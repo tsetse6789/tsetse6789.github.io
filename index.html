@@ -232,6 +232,47 @@
             </div>
         </div>
 
+        <!-- Room Settings Modal -->
+        <div id="room-settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 slide-up">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-bold">Room Settings</h3>
+                    <button id="close-room-settings" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Room Name</label>
+                        <input type="text" id="edit-room-name" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Invite Username</label>
+                        <div class="flex space-x-2">
+                            <input type="text" id="invite-username" placeholder="Enter username..." class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                            <button id="invite-user-btn" class="bg-primary text-white px-4 py-3 rounded-lg">Invite</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium mb-2">Room Members</h4>
+                        <div id="room-members-list" class="max-h-40 overflow-y-auto space-y-2">
+                            <!-- Members will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button id="save-room-settings" class="flex-1 bg-primary text-white py-3 rounded-lg">Save</button>
+                        <button id="leave-room-btn" class="flex-1 bg-red-600 text-white py-3 rounded-lg">Leave Room</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Friends Modal -->
         <div id="friends-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 slide-up max-h-96 flex flex-col">
@@ -246,9 +287,10 @@
                 
                 <div class="mb-4">
                     <div class="flex space-x-2">
-                        <input type="email" id="friend-email" placeholder="Friend's email..." class="flex-1 px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                        <input type="text" id="friend-username" placeholder="Friend's username..." class="flex-1 px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
                         <button id="add-friend-btn" class="bg-primary text-white px-4 py-2 rounded-lg">Add</button>
                     </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Search and add friends by username</p>
                 </div>
                 
                 <div id="friends-list" class="flex-1 overflow-y-auto space-y-2">
@@ -340,6 +382,7 @@
         // Global variables
         let currentUser = null;
         let currentRoom = null;
+        let currentRoomData = null;
         let messagesListener = null;
         let roomsListener = null;
 
@@ -394,11 +437,16 @@
             document.getElementById('settings-btn').addEventListener('click', () => showModal('settings-modal'));
             document.getElementById('create-room-btn').addEventListener('click', () => showModal('create-room-modal'));
             document.getElementById('back-to-rooms').addEventListener('click', showRoomsView);
+            document.getElementById('room-settings-btn').addEventListener('click', () => {
+                loadRoomSettings();
+                showModal('room-settings-modal');
+            });
 
             document.getElementById('close-profile').addEventListener('click', () => hideModal('profile-modal'));
             document.getElementById('close-settings').addEventListener('click', () => hideModal('settings-modal'));
             document.getElementById('close-create-room').addEventListener('click', () => hideModal('create-room-modal'));
             document.getElementById('close-friends').addEventListener('click', () => hideModal('friends-modal'));
+            document.getElementById('close-room-settings').addEventListener('click', () => hideModal('room-settings-modal'));
 
             document.getElementById('save-profile').addEventListener('click', saveProfile);
             document.getElementById('view-friends').addEventListener('click', () => {
@@ -411,6 +459,9 @@
             document.getElementById('delete-account-btn').addEventListener('click', confirmDeleteAccount);
 
             document.getElementById('create-room-submit').addEventListener('click', createRoom);
+            document.getElementById('save-room-settings').addEventListener('click', saveRoomSettings);
+            document.getElementById('invite-user-btn').addEventListener('click', inviteUserToRoom);
+            document.getElementById('leave-room-btn').addEventListener('click', leaveRoom);
 
             document.getElementById('send-message').addEventListener('click', sendMessage);
             document.getElementById('message-input').addEventListener('keypress', (e) => {
@@ -675,6 +726,7 @@
 
         function openChatRoom(roomId, roomData) {
             currentRoom = roomId;
+            currentRoomData = roomData;
             document.getElementById('chat-room-name').textContent = roomData.name;
             showChatView();
             loadMessages();
@@ -688,12 +740,165 @@
                 messagesListener = null;
             }
             currentRoom = null;
+            currentRoomData = null;
         }
 
         function showChatView() {
             document.getElementById('rooms-view').classList.add('hidden');
             document.getElementById('chat-view').classList.remove('hidden');
         }
+
+        async function loadRoomSettings() {
+            if (!currentRoom || !currentRoomData) return;
+            
+            document.getElementById('edit-room-name').value = currentRoomData.name;
+            
+            // Load room members
+            const membersList = document.getElementById('room-members-list');
+            membersList.innerHTML = '';
+            
+            if (currentRoomData.users) {
+                for (const [userId, userData] of Object.entries(currentRoomData.users)) {
+                    try {
+                        const userSnapshot = await database.ref(`users/${userId}`).once('value');
+                        if (userSnapshot.exists()) {
+                            const userProfile = userSnapshot.val();
+                            const memberElement = createMemberElement(userId, userProfile, userData);
+                            membersList.appendChild(memberElement);
+                        }
+                    } catch (error) {
+                        console.error('Error loading member:', error);
+                    }
+                }
+            }
+        }
+
+        function createMemberElement(userId, userProfile, userData) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg';
+            
+            const isCurrentUser = userId === currentUser.uid;
+            const isHost = userData.role === 'host';
+            const canRemove = currentRoomData.createdBy === currentUser.uid && !isCurrentUser;
+            
+            div.innerHTML = `
+                <div class="flex items-center">
+                    ${userProfile.profilePic ? 
+                        `<img src="${userProfile.profilePic}" class="w-8 h-8 rounded-full mr-2" alt="Profile">` :
+                        `<div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full mr-2 flex items-center justify-center">
+                            <span class="text-sm font-semibold">${userProfile.username.charAt(0).toUpperCase()}</span>
+                        </div>`
+                    }
+                    <div>
+                        <p class="font-medium text-sm">${userProfile.username} ${isCurrentUser ? '(You)' : ''}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">${isHost ? 'Host' : 'Member'}</p>
+                    </div>
+                </div>
+                ${canRemove ? `
+                    <button onclick="removeMemberFromRoom('${userId}')" class="text-red-500 hover:text-red-700 p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                ` : ''}
+            `;
+            return div;
+        }
+
+        async function saveRoomSettings() {
+            if (!currentRoom) return;
+            
+            const newRoomName = document.getElementById('edit-room-name').value.trim();
+            if (!newRoomName) {
+                showCustomAlert('Room name is required');
+                return;
+            }
+            
+            try {
+                await database.ref(`rooms/${currentRoom}/name`).set(newRoomName);
+                currentRoomData.name = newRoomName;
+                document.getElementById('chat-room-name').textContent = newRoomName;
+                hideModal('room-settings-modal');
+            } catch (error) {
+                showCustomAlert('Error saving room settings: ' + error.message);
+            }
+        }
+
+        async function inviteUserToRoom() {
+            const username = document.getElementById('invite-username').value.trim();
+            if (!username || !currentRoom) return;
+            
+            try {
+                // Search for user by username using Firebase query
+                const usersSnapshot = await database.ref('users').orderByChild('username').equalTo(username).once('value');
+                
+                if (!usersSnapshot.exists()) {
+                    showCustomAlert('User not found');
+                    return;
+                }
+                
+                const users = usersSnapshot.val();
+                const userId = Object.keys(users)[0];
+                
+                if (currentRoomData.users && currentRoomData.users[userId]) {
+                    showCustomAlert('User is already in this room');
+                    return;
+                }
+                
+                await database.ref(`rooms/${currentRoom}/users/${userId}`).set({
+                    joinedAt: Date.now(),
+                    lastSeen: Date.now(),
+                    role: 'member'
+                });
+                
+                document.getElementById('invite-username').value = '';
+                
+                // Refresh room data and reload settings
+                const roomSnapshot = await database.ref(`rooms/${currentRoom}`).once('value');
+                if (roomSnapshot.exists()) {
+                    currentRoomData = roomSnapshot.val();
+                    loadRoomSettings();
+                }
+                
+            } catch (error) {
+                showCustomAlert('Error inviting user: ' + error.message);
+            }
+        }
+
+        async function leaveRoom() {
+            if (!currentRoom) return;
+            
+            document.getElementById('confirm-title').textContent = 'Leave Room';
+            document.getElementById('confirm-message').textContent = 'Are you sure you want to leave this room?';
+            document.getElementById('confirm-ok').onclick = async () => {
+                try {
+                    await database.ref(`rooms/${currentRoom}/users/${currentUser.uid}`).remove();
+                    hideModal('confirm-modal');
+                    hideModal('room-settings-modal');
+                    showRoomsView();
+                } catch (error) {
+                    showCustomAlert('Error leaving room: ' + error.message);
+                }
+            };
+            showModal('confirm-modal');
+        }
+
+        window.removeMemberFromRoom = async function(userId) {
+            if (!currentRoom || currentRoomData.createdBy !== currentUser.uid) return;
+            
+            try {
+                await database.ref(`rooms/${currentRoom}/users/${userId}`).remove();
+                
+                // Refresh room data and reload settings
+                const roomSnapshot = await database.ref(`rooms/${currentRoom}`).once('value');
+                if (roomSnapshot.exists()) {
+                    currentRoomData = roomSnapshot.val();
+                    loadRoomSettings();
+                }
+            } catch (error) {
+                showCustomAlert('Error removing member: ' + error.message);
+            }
+        };
 
         function loadMessages() {
             if (messagesListener) {
@@ -763,26 +968,35 @@
         }
 
         async function addFriend() {
-            const friendEmail = document.getElementById('friend-email').value.trim();
-            if (!friendEmail) return;
+            const friendUsername = document.getElementById('friend-username').value.trim();
+            if (!friendUsername) return;
+            
             try {
-                const usersSnapshot = await database.ref('users').once('value');
-                let friendId = null;
-                if (usersSnapshot.exists()) {
-                    const users = usersSnapshot.val();
-                    for (const [uid, userData] of Object.entries(users)) {
-                        if (userData.email === friendEmail && uid !== currentUser.uid) {
-                            friendId = uid;
-                            break;
-                        }
-                    }
-                }
-                if (!friendId) {
+                // Search for user by username using Firebase query
+                const usersSnapshot = await database.ref('users').orderByChild('username').equalTo(friendUsername).once('value');
+                
+                if (!usersSnapshot.exists()) {
                     showCustomAlert('User not found');
                     return;
                 }
+                
+                const users = usersSnapshot.val();
+                const friendId = Object.keys(users)[0];
+                
+                if (friendId === currentUser.uid) {
+                    showCustomAlert('You cannot add yourself as a friend');
+                    return;
+                }
+                
+                // Check if already friends
+                const existingFriendSnapshot = await database.ref(`users/${currentUser.uid}/friends/${friendId}`).once('value');
+                if (existingFriendSnapshot.exists()) {
+                    showCustomAlert('User is already your friend');
+                    return;
+                }
+                
                 await database.ref(`users/${currentUser.uid}/friends/${friendId}`).set(true);
-                document.getElementById('friend-email').value = '';
+                document.getElementById('friend-username').value = '';
                 loadFriends();
             } catch (error) {
                 showCustomAlert('Error adding friend: ' + error.message);
