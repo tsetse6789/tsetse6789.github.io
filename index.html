@@ -27,6 +27,21 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .slide-up { animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
@@ -87,6 +102,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                         </svg>
                     </button>
+                    <div class="relative">
+                        <button id="friends-btn" class="p-2 rounded-full hover:bg-white hover:bg-opacity-20">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </button>
+                        <div id="friend-requests-badge" class="notification-badge hidden">0</div>
+                    </div>
                     <button id="settings-btn" class="p-2 rounded-full hover:bg-white hover:bg-opacity-20">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
@@ -171,10 +194,7 @@
                         <input type="url" id="profile-pic" placeholder="https://..." class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
                     </div>
                     
-                    <div class="flex space-x-3">
-                        <button id="save-profile" class="flex-1 bg-primary text-white py-3 rounded-lg">Save</button>
-                        <button id="view-friends" class="flex-1 bg-gray-500 text-white py-3 rounded-lg">Friends</button>
-                    </div>
+                    <button id="save-profile" class="w-full bg-primary text-white py-3 rounded-lg">Save Profile</button>
                 </div>
             </div>
         </div>
@@ -251,10 +271,12 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium mb-2">Invite Username</label>
+                        <label class="block text-sm font-medium mb-2">Invite Friend</label>
                         <div class="flex space-x-2">
-                            <input type="text" id="invite-username" placeholder="Enter username..." class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
-                            <button id="invite-user-btn" class="bg-primary text-white px-4 py-3 rounded-lg">Invite</button>
+                            <select id="invite-friend-select" class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                                <option value="">Select a friend...</option>
+                            </select>
+                            <button id="invite-friend-btn" class="bg-primary text-white px-4 py-3 rounded-lg">Invite</button>
                         </div>
                     </div>
                     
@@ -277,7 +299,7 @@
         <div id="friends-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 slide-up max-h-96 flex flex-col">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold">Friends</h3>
+                    <h3 class="text-xl font-bold">Friends & Requests</h3>
                     <button id="close-friends" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -285,16 +307,30 @@
                     </button>
                 </div>
                 
-                <div class="mb-4">
-                    <div class="flex space-x-2">
-                        <input type="text" id="friend-username" placeholder="Friend's username..." class="flex-1 px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
-                        <button id="add-friend-btn" class="bg-primary text-white px-4 py-2 rounded-lg">Add</button>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Search and add friends by username</p>
+                <div class="flex mb-4">
+                    <button id="friends-tab" class="flex-1 py-2 text-center font-medium border-b-2 border-primary text-primary">Friends</button>
+                    <button id="requests-tab" class="flex-1 py-2 text-center font-medium border-b-2 border-transparent text-gray-500">
+                        Requests
+                        <span id="requests-count" class="ml-1 bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden">0</span>
+                    </button>
                 </div>
                 
-                <div id="friends-list" class="flex-1 overflow-y-auto space-y-2">
-                    <!-- Friends will be populated here -->
+                <div id="friends-content" class="flex-1 overflow-hidden flex flex-col">
+                    <div class="mb-4">
+                        <div class="flex space-x-2">
+                            <input type="text" id="friend-username" placeholder="Friend's username..." class="flex-1 px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
+                            <button id="send-friend-request-btn" class="bg-primary text-white px-4 py-2 rounded-lg">Send</button>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Send friend request by username</p>
+                    </div>
+                    
+                    <div id="friends-list" class="flex-1 overflow-y-auto space-y-2">
+                        <!-- Friends will be populated here -->
+                    </div>
+                </div>
+                
+                <div id="requests-content" class="hidden flex-1 overflow-y-auto space-y-2">
+                    <!-- Friend requests will be populated here -->
                 </div>
             </div>
         </div>
@@ -385,6 +421,8 @@
         let currentRoomData = null;
         let messagesListener = null;
         let roomsListener = null;
+        let friendRequestsListener = null;
+        let userFriends = {};
 
         // DOM elements
         const loading = document.getElementById('loading');
@@ -411,6 +449,8 @@
                         currentUser = user;
                         showMainApp();
                         loadUserProfile();
+                        loadFriends();
+                        loadFriendRequests();
                         loadRooms();
                     } else {
                         showAuthScreen();
@@ -434,6 +474,11 @@
             authForm.addEventListener('submit', handleAuth);
 
             document.getElementById('profile-btn').addEventListener('click', () => showModal('profile-modal'));
+            document.getElementById('friends-btn').addEventListener('click', () => {
+                showModal('friends-modal');
+                loadFriends();
+                loadFriendRequests();
+            });
             document.getElementById('settings-btn').addEventListener('click', () => showModal('settings-modal'));
             document.getElementById('create-room-btn').addEventListener('click', () => showModal('create-room-modal'));
             document.getElementById('back-to-rooms').addEventListener('click', showRoomsView);
@@ -449,18 +494,13 @@
             document.getElementById('close-room-settings').addEventListener('click', () => hideModal('room-settings-modal'));
 
             document.getElementById('save-profile').addEventListener('click', saveProfile);
-            document.getElementById('view-friends').addEventListener('click', () => {
-                hideModal('profile-modal');
-                showModal('friends-modal');
-                loadFriends();
-            });
 
             document.getElementById('logout-btn').addEventListener('click', logout);
             document.getElementById('delete-account-btn').addEventListener('click', confirmDeleteAccount);
 
             document.getElementById('create-room-submit').addEventListener('click', createRoom);
             document.getElementById('save-room-settings').addEventListener('click', saveRoomSettings);
-            document.getElementById('invite-user-btn').addEventListener('click', inviteUserToRoom);
+            document.getElementById('invite-friend-btn').addEventListener('click', inviteFriendToRoom);
             document.getElementById('leave-room-btn').addEventListener('click', leaveRoom);
 
             document.getElementById('send-message').addEventListener('click', sendMessage);
@@ -468,7 +508,10 @@
                 if (e.key === 'Enter') sendMessage();
             });
 
-            document.getElementById('add-friend-btn').addEventListener('click', addFriend);
+            document.getElementById('send-friend-request-btn').addEventListener('click', sendFriendRequest);
+
+            document.getElementById('friends-tab').addEventListener('click', () => switchToFriendsTab());
+            document.getElementById('requests-tab').addEventListener('click', () => switchToRequestsTab());
 
             document.getElementById('confirm-cancel').addEventListener('click', () => hideModal('confirm-modal'));
         }
@@ -491,6 +534,24 @@
             signupFields.classList.remove('hidden');
             loginOptions.classList.add('hidden');
             authSubmit.textContent = 'Sign Up';
+        }
+
+        function switchToFriendsTab() {
+            document.getElementById('friends-tab').classList.add('border-primary', 'text-primary');
+            document.getElementById('friends-tab').classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById('requests-tab').classList.remove('border-primary', 'text-primary');
+            document.getElementById('requests-tab').classList.add('border-transparent', 'text-gray-500');
+            document.getElementById('friends-content').classList.remove('hidden');
+            document.getElementById('requests-content').classList.add('hidden');
+        }
+
+        function switchToRequestsTab() {
+            document.getElementById('requests-tab').classList.add('border-primary', 'text-primary');
+            document.getElementById('requests-tab').classList.remove('border-transparent', 'text-gray-500');
+            document.getElementById('friends-tab').classList.remove('border-primary', 'text-primary');
+            document.getElementById('friends-tab').classList.add('border-transparent', 'text-gray-500');
+            document.getElementById('requests-content').classList.remove('hidden');
+            document.getElementById('friends-content').classList.add('hidden');
         }
 
         async function handleAuth(e) {
@@ -628,7 +689,236 @@
             }
         }
 
-        // FIX: After creating a room, fetch it from DB before opening!
+        async function sendFriendRequest() {
+            const friendUsername = document.getElementById('friend-username').value.trim();
+            if (!friendUsername) return;
+            
+            try {
+                // Search for user by username
+                const usersSnapshot = await database.ref('users').orderByChild('username').equalTo(friendUsername).once('value');
+                
+                if (!usersSnapshot.exists()) {
+                    showCustomAlert('User not found');
+                    return;
+                }
+                
+                const users = usersSnapshot.val();
+                const friendId = Object.keys(users)[0];
+                
+                if (friendId === currentUser.uid) {
+                    showCustomAlert('You cannot send a friend request to yourself');
+                    return;
+                }
+                
+                // Check if already friends
+                if (userFriends[friendId] === 'accepted') {
+                    showCustomAlert('You are already friends with this user');
+                    return;
+                }
+                
+                // Check if request already sent
+                const sentRequestSnapshot = await database.ref(`users/${currentUser.uid}/friendRequests/sent/${friendId}`).once('value');
+                if (sentRequestSnapshot.exists() && sentRequestSnapshot.val() === 'pending') {
+                    showCustomAlert('Friend request already sent');
+                    return;
+                }
+                
+                // Send friend request
+                const updates = {};
+                updates[`users/${currentUser.uid}/friendRequests/sent/${friendId}`] = 'pending';
+                updates[`users/${friendId}/friendRequests/received/${currentUser.uid}`] = 'pending';
+                
+                await database.ref().update(updates);
+                
+                document.getElementById('friend-username').value = '';
+                showCustomAlert('Friend request sent!', 'success');
+            } catch (error) {
+                showCustomAlert('Error sending friend request: ' + error.message);
+            }
+        }
+
+        async function loadFriends() {
+            try {
+                const friendsSnapshot = await database.ref(`users/${currentUser.uid}/friends`).once('value');
+                userFriends = friendsSnapshot.exists() ? friendsSnapshot.val() : {};
+                
+                const friendsList = document.getElementById('friends-list');
+                friendsList.innerHTML = '';
+                
+                if (Object.keys(userFriends).length > 0) {
+                    const friendElements = await Promise.all(
+                        Object.entries(userFriends).map(async ([friendId, status]) => {
+                            if (status === 'accepted') {
+                                const friendSnapshot = await database.ref(`users/${friendId}`).once('value');
+                                if (friendSnapshot.exists()) {
+                                    const friendData = friendSnapshot.val();
+                                    return createFriendElement(friendId, friendData);
+                                }
+                            }
+                            return null;
+                        })
+                    );
+                    friendElements.filter(el => el !== null).forEach(element => {
+                        friendsList.appendChild(element);
+                    });
+                } else {
+                    friendsList.innerHTML = '<p class="text-gray-500 text-center py-4">No friends yet</p>';
+                }
+            } catch (error) {
+                console.error('Error loading friends:', error);
+            }
+        }
+
+        async function loadFriendRequests() {
+            try {
+                const requestsSnapshot = await database.ref(`users/${currentUser.uid}/friendRequests/received`).once('value');
+                const requestsList = document.getElementById('requests-content');
+                requestsList.innerHTML = '';
+                
+                let pendingCount = 0;
+                
+                if (requestsSnapshot.exists()) {
+                    const requests = requestsSnapshot.val();
+                    const pendingRequests = Object.entries(requests).filter(([_, status]) => status === 'pending');
+                    pendingCount = pendingRequests.length;
+                    
+                    if (pendingRequests.length > 0) {
+                        const requestElements = await Promise.all(
+                            pendingRequests.map(async ([requesterId, _]) => {
+                                const requesterSnapshot = await database.ref(`users/${requesterId}`).once('value');
+                                if (requesterSnapshot.exists()) {
+                                    const requesterData = requesterSnapshot.val();
+                                    return createFriendRequestElement(requesterId, requesterData);
+                                }
+                                return null;
+                            })
+                        );
+                        requestElements.filter(el => el !== null).forEach(element => {
+                            requestsList.appendChild(element);
+                        });
+                    } else {
+                        requestsList.innerHTML = '<p class="text-gray-500 text-center py-4">No pending requests</p>';
+                    }
+                } else {
+                    requestsList.innerHTML = '<p class="text-gray-500 text-center py-4">No pending requests</p>';
+                }
+                
+                // Update notification badges
+                const badge = document.getElementById('friend-requests-badge');
+                const countSpan = document.getElementById('requests-count');
+                
+                if (pendingCount > 0) {
+                    badge.textContent = pendingCount;
+                    badge.classList.remove('hidden');
+                    countSpan.textContent = pendingCount;
+                    countSpan.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                    countSpan.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading friend requests:', error);
+            }
+        }
+
+        function createFriendElement(friendId, friendData) {
+            const div = document.createElement('div');
+            div.className = 'p-3 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between';
+            div.innerHTML = `
+                <div class="flex items-center">
+                    ${friendData.profilePic ? 
+                        `<img src="${friendData.profilePic}" class="w-10 h-10 rounded-full mr-3" alt="Profile">` :
+                        `<div class="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full mr-3 flex items-center justify-center">
+                            <span class="text-lg font-semibold">${friendData.username.charAt(0).toUpperCase()}</span>
+                        </div>`
+                    }
+                    <div>
+                        <p class="font-medium">${friendData.username}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Friend</p>
+                    </div>
+                </div>
+                <button onclick="removeFriend('${friendId}')" class="text-red-500 hover:text-red-700 p-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            `;
+            return div;
+        }
+
+        function createFriendRequestElement(requesterId, requesterData) {
+            const div = document.createElement('div');
+            div.className = 'p-3 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between';
+            div.innerHTML = `
+                <div class="flex items-center">
+                    ${requesterData.profilePic ? 
+                        `<img src="${requesterData.profilePic}" class="w-10 h-10 rounded-full mr-3" alt="Profile">` :
+                        `<div class="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full mr-3 flex items-center justify-center">
+                            <span class="text-lg font-semibold">${requesterData.username.charAt(0).toUpperCase()}</span>
+                        </div>`
+                    }
+                    <div>
+                        <p class="font-medium">${requesterData.username}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Friend request</p>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="acceptFriendRequest('${requesterId}')" class="bg-green-500 text-white px-3 py-1 rounded text-sm">Accept</button>
+                    <button onclick="declineFriendRequest('${requesterId}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">Decline</button>
+                </div>
+            `;
+            return div;
+        }
+
+        window.acceptFriendRequest = async function(requesterId) {
+            try {
+                const updates = {};
+                // Mark both as friends
+                updates[`users/${currentUser.uid}/friends/${requesterId}`] = 'accepted';
+                updates[`users/${requesterId}/friends/${currentUser.uid}`] = 'accepted';
+                // Update request status
+                updates[`users/${currentUser.uid}/friendRequests/received/${requesterId}`] = 'accepted';
+                updates[`users/${requesterId}/friendRequests/sent/${currentUser.uid}`] = 'accepted';
+                
+                await database.ref().update(updates);
+                
+                loadFriends();
+                loadFriendRequests();
+                showCustomAlert('Friend request accepted!', 'success');
+            } catch (error) {
+                showCustomAlert('Error accepting friend request: ' + error.message);
+            }
+        };
+
+        window.declineFriendRequest = async function(requesterId) {
+            try {
+                const updates = {};
+                updates[`users/${currentUser.uid}/friendRequests/received/${requesterId}`] = 'declined';
+                updates[`users/${requesterId}/friendRequests/sent/${currentUser.uid}`] = 'declined';
+                
+                await database.ref().update(updates);
+                
+                loadFriendRequests();
+                showCustomAlert('Friend request declined', 'info');
+            } catch (error) {
+                showCustomAlert('Error declining friend request: ' + error.message);
+            }
+        };
+
+        window.removeFriend = async function(friendId) {
+            try {
+                const updates = {};
+                updates[`users/${currentUser.uid}/friends/${friendId}`] = null;
+                updates[`users/${friendId}/friends/${currentUser.uid}`] = null;
+                
+                await database.ref().update(updates);
+                loadFriends();
+                showCustomAlert('Friend removed', 'info');
+            } catch (error) {
+                showCustomAlert('Error removing friend: ' + error.message);
+            }
+        };
+
         async function createRoom() {
             const roomName = document.getElementById('room-name-input').value.trim();
             if (!roomName) {
@@ -651,7 +941,7 @@
                 });
                 document.getElementById('room-name-input').value = '';
                 hideModal('create-room-modal');
-                // Fetch the new room data and open it
+                
                 const snapshot = await roomRef.once('value');
                 if (snapshot.exists()) {
                     openChatRoom(snapshot.key, snapshot.val());
@@ -664,7 +954,6 @@
             }
         }
 
-        // FIX: Always fetch latest room data before opening any room!
         function loadRooms() {
             if (roomsListener) {
                 database.ref('rooms').off('value', roomsListener);
@@ -753,6 +1042,29 @@
             
             document.getElementById('edit-room-name').value = currentRoomData.name;
             
+            // Load friends for invitation dropdown
+            const inviteSelect = document.getElementById('invite-friend-select');
+            inviteSelect.innerHTML = '<option value="">Select a friend...</option>';
+            
+            if (Object.keys(userFriends).length > 0) {
+                for (const [friendId, status] of Object.entries(userFriends)) {
+                    if (status === 'accepted' && (!currentRoomData.users || !currentRoomData.users[friendId])) {
+                        try {
+                            const friendSnapshot = await database.ref(`users/${friendId}`).once('value');
+                            if (friendSnapshot.exists()) {
+                                const friendData = friendSnapshot.val();
+                                const option = document.createElement('option');
+                                option.value = friendId;
+                                option.textContent = friendData.username;
+                                inviteSelect.appendChild(option);
+                            }
+                        } catch (error) {
+                            console.error('Error loading friend data:', error);
+                        }
+                    }
+                }
+            }
+            
             // Load room members
             const membersList = document.getElementById('room-members-list');
             membersList.innerHTML = '';
@@ -824,34 +1136,22 @@
             }
         }
 
-        async function inviteUserToRoom() {
-            const username = document.getElementById('invite-username').value.trim();
-            if (!username || !currentRoom) return;
+        async function inviteFriendToRoom() {
+            const friendId = document.getElementById('invite-friend-select').value;
+            if (!friendId || !currentRoom) return;
             
             try {
-                // Search for user by username using Firebase query
-                const usersSnapshot = await database.ref('users').orderByChild('username').equalTo(username).once('value');
-                
-                if (!usersSnapshot.exists()) {
-                    showCustomAlert('User not found');
+                // Check if user is actually a friend
+                if (!userFriends[friendId] || userFriends[friendId] !== 'accepted') {
+                    showCustomAlert('You can only invite friends to rooms');
                     return;
                 }
                 
-                const users = usersSnapshot.val();
-                const userId = Object.keys(users)[0];
-                
-                if (currentRoomData.users && currentRoomData.users[userId]) {
-                    showCustomAlert('User is already in this room');
-                    return;
-                }
-                
-                await database.ref(`rooms/${currentRoom}/users/${userId}`).set({
+                await database.ref(`rooms/${currentRoom}/users/${friendId}`).set({
                     joinedAt: Date.now(),
                     lastSeen: Date.now(),
                     role: 'member'
                 });
-                
-                document.getElementById('invite-username').value = '';
                 
                 // Refresh room data and reload settings
                 const roomSnapshot = await database.ref(`rooms/${currentRoom}`).once('value');
@@ -860,8 +1160,10 @@
                     loadRoomSettings();
                 }
                 
+                showCustomAlert('Friend invited successfully!', 'success');
+                
             } catch (error) {
-                showCustomAlert('Error inviting user: ' + error.message);
+                showCustomAlert('Error inviting friend: ' + error.message);
             }
         }
 
@@ -967,105 +1269,10 @@
             }
         }
 
-        async function addFriend() {
-            const friendUsername = document.getElementById('friend-username').value.trim();
-            if (!friendUsername) return;
-            
-            try {
-                // Search for user by username using Firebase query
-                const usersSnapshot = await database.ref('users').orderByChild('username').equalTo(friendUsername).once('value');
-                
-                if (!usersSnapshot.exists()) {
-                    showCustomAlert('User not found');
-                    return;
-                }
-                
-                const users = usersSnapshot.val();
-                const friendId = Object.keys(users)[0];
-                
-                if (friendId === currentUser.uid) {
-                    showCustomAlert('You cannot add yourself as a friend');
-                    return;
-                }
-                
-                // Check if already friends
-                const existingFriendSnapshot = await database.ref(`users/${currentUser.uid}/friends/${friendId}`).once('value');
-                if (existingFriendSnapshot.exists()) {
-                    showCustomAlert('User is already your friend');
-                    return;
-                }
-                
-                await database.ref(`users/${currentUser.uid}/friends/${friendId}`).set(true);
-                document.getElementById('friend-username').value = '';
-                loadFriends();
-            } catch (error) {
-                showCustomAlert('Error adding friend: ' + error.message);
-            }
-        }
-
-        async function loadFriends() {
-            try {
-                const friendsSnapshot = await database.ref(`users/${currentUser.uid}/friends`).once('value');
-                const friendsList = document.getElementById('friends-list');
-                friendsList.innerHTML = '';
-                if (friendsSnapshot.exists()) {
-                    const friends = friendsSnapshot.val();
-                    const friendElements = await Promise.all(
-                        Object.keys(friends).map(async (friendId) => {
-                            const friendSnapshot = await database.ref(`users/${friendId}`).once('value');
-                            if (friendSnapshot.exists()) {
-                                const friendData = friendSnapshot.val();
-                                return createFriendElement(friendId, friendData);
-                            }
-                            return null;
-                        })
-                    );
-                    friendElements.filter(el => el !== null).forEach(element => {
-                        friendsList.appendChild(element);
-                    });
-                } else {
-                    friendsList.innerHTML = '<p class="text-gray-500 text-center py-4">No friends yet</p>';
-                }
-            } catch (error) {}
-        }
-
-        function createFriendElement(friendId, friendData) {
-            const div = document.createElement('div');
-            div.className = 'p-3 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between';
-            div.innerHTML = `
-                <div class="flex items-center">
-                    ${friendData.profilePic ? 
-                        `<img src="${friendData.profilePic}" class="w-10 h-10 rounded-full mr-3" alt="Profile">` :
-                        `<div class="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full mr-3 flex items-center justify-center">
-                            <span class="text-lg font-semibold">${friendData.username.charAt(0).toUpperCase()}</span>
-                        </div>`
-                    }
-                    <div>
-                        <p class="font-medium">${friendData.username}</p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Friend</p>
-                    </div>
-                </div>
-                <button onclick="removeFriend('${friendId}')" class="text-red-500 hover:text-red-700 p-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
-            `;
-            return div;
-        }
-
-        window.removeFriend = async function(friendId) {
-            try {
-                await database.ref(`users/${currentUser.uid}/friends/${friendId}`).remove();
-                loadFriends();
-            } catch (error) {
-                showCustomAlert('Error removing friend: ' + error.message);
-            }
-        };
-
-        function showCustomAlert(message) {
+        function showCustomAlert(message, type = 'error') {
             const alertDiv = document.createElement('div');
-            alertDiv.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+            const bgColor = type === 'success' ? 'bg-green-500' : type === 'info' ? 'bg-blue-500' : 'bg-red-500';
+            alertDiv.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
             alertDiv.textContent = message;
             document.body.appendChild(alertDiv);
             setTimeout(() => {
