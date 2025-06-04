@@ -146,6 +146,7 @@
                             </svg>
                         </button>
                         <h3 id="chat-room-name" class="text-lg font-semibold"></h3>
+                        <span id="user-role-badge" class="ml-3 px-2 py-1 text-xs rounded-full bg-gray-200 dark:bg-gray-700"></span>
                     </div>
                     <button id="room-settings-btn" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,7 +255,7 @@
 
         <!-- Room Settings Modal -->
         <div id="room-settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 slide-up">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 slide-up max-h-96 overflow-y-auto">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-xl font-bold">Room Settings</h3>
                     <button id="close-room-settings" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -265,12 +266,12 @@
                 </div>
                 
                 <div class="space-y-4">
-                    <div>
+                    <div id="room-name-section">
                         <label class="block text-sm font-medium mb-2">Room Name</label>
                         <input type="text" id="edit-room-name" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
                     </div>
                     
-                    <div>
+                    <div id="invite-section">
                         <label class="block text-sm font-medium mb-2">Invite Friend</label>
                         <div class="flex space-x-2">
                             <select id="invite-friend-select" class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700">
@@ -998,13 +999,16 @@
                     showCustomAlert('Failed to open room: ' + error.message);
                 }
             };
-            const isHost = roomData.createdBy === currentUser.uid;
+            
+            const userRole = roomData.users[currentUser.uid]?.role || 'member';
+            const roleDisplay = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+            
             div.innerHTML = `
                 <div class="flex items-center justify-between">
                     <div>
                         <h3 class="font-semibold">${roomData.name}</h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                            ${isHost ? 'Host' : 'Member'} • ${Object.keys(roomData.users || {}).length} members
+                            ${roleDisplay} • ${Object.keys(roomData.users || {}).length} members
                         </p>
                     </div>
                     <div class="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -1017,6 +1021,23 @@
             currentRoom = roomId;
             currentRoomData = roomData;
             document.getElementById('chat-room-name').textContent = roomData.name;
+            
+            // Update role badge
+            const userRole = roomData.users[currentUser.uid]?.role || 'member';
+            const roleDisplay = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+            const roleBadge = document.getElementById('user-role-badge');
+            roleBadge.textContent = roleDisplay;
+            
+            // Set badge color based on role
+            roleBadge.className = 'ml-3 px-2 py-1 text-xs rounded-full';
+            if (userRole === 'host') {
+                roleBadge.classList.add('bg-yellow-200', 'text-yellow-800', 'dark:bg-yellow-800', 'dark:text-yellow-200');
+            } else if (userRole === 'admin') {
+                roleBadge.classList.add('bg-blue-200', 'text-blue-800', 'dark:bg-blue-800', 'dark:text-blue-200');
+            } else {
+                roleBadge.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-200');
+            }
+            
             showChatView();
             loadMessages();
         }
@@ -1040,13 +1061,35 @@
         async function loadRoomSettings() {
             if (!currentRoom || !currentRoomData) return;
             
+            const currentUserRole = currentRoomData.users[currentUser.uid]?.role;
+            const canEdit = currentUserRole === 'host' || currentUserRole === 'admin';
+            const isHost = currentUserRole === 'host';
+            
+            // Show/hide edit controls based on permissions
+            document.getElementById('edit-room-name').disabled = !canEdit;
+            document.getElementById('invite-friend-select').disabled = !canEdit;
+            document.getElementById('invite-friend-btn').disabled = !canEdit;
+            document.getElementById('save-room-settings').disabled = !canEdit;
+            
+            if (!canEdit) {
+                ['edit-room-name', 'invite-friend-select', 'invite-friend-btn', 'save-room-settings'].forEach(id => {
+                    const element = document.getElementById(id);
+                    element.classList.add('opacity-50', 'cursor-not-allowed');
+                });
+            } else {
+                ['edit-room-name', 'invite-friend-select', 'invite-friend-btn', 'save-room-settings'].forEach(id => {
+                    const element = document.getElementById(id);
+                    element.classList.remove('opacity-50', 'cursor-not-allowed');
+                });
+            }
+            
             document.getElementById('edit-room-name').value = currentRoomData.name;
             
-            // Load friends for invitation dropdown
+            // Load friends for invitation dropdown (only if can edit)
             const inviteSelect = document.getElementById('invite-friend-select');
             inviteSelect.innerHTML = '<option value="">Select a friend...</option>';
             
-            if (Object.keys(userFriends).length > 0) {
+            if (canEdit && Object.keys(userFriends).length > 0) {
                 for (const [friendId, status] of Object.entries(userFriends)) {
                     if (status === 'accepted' && (!currentRoomData.users || !currentRoomData.users[friendId])) {
                         try {
@@ -1075,7 +1118,7 @@
                         const userSnapshot = await database.ref(`users/${userId}`).once('value');
                         if (userSnapshot.exists()) {
                             const userProfile = userSnapshot.val();
-                            const memberElement = createMemberElement(userId, userProfile, userData);
+                            const memberElement = createMemberElement(userId, userProfile, userData, isHost);
                             membersList.appendChild(memberElement);
                         }
                     } catch (error) {
@@ -1085,13 +1128,22 @@
             }
         }
 
-        function createMemberElement(userId, userProfile, userData) {
+        function createMemberElement(userId, userProfile, userData, canManage) {
             const div = document.createElement('div');
             div.className = 'flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg';
             
             const isCurrentUser = userId === currentUser.uid;
-            const isHost = userData.role === 'host';
-            const canRemove = currentRoomData.createdBy === currentUser.uid && !isCurrentUser;
+            const userRole = userData.role || 'member';
+            const canRemove = canManage && !isCurrentUser;
+            const canChangeRole = canManage && !isCurrentUser && userRole !== 'host';
+            
+            // Role color mapping
+            let roleClass = 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-200';
+            if (userRole === 'host') {
+                roleClass = 'bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200';
+            } else if (userRole === 'admin') {
+                roleClass = 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200';
+            }
             
             div.innerHTML = `
                 <div class="flex items-center">
@@ -1103,22 +1155,55 @@
                     }
                     <div>
                         <p class="font-medium text-sm">${userProfile.username} ${isCurrentUser ? '(You)' : ''}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">${isHost ? 'Host' : 'Member'}</p>
+                        <span class="text-xs px-2 py-1 rounded-full ${roleClass}">${userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span>
                     </div>
                 </div>
-                ${canRemove ? `
-                    <button onclick="removeMemberFromRoom('${userId}')" class="text-red-500 hover:text-red-700 p-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                ` : ''}
+                <div class="flex items-center space-x-2">
+                    ${canChangeRole ? `
+                        <select onchange="changeUserRole('${userId}', this.value)" class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800">
+                            <option value="member" ${userRole === 'member' ? 'selected' : ''}>Member</option>
+                            <option value="admin" ${userRole === 'admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    ` : ''}
+                    ${canRemove ? `
+                        <button onclick="removeMemberFromRoom('${userId}')" class="text-red-500 hover:text-red-700 p-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    ` : ''}
+                </div>
             `;
             return div;
         }
 
+        window.changeUserRole = async function(userId, newRole) {
+            if (!currentRoom || currentRoomData.users[currentUser.uid]?.role !== 'host') return;
+            
+            try {
+                await database.ref(`rooms/${currentRoom}/users/${userId}/role`).set(newRole);
+                
+                // Refresh room data and reload settings
+                const roomSnapshot = await database.ref(`rooms/${currentRoom}`).once('value');
+                if (roomSnapshot.exists()) {
+                    currentRoomData = roomSnapshot.val();
+                    loadRoomSettings();
+                }
+                
+                showCustomAlert(`User role changed to ${newRole}`, 'success');
+            } catch (error) {
+                showCustomAlert('Error changing user role: ' + error.message);
+            }
+        };
+
         async function saveRoomSettings() {
             if (!currentRoom) return;
+            
+            const currentUserRole = currentRoomData.users[currentUser.uid]?.role;
+            if (currentUserRole !== 'host' && currentUserRole !== 'admin') {
+                showCustomAlert('You do not have permission to edit room settings');
+                return;
+            }
             
             const newRoomName = document.getElementById('edit-room-name').value.trim();
             if (!newRoomName) {
@@ -1131,6 +1216,7 @@
                 currentRoomData.name = newRoomName;
                 document.getElementById('chat-room-name').textContent = newRoomName;
                 hideModal('room-settings-modal');
+                showCustomAlert('Room settings saved!', 'success');
             } catch (error) {
                 showCustomAlert('Error saving room settings: ' + error.message);
             }
@@ -1139,6 +1225,12 @@
         async function inviteFriendToRoom() {
             const friendId = document.getElementById('invite-friend-select').value;
             if (!friendId || !currentRoom) return;
+            
+            const currentUserRole = currentRoomData.users[currentUser.uid]?.role;
+            if (currentUserRole !== 'host' && currentUserRole !== 'admin') {
+                showCustomAlert('You do not have permission to invite users');
+                return;
+            }
             
             try {
                 // Check if user is actually a friend
@@ -1178,6 +1270,7 @@
                     hideModal('confirm-modal');
                     hideModal('room-settings-modal');
                     showRoomsView();
+                    showCustomAlert('You have left the room', 'info');
                 } catch (error) {
                     showCustomAlert('Error leaving room: ' + error.message);
                 }
@@ -1186,7 +1279,7 @@
         }
 
         window.removeMemberFromRoom = async function(userId) {
-            if (!currentRoom || currentRoomData.createdBy !== currentUser.uid) return;
+            if (!currentRoom || currentRoomData.users[currentUser.uid]?.role !== 'host') return;
             
             try {
                 await database.ref(`rooms/${currentRoom}/users/${userId}`).remove();
@@ -1197,6 +1290,8 @@
                     currentRoomData = roomSnapshot.val();
                     loadRoomSettings();
                 }
+                
+                showCustomAlert('Member removed from room', 'info');
             } catch (error) {
                 showCustomAlert('Error removing member: ' + error.message);
             }
