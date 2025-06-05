@@ -42,19 +42,6 @@
             justify-content: center;
             font-weight: bold;
         }
-        .reply-indicator {
-            border-left: 3px solid #5D5CDE;
-            padding-left: 12px;
-            background: rgba(93, 92, 222, 0.1);
-            border-radius: 0 8px 8px 0;
-        }
-        .message-actions {
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .message-container:hover .message-actions {
-            opacity: 1;
-        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
@@ -166,23 +153,6 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
                         </svg>
                     </button>
-                </div>
-                
-                <!-- Reply indicator -->
-                <div id="reply-indicator" class="hidden p-3 bg-blue-50 dark:bg-blue-900 border-b border-blue-200 dark:border-blue-700">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center text-sm text-blue-700 dark:text-blue-300">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-                            </svg>
-                            Replying to: <span id="reply-preview" class="font-medium ml-1"></span>
-                        </div>
-                        <button id="cancel-reply" class="text-blue-500 hover:text-blue-700">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
                 </div>
                 
                 <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-3">
@@ -366,32 +336,6 @@
             </div>
         </div>
 
-        <!-- Edit Message Modal -->
-        <div id="edit-message-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 slide-up">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-xl font-bold">Edit Message</h3>
-                    <button id="close-edit-message" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Message</label>
-                        <textarea id="edit-message-text" rows="3" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 resize-none"></textarea>
-                    </div>
-                    
-                    <div class="flex space-x-3">
-                        <button id="cancel-edit-message" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg">Cancel</button>
-                        <button id="save-edit-message" class="flex-1 bg-primary text-white py-2 rounded-lg">Save</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Confirmation Modal -->
         <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 slide-up">
@@ -480,8 +424,6 @@
         let roomsListener = null;
         let friendRequestsListener = null;
         let userFriends = {};
-        let replyToMessage = null;
-        let editingMessageId = null;
 
         // DOM elements
         const loading = document.getElementById('loading');
@@ -551,7 +493,6 @@
             document.getElementById('close-create-room').addEventListener('click', () => hideModal('create-room-modal'));
             document.getElementById('close-friends').addEventListener('click', () => hideModal('friends-modal'));
             document.getElementById('close-room-settings').addEventListener('click', () => hideModal('room-settings-modal'));
-            document.getElementById('close-edit-message').addEventListener('click', () => hideModal('edit-message-modal'));
 
             document.getElementById('save-profile').addEventListener('click', saveProfile);
 
@@ -574,13 +515,6 @@
             document.getElementById('requests-tab').addEventListener('click', () => switchToRequestsTab());
 
             document.getElementById('confirm-cancel').addEventListener('click', () => hideModal('confirm-modal'));
-
-            // Reply functionality
-            document.getElementById('cancel-reply').addEventListener('click', cancelReply);
-
-            // Edit message functionality
-            document.getElementById('cancel-edit-message').addEventListener('click', () => hideModal('edit-message-modal'));
-            document.getElementById('save-edit-message').addEventListener('click', saveEditMessage);
         }
 
         function switchToLogin() {
@@ -1147,8 +1081,6 @@
             }
             currentRoom = null;
             currentRoomData = null;
-            replyToMessage = null;
-            hideReplyIndicator();
         }
 
         function showChatView() {
@@ -1405,7 +1337,7 @@
                 if (snapshot.exists()) {
                     const messages = snapshot.val();
                     const sortedMessages = Object.entries(messages).sort((a, b) => a[1].timestamp - b[1].timestamp);
-                    Promise.all(sortedMessages.map(([messageId, messageData]) => createMessageElement(messageId, messageData)))
+                    Promise.all(sortedMessages.map(([messageId, messageData]) => createMessageElement(messageData)))
                         .then(messageElements => {
                             messageElements.forEach(element => {
                                 messagesContainer.appendChild(element);
@@ -1418,11 +1350,10 @@
             });
         }
 
-        async function createMessageElement(messageId, messageData) {
+        async function createMessageElement(messageData) {
             const div = document.createElement('div');
             const isOwnMessage = messageData.senderId === currentUser.uid;
-            div.className = `message-container flex ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-2`;
-            
+            div.className = `flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`;
             let senderName = 'Unknown';
             try {
                 const senderSnapshot = await database.ref(`users/${messageData.senderId}`).once('value');
@@ -1430,169 +1361,34 @@
                     senderName = senderSnapshot.val().username;
                 }
             } catch (error) {}
-
-            // Check if this message is a reply
-            let replyHTML = '';
-            if (messageData.replyTo) {
-                try {
-                    const repliedMessage = await database.ref(`rooms/${currentRoom}/messages/${messageData.replyTo}`).once('value');
-                    if (repliedMessage.exists()) {
-                        const repliedData = repliedMessage.val();
-                        const repliedSender = await database.ref(`users/${repliedData.senderId}`).once('value');
-                        const repliedSenderName = repliedSender.exists() ? repliedSender.val().username : 'Unknown';
-                        
-                        replyHTML = `
-                            <div class="reply-indicator mb-2 p-2 text-xs text-gray-600 dark:text-gray-300">
-                                <div class="font-medium">${repliedSenderName}</div>
-                                <div class="truncate">${repliedData.text}</div>
-                            </div>
-                        `;
-                    }
-                } catch (error) {
-                    console.error('Error loading replied message:', error);
-                }
-            }
-            
-            const editedIndicator = messageData.edited ? '<span class="text-xs opacity-50 ml-1">(edited)</span>' : '';
-            
             div.innerHTML = `
-                <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${
+                <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                     isOwnMessage 
                         ? 'bg-primary text-white' 
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
                 }">
-                    ${replyHTML}
                     ${!isOwnMessage ? `<p class="text-xs opacity-75 mb-1">${senderName}</p>` : ''}
-                    <p>${messageData.text}${editedIndicator}</p>
+                    <p>${messageData.text}</p>
                     <p class="text-xs opacity-75 mt-1">
                         ${new Date(messageData.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                     </p>
-                    
-                    <!-- Message Actions -->
-                    <div class="message-actions absolute top-0 ${isOwnMessage ? 'left-0' : 'right-0'} transform ${isOwnMessage ? '-translate-x-full' : 'translate-x-full'} flex flex-col space-y-1 mt-1">
-                        <button onclick="replyToMessage('${messageId}', '${messageData.text.replace(/'/g, "\\'")}', '${senderName}')" class="p-1 bg-gray-600 text-white rounded-full hover:bg-gray-700 transition-colors" title="Reply">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-                            </svg>
-                        </button>
-                        ${isOwnMessage ? `
-                            <button onclick="editMessage('${messageId}', '${messageData.text.replace(/'/g, "\\'")}', '${senderName}')" class="p-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors" title="Edit">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                </svg>
-                            </button>
-                            <button onclick="deleteMessage('${messageId}')" class="p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors" title="Delete">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>
-                        ` : ''}
-                    </div>
                 </div>
             `;
             return div;
         }
 
-        // Reply functionality
-        window.replyToMessage = function(messageId, messageText, senderName) {
-            replyToMessage = {
-                id: messageId,
-                text: messageText,
-                senderName: senderName
-            };
-            showReplyIndicator();
-            document.getElementById('message-input').focus();
-        };
-
-        function showReplyIndicator() {
-            if (replyToMessage) {
-                document.getElementById('reply-preview').textContent = `${replyToMessage.senderName}: ${replyToMessage.text.substring(0, 50)}${replyToMessage.text.length > 50 ? '...' : ''}`;
-                document.getElementById('reply-indicator').classList.remove('hidden');
-            }
-        }
-
-        function hideReplyIndicator() {
-            document.getElementById('reply-indicator').classList.add('hidden');
-            replyToMessage = null;
-        }
-
-        function cancelReply() {
-            hideReplyIndicator();
-        }
-
-        // Edit functionality
-        window.editMessage = function(messageId, messageText, senderName) {
-            editingMessageId = messageId;
-            document.getElementById('edit-message-text').value = messageText;
-            showModal('edit-message-modal');
-        };
-
-        async function saveEditMessage() {
-            if (!editingMessageId || !currentRoom) return;
-            
-            const newText = document.getElementById('edit-message-text').value.trim();
-            if (!newText) {
-                showCustomAlert('Message cannot be empty');
-                return;
-            }
-            
-            try {
-                const updates = {};
-                updates[`rooms/${currentRoom}/messages/${editingMessageId}/text`] = newText;
-                updates[`rooms/${currentRoom}/messages/${editingMessageId}/edited`] = true;
-                updates[`rooms/${currentRoom}/messages/${editingMessageId}/editedAt`] = Date.now();
-                
-                await database.ref().update(updates);
-                
-                hideModal('edit-message-modal');
-                editingMessageId = null;
-                showCustomAlert('Message edited successfully', 'success');
-            } catch (error) {
-                showCustomAlert('Error editing message: ' + error.message);
-            }
-        }
-
-        // Delete functionality
-        window.deleteMessage = function(messageId) {
-            document.getElementById('confirm-title').textContent = 'Delete Message';
-            document.getElementById('confirm-message').textContent = 'Are you sure you want to delete this message? This action cannot be undone.';
-            document.getElementById('confirm-ok').onclick = async () => {
-                try {
-                    await database.ref(`rooms/${currentRoom}/messages/${messageId}`).remove();
-                    hideModal('confirm-modal');
-                    showCustomAlert('Message deleted', 'info');
-                } catch (error) {
-                    showCustomAlert('Error deleting message: ' + error.message);
-                }
-            };
-            showModal('confirm-modal');
-        };
-
         async function sendMessage() {
             const messageInput = document.getElementById('message-input');
             const text = messageInput.value.trim();
             if (!text || !currentRoom) return;
-            
             try {
                 const messageRef = database.ref(`rooms/${currentRoom}/messages`).push();
-                const messageData = {
+                await messageRef.set({
                     senderId: currentUser.uid,
                     text,
                     timestamp: Date.now()
-                };
-                
-                // Add reply information if replying
-                if (replyToMessage) {
-                    messageData.replyTo = replyToMessage.id;
-                }
-                
-                await messageRef.set(messageData);
+                });
                 messageInput.value = '';
-                
-                // Hide reply indicator after sending
-                if (replyToMessage) {
-                    hideReplyIndicator();
-                }
             } catch (error) {
                 showCustomAlert('Error sending message: ' + error.message);
             }
