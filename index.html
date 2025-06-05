@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real Time Chat</title>
-    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.16/tailwind.min.js"></script>
     <!-- Firebase Compat SDK for better browser compatibility -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script>
+        // Tailwind CSS configuration for extending colors and enabling dark mode
         tailwind.config = {
             theme: {
                 extend: {
@@ -23,10 +24,13 @@
         }
     </script>
     <style>
+        /* CSS animations for fade-in and slide-up effects */
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .slide-up { animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        /* Styles for notification badges */
         .notification-badge {
             position: absolute;
             top: -2px;
@@ -42,12 +46,16 @@
             justify-content: center;
             font-weight: bold;
         }
+        
+        /* Styles for reply indicators in messages */
         .reply-indicator {
             border-left: 3px solid #5D5CDE;
             padding-left: 12px;
             background: rgba(93, 92, 222, 0.1);
             border-radius: 0 8px 8px 0;
         }
+        
+        /* Styles for message action buttons (reply, edit, delete) */
         .message-actions {
             opacity: 0;
             transition: opacity 0.2s;
@@ -83,9 +91,9 @@
                             <input type="text" id="signup-username" placeholder="Username" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700">
                         </div>
                         
-                        <input type="email" id="auth-email" placeholder="Email" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700" required="">
+                        <input type="email" id="auth-email" placeholder="Email" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700" required>
                         
-                        <input type="password" id="auth-password" placeholder="Password" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700" required="">
+                        <input type="password" id="auth-password" placeholder="Password" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700" required>
                         
                         <div id="login-options" class="flex items-center justify-between">
                             <label class="flex items-center">
@@ -406,7 +414,7 @@
     </div>
 
     <script>
-        // Dark mode detection
+        // Dark mode detection and toggling
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.classList.add('dark');
         }
@@ -420,7 +428,7 @@
 
         console.log('Starting Firebase app initialization...');
 
-        // Firebase configuration
+        // Firebase configuration (replace with your actual Firebase config)
         const firebaseConfig = {
             apiKey: "AIzaSyDr12y9qAWiTFaHPVYaCKKU1fgYCXyK_ao",
             authDomain: "real-time-chat-a665b.firebaseapp.com",
@@ -462,6 +470,7 @@
             }
         }
         
+        // Start the application after DOM content is loaded
         function startApp() {
             waitForFirebase(initializeFirebase);
         }
@@ -472,7 +481,7 @@
             startApp();
         }
 
-        // Global variables
+        // Global variables for application state
         let currentUser = null;
         let currentRoom = null;
         let currentRoomData = null;
@@ -480,10 +489,10 @@
         let roomsListener = null;
         let friendRequestsListener = null;
         let userFriends = {};
-        let replyToMessage = null;
-        let editingMessageId = null;
+        let replyToMessage = null; // Stores information about the message being replied to
+        let editingMessageId = null; // Stores the ID of the message being edited
 
-        // DOM elements
+        // DOM elements references for easier access
         const loading = document.getElementById('loading');
         const authScreen = document.getElementById('auth-screen');
         const mainApp = document.getElementById('main-app');
@@ -495,57 +504,72 @@
         const authSubmit = document.getElementById('auth-submit');
         const authError = document.getElementById('auth-error');
 
+        // Main initialization function
         function init() {
-            setupEventListeners();
+            setupEventListeners(); // Set up all event listeners
+            // Set a timeout for loading screen in case Firebase initialization fails or is slow
             const loadingTimeout = setTimeout(() => {
                 loading.classList.add('hidden');
                 showAuthScreen();
-            }, 10000);
+            }, 10000); // 10 seconds timeout
+
             try {
+                // Listen for Firebase authentication state changes
                 auth.onAuthStateChanged((user) => {
-                    clearTimeout(loadingTimeout);
+                    clearTimeout(loadingTimeout); // Clear loading timeout once auth state is known
                     if (user) {
-                        currentUser = user;
-                        showMainApp();
+                        currentUser = user; // Set current user
+                        showMainApp(); // Show the main application
+                        // Load user data and application-specific data
                         loadUserProfile();
                         loadFriends();
                         loadFriendRequests();
                         loadRooms();
                     } else {
-                        showAuthScreen();
+                        showAuthScreen(); // Show authentication screen if no user is logged in
                     }
-                    loading.classList.add('hidden');
+                    loading.classList.add('hidden'); // Hide loading screen
                 }, (error) => {
+                    // Handle errors during auth state observation
                     clearTimeout(loadingTimeout);
                     loading.classList.add('hidden');
                     showAuthScreen();
+                    console.error("Auth state change error:", error);
                 });
             } catch (error) {
+                // Catch any immediate errors during auth.onAuthStateChanged setup
                 clearTimeout(loadingTimeout);
                 loading.classList.add('hidden');
                 showAuthScreen();
+                console.error("Error setting up auth state listener:", error);
             }
         }
 
+        // Function to set up all global event listeners
         function setupEventListeners() {
+            // Authentication screen event listeners
             loginTab.addEventListener('click', () => switchToLogin());
             signupTab.addEventListener('click', () => switchToSignup());
             authForm.addEventListener('submit', handleAuth);
 
+            // Header button event listeners (profile, friends, settings)
             document.getElementById('profile-btn').addEventListener('click', () => showModal('profile-modal'));
             document.getElementById('friends-btn').addEventListener('click', () => {
                 showModal('friends-modal');
-                loadFriends();
-                loadFriendRequests();
+                loadFriends(); // Reload friends when modal opens
+                loadFriendRequests(); // Reload friend requests when modal opens
             });
             document.getElementById('settings-btn').addEventListener('click', () => showModal('settings-modal'));
+            
+            // Room management event listeners
             document.getElementById('create-room-btn').addEventListener('click', () => showModal('create-room-modal'));
             document.getElementById('back-to-rooms').addEventListener('click', showRoomsView);
             document.getElementById('room-settings-btn').addEventListener('click', () => {
-                loadRoomSettings();
+                loadRoomSettings(); // Load settings for the current room
                 showModal('room-settings-modal');
             });
 
+            // Close modal buttons event listeners
             document.getElementById('close-profile').addEventListener('click', () => hideModal('profile-modal'));
             document.getElementById('close-settings').addEventListener('click', () => hideModal('settings-modal'));
             document.getElementById('close-create-room').addEventListener('click', () => hideModal('create-room-modal'));
@@ -553,36 +577,44 @@
             document.getElementById('close-room-settings').addEventListener('click', () => hideModal('room-settings-modal'));
             document.getElementById('close-edit-message').addEventListener('click', () => hideModal('edit-message-modal'));
 
+            // Profile related event listeners
             document.getElementById('save-profile').addEventListener('click', saveProfile);
 
+            // Settings related event listeners
             document.getElementById('logout-btn').addEventListener('click', logout);
             document.getElementById('delete-account-btn').addEventListener('click', confirmDeleteAccount);
 
+            // Create/Manage room event listeners
             document.getElementById('create-room-submit').addEventListener('click', createRoom);
             document.getElementById('save-room-settings').addEventListener('click', saveRoomSettings);
             document.getElementById('invite-friend-btn').addEventListener('click', inviteFriendToRoom);
             document.getElementById('leave-room-btn').addEventListener('click', leaveRoom);
 
+            // Message sending event listeners
             document.getElementById('send-message').addEventListener('click', sendMessage);
             document.getElementById('message-input').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') sendMessage();
             });
 
+            // Friend request event listeners
             document.getElementById('send-friend-request-btn').addEventListener('click', sendFriendRequest);
 
+            // Friends modal tab switching
             document.getElementById('friends-tab').addEventListener('click', () => switchToFriendsTab());
             document.getElementById('requests-tab').addEventListener('click', () => switchToRequestsTab());
 
+            // Confirmation modal cancel button
             document.getElementById('confirm-cancel').addEventListener('click', () => hideModal('confirm-modal'));
 
-            // Reply functionality
+            // Reply functionality event listeners
             document.getElementById('cancel-reply').addEventListener('click', cancelReply);
 
-            // Edit message functionality
+            // Edit message functionality event listeners
             document.getElementById('cancel-edit-message').addEventListener('click', () => hideModal('edit-message-modal'));
             document.getElementById('save-edit-message').addEventListener('click', saveEditMessage);
         }
 
+        // Functions to switch between login and signup forms
         function switchToLogin() {
             loginTab.classList.add('border-primary', 'text-primary');
             loginTab.classList.remove('border-transparent', 'text-gray-500');
@@ -603,6 +635,7 @@
             authSubmit.textContent = 'Sign Up';
         }
 
+        // Functions to switch between friends and requests tabs in the friends modal
         function switchToFriendsTab() {
             document.getElementById('friends-tab').classList.add('border-primary', 'text-primary');
             document.getElementById('friends-tab').classList.remove('border-transparent', 'text-gray-500');
@@ -621,16 +654,17 @@
             document.getElementById('friends-content').classList.add('hidden');
         }
 
+        // Handles user authentication (login or signup)
         async function handleAuth(e) {
-            e.preventDefault();
+            e.preventDefault(); // Prevent default form submission
             const email = document.getElementById('auth-email').value;
             const password = document.getElementById('auth-password').value;
-            const isSignup = authSubmit.textContent === 'Sign Up';
+            const isSignup = authSubmit.textContent === 'Sign Up'; // Check if it's a signup attempt
             
             try {
-                hideError();
-                authSubmit.disabled = true;
-                authSubmit.textContent = 'Processing...';
+                hideError(); // Hide any previous error messages
+                authSubmit.disabled = true; // Disable button during processing
+                authSubmit.textContent = 'Processing...'; // Change button text
                 
                 if (isSignup) {
                     const username = document.getElementById('signup-username').value;
@@ -639,57 +673,66 @@
                         return;
                     }
                     
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password); // Create new user
+                    // Save user profile data to Firebase Realtime Database
                     await database.ref(`users/${userCredential.user.uid}`).set({
                         username: username.trim(),
                         email: email,
-                        profilePic: '',
+                        profilePic: '', // Default empty profile picture
                         createdAt: Date.now()
                     });
                 } else {
-                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password); // Sign in user
+                    // Check if user profile exists in database (important for existing users)
                     const userSnapshot = await database.ref(`users/${userCredential.user.uid}`).once('value');
                     if (!userSnapshot.exists()) {
-                        await auth.signOut();
+                        await auth.signOut(); // Sign out if profile not found
                         showError('Account not found in database. Please contact support or create a new account.');
                         return;
                     }
                 }
             } catch (error) {
-                showError(error.message);
+                showError(error.message); // Display Firebase authentication errors
             } finally {
-                authSubmit.disabled = false;
-                authSubmit.textContent = isSignup ? 'Sign Up' : 'Login';
+                authSubmit.disabled = false; // Re-enable button
+                authSubmit.textContent = isSignup ? 'Sign Up' : 'Login'; // Restore button text
             }
         }
 
+        // Shows an error message on the auth screen
         function showError(message) {
             authError.textContent = message;
             authError.classList.remove('hidden');
         }
 
+        // Hides the error message on the auth screen
         function hideError() {
             authError.classList.add('hidden');
         }
 
+        // Shows the authentication screen and hides the main app
         function showAuthScreen() {
             authScreen.classList.remove('hidden');
             mainApp.classList.add('hidden');
         }
 
+        // Shows the main app and hides the authentication screen
         function showMainApp() {
             authScreen.classList.add('hidden');
             mainApp.classList.remove('hidden');
         }
 
+        // Generic function to show any modal
         function showModal(modalId) {
             document.getElementById(modalId).classList.remove('hidden');
         }
 
+        // Generic function to hide any modal
         function hideModal(modalId) {
             document.getElementById(modalId).classList.add('hidden');
         }
 
+        // Loads the current user's profile data into the profile modal
         async function loadUserProfile() {
             try {
                 const snapshot = await database.ref(`users/${currentUser.uid}`).once('value');
@@ -698,9 +741,12 @@
                     document.getElementById('profile-username').value = userData.username || '';
                     document.getElementById('profile-pic').value = userData.profilePic || '';
                 }
-            } catch (error) { }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+            }
         }
 
+        // Saves the updated user profile data
         async function saveProfile() {
             const username = document.getElementById('profile-username').value.trim();
             const profilePic = document.getElementById('profile-pic').value.trim();
@@ -711,57 +757,71 @@
             }
 
             try {
-                await database.ref(`users/${currentUser.uid}`).set({
+                // Update user data in Firebase Realtime Database
+                await database.ref(`users/${currentUser.uid}`).update({
                     username,
-                    email: currentUser.email,
+                    email: currentUser.email, // Keep email updated
                     profilePic,
                     updatedAt: Date.now()
                 });
-                hideModal('profile-modal');
+                hideModal('profile-modal'); // Close the profile modal
+                showCustomAlert('Profile saved successfully!', 'success');
             } catch (error) {
                 showCustomAlert('Error saving profile: ' + error.message);
             }
         }
 
+        // Logs out the current user
         async function logout() {
             try {
-                await auth.signOut();
-                hideModal('settings-modal');
+                await auth.signOut(); // Sign out from Firebase
+                hideModal('settings-modal'); // Close settings modal
+                showCustomAlert('Logged out successfully', 'info');
             } catch (error) {
                 showCustomAlert('Error logging out: ' + error.message);
             }
         }
 
+        // Shows a confirmation dialog before account deletion
         function confirmDeleteAccount() {
             document.getElementById('confirm-title').textContent = 'Delete Account';
             document.getElementById('confirm-message').textContent = 'Are you sure you want to delete your account? This action cannot be undone and will delete all your data.';
             document.getElementById('confirm-ok').onclick = async () => {
                 hideModal('confirm-modal');
+                // Second confirmation for critical action
                 document.getElementById('confirm-title').textContent = 'Final Confirmation';
                 document.getElementById('confirm-message').textContent = 'This is your final warning. Your account and ALL data will be permanently deleted. Are you absolutely sure?';
-                document.getElementById('confirm-ok').onclick = deleteAccount;
+                document.getElementById('confirm-ok').onclick = deleteAccount; // Set final delete action
                 showModal('confirm-modal');
             };
-            hideModal('settings-modal');
+            hideModal('settings-modal'); // Hide settings modal before showing confirmation
             showModal('confirm-modal');
         }
 
+        // Deletes the user account and associated data
         async function deleteAccount() {
             try {
+                // Remove user data from Realtime Database
                 await database.ref(`users/${currentUser.uid}`).remove();
+                // Delete user from Firebase Authentication
                 await currentUser.delete();
-                hideModal('confirm-modal');
+                hideModal('confirm-modal'); // Close confirmation modal
+                showCustomAlert('Account deleted successfully', 'info');
             } catch (error) {
                 showCustomAlert('Error deleting account: ' + error.message);
             }
         }
 
+        // Sends a friend request to another user
         async function sendFriendRequest() {
             const friendUsername = document.getElementById('friend-username').value.trim();
-            if (!friendUsername) return;
+            if (!friendUsername) {
+                showCustomAlert('Friend\'s username cannot be empty');
+                return;
+            }
             
             try {
-                // Search for user by username
+                // Search for user by username in the 'users' node
                 const usersSnapshot = await database.ref('users').orderByChild('username').equalTo(friendUsername).once('value');
                 
                 if (!usersSnapshot.exists()) {
@@ -770,49 +830,50 @@
                 }
                 
                 const users = usersSnapshot.val();
-                const friendId = Object.keys(users)[0];
+                const friendId = Object.keys(users)[0]; // Get the UID of the found friend
                 
                 if (friendId === currentUser.uid) {
                     showCustomAlert('You cannot send a friend request to yourself');
                     return;
                 }
                 
-                // Check if already friends
-                if (userFriends[friendId] === 'accepted') {
+                // Check if already friends or request already pending
+                const existingFriendship = await database.ref(`users/${currentUser.uid}/friends/${friendId}`).once('value');
+                if (existingFriendship.exists() && existingFriendship.val() === 'accepted') {
                     showCustomAlert('You are already friends with this user');
                     return;
                 }
-                
-                // Check if request already sent
                 const sentRequestSnapshot = await database.ref(`users/${currentUser.uid}/friendRequests/sent/${friendId}`).once('value');
                 if (sentRequestSnapshot.exists() && sentRequestSnapshot.val() === 'pending') {
                     showCustomAlert('Friend request already sent');
                     return;
                 }
                 
-                // Send friend request
+                // Perform a multi-path update to send the friend request
                 const updates = {};
-                updates[`users/${currentUser.uid}/friendRequests/sent/${friendId}`] = 'pending';
-                updates[`users/${friendId}/friendRequests/received/${currentUser.uid}`] = 'pending';
+                updates[`users/${currentUser.uid}/friendRequests/sent/${friendId}`] = 'pending'; // Current user sent a request
+                updates[`users/${friendId}/friendRequests/received/${currentUser.uid}`] = 'pending'; // Friend received a request
                 
                 await database.ref().update(updates);
                 
-                document.getElementById('friend-username').value = '';
+                document.getElementById('friend-username').value = ''; // Clear input
                 showCustomAlert('Friend request sent!', 'success');
             } catch (error) {
                 showCustomAlert('Error sending friend request: ' + error.message);
             }
         }
 
+        // Loads the current user's friends list
         async function loadFriends() {
             try {
                 const friendsSnapshot = await database.ref(`users/${currentUser.uid}/friends`).once('value');
-                userFriends = friendsSnapshot.exists() ? friendsSnapshot.val() : {};
+                userFriends = friendsSnapshot.exists() ? friendsSnapshot.val() : {}; // Store accepted friends
                 
                 const friendsList = document.getElementById('friends-list');
-                friendsList.innerHTML = '';
+                friendsList.innerHTML = ''; // Clear existing list
                 
                 if (Object.keys(userFriends).length > 0) {
+                    // Create friend elements only for accepted friends
                     const friendElements = await Promise.all(
                         Object.entries(userFriends).map(async ([friendId, status]) => {
                             if (status === 'accepted') {
@@ -826,30 +887,34 @@
                         })
                     );
                     friendElements.filter(el => el !== null).forEach(element => {
-                        friendsList.appendChild(element);
+                        friendsList.appendChild(element); // Append valid friend elements
                     });
                 } else {
                     friendsList.innerHTML = '<p class="text-gray-500 text-center py-4">No friends yet</p>';
                 }
             } catch (error) {
                 console.error('Error loading friends:', error);
+                showCustomAlert('Error loading friends: ' + error.message);
             }
         }
 
+        // Loads incoming friend requests
         async function loadFriendRequests() {
             try {
                 const requestsSnapshot = await database.ref(`users/${currentUser.uid}/friendRequests/received`).once('value');
                 const requestsList = document.getElementById('requests-content');
-                requestsList.innerHTML = '';
+                requestsList.innerHTML = ''; // Clear existing list
                 
                 let pendingCount = 0;
                 
                 if (requestsSnapshot.exists()) {
                     const requests = requestsSnapshot.val();
+                    // Filter for pending requests only
                     const pendingRequests = Object.entries(requests).filter(([_, status]) => status === 'pending');
                     pendingCount = pendingRequests.length;
                     
                     if (pendingRequests.length > 0) {
+                        // Create elements for pending requests
                         const requestElements = await Promise.all(
                             pendingRequests.map(async ([requesterId, _]) => {
                                 const requesterSnapshot = await database.ref(`users/${requesterId}`).once('value');
@@ -861,7 +926,7 @@
                             })
                         );
                         requestElements.filter(el => el !== null).forEach(element => {
-                            requestsList.appendChild(element);
+                            requestsList.appendChild(element); // Append valid request elements
                         });
                     } else {
                         requestsList.innerHTML = '<p class="text-gray-500 text-center py-4">No pending requests</p>';
@@ -885,9 +950,11 @@
                 }
             } catch (error) {
                 console.error('Error loading friend requests:', error);
+                showCustomAlert('Error loading friend requests: ' + error.message);
             }
         }
 
+        // Creates an HTML element for a friend in the friends list
         function createFriendElement(friendId, friendData) {
             const div = document.createElement('div');
             div.className = 'p-3 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between';
@@ -913,6 +980,7 @@
             return div;
         }
 
+        // Creates an HTML element for a pending friend request
         function createFriendRequestElement(requesterId, requesterData) {
             const div = document.createElement('div');
             div.className = 'p-3 bg-gray-50 dark:bg-gray-700 rounded-lg flex items-center justify-between';
@@ -937,55 +1005,61 @@
             return div;
         }
 
+        // Accepts a friend request
         window.acceptFriendRequest = async function(requesterId) {
             try {
                 const updates = {};
-                // Mark both as friends
+                // Mark both users as friends
                 updates[`users/${currentUser.uid}/friends/${requesterId}`] = 'accepted';
                 updates[`users/${requesterId}/friends/${currentUser.uid}`] = 'accepted';
-                // Update request status
+                // Update request status to accepted
                 updates[`users/${currentUser.uid}/friendRequests/received/${requesterId}`] = 'accepted';
                 updates[`users/${requesterId}/friendRequests/sent/${currentUser.uid}`] = 'accepted';
                 
                 await database.ref().update(updates);
                 
-                loadFriends();
-                loadFriendRequests();
+                loadFriends(); // Reload friends list
+                loadFriendRequests(); // Reload friend requests list
                 showCustomAlert('Friend request accepted!', 'success');
             } catch (error) {
                 showCustomAlert('Error accepting friend request: ' + error.message);
             }
         };
 
+        // Declines a friend request
         window.declineFriendRequest = async function(requesterId) {
             try {
                 const updates = {};
+                // Update request status to declined
                 updates[`users/${currentUser.uid}/friendRequests/received/${requesterId}`] = 'declined';
                 updates[`users/${requesterId}/friendRequests/sent/${currentUser.uid}`] = 'declined';
                 
                 await database.ref().update(updates);
                 
-                loadFriendRequests();
+                loadFriendRequests(); // Reload friend requests list
                 showCustomAlert('Friend request declined', 'info');
             } catch (error) {
                 showCustomAlert('Error declining friend request: ' + error.message);
             }
         };
 
+        // Removes an existing friend
         window.removeFriend = async function(friendId) {
             try {
                 const updates = {};
+                // Remove friendship from both users' data
                 updates[`users/${currentUser.uid}/friends/${friendId}`] = null;
                 updates[`users/${friendId}/friends/${currentUser.uid}`] = null;
                 
                 await database.ref().update(updates);
-                loadFriends();
+                loadFriends(); // Reload friends list
                 showCustomAlert('Friend removed', 'info');
             } catch (error) {
                 showCustomAlert('Error removing friend: ' + error.message);
             }
         };
 
+        // Creates a new chat room
         async function createRoom() {
             const roomName = document.getElementById('room-name-input').value.trim();
             if (!roomName) {
@@ -993,46 +1067,50 @@
                 return;
             }
             try {
-                const roomRef = database.ref('rooms').push();
+                const roomRef = database.ref('rooms').push(); // Generate a unique key for the new room
                 await roomRef.set({
                     name: roomName,
                     createdAt: Date.now(),
                     createdBy: currentUser.uid,
                     users: {
-                        [currentUser.uid]: {
+                        [currentUser.uid]: { // Add current user as host
                             joinedAt: Date.now(),
                             lastSeen: Date.now(),
                             role: 'host'
                         }
                     }
                 });
-                document.getElementById('room-name-input').value = '';
-                hideModal('create-room-modal');
+                document.getElementById('room-name-input').value = ''; // Clear input
+                hideModal('create-room-modal'); // Hide the modal
                 
                 const snapshot = await roomRef.once('value');
                 if (snapshot.exists()) {
-                    openChatRoom(snapshot.key, snapshot.val());
+                    openChatRoom(snapshot.key, snapshot.val()); // Open the newly created room
                 } else {
                     showCustomAlert('Room created, but failed to open it. Please try again.');
-                    loadRooms();
+                    loadRooms(); // Reload rooms list
                 }
             } catch (error) {
                 showCustomAlert('Error creating room: ' + error.message);
             }
         }
 
+        // Loads and displays the list of chat rooms
         function loadRooms() {
+            // Detach previous listener if exists to prevent duplicate updates
             if (roomsListener) {
                 database.ref('rooms').off('value', roomsListener);
             }
+            // Attach a new listener to the 'rooms' node
             roomsListener = database.ref('rooms').on('value', async (snapshot) => {
                 const roomsList = document.getElementById('rooms-list');
-                roomsList.innerHTML = '';
+                roomsList.innerHTML = ''; // Clear existing room list
                 if (snapshot.exists()) {
                     const rooms = snapshot.val();
                     let userRoomsCount = 0;
                     const roomElements = [];
                     
+                    // Iterate through rooms and only show rooms the current user is a part of
                     for (const [roomId, roomData] of Object.entries(rooms)) {
                         if (roomData.users && roomData.users[currentUser.uid]) {
                             userRoomsCount++;
@@ -1042,7 +1120,7 @@
                     }
                     
                     roomElements.forEach(element => {
-                        roomsList.appendChild(element);
+                        roomsList.appendChild(element); // Append room elements to the list
                     });
                     
                     if (userRoomsCount === 0) {
@@ -1053,12 +1131,15 @@
                 }
             }, (error) => {
                 showCustomAlert('Error loading rooms: ' + error.message);
+                console.error('Error loading rooms:', error);
             });
         }
 
+        // Creates an HTML element for a single chat room in the list
         async function createRoomElement(roomId, roomData) {
             const div = document.createElement('div');
             div.className = 'p-4 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative';
+            // Set onclick to open the chat room
             div.onclick = async () => {
                 try {
                     const roomSnapshot = await database.ref('rooms/' + roomId).once('value');
@@ -1066,17 +1147,18 @@
                         openChatRoom(roomId, roomSnapshot.val());
                     } else {
                         showCustomAlert('Room not found.');
-                        loadRooms();
+                        loadRooms(); // Refresh room list if room is not found
                     }
                 } catch (error) {
                     showCustomAlert('Failed to open room: ' + error.message);
+                    console.error('Failed to open room:', error);
                 }
             };
             
             const userRole = roomData.users[currentUser.uid]?.role || 'member';
             const roleDisplay = userRole.charAt(0).toUpperCase() + userRole.slice(1);
             
-            // Get last message and unread count
+            // Get last message and unread count for display in the room list
             const { lastMessage, unreadCount } = await getLastMessageAndUnreadCount(roomId, roomData);
             
             div.innerHTML = `
@@ -1106,18 +1188,19 @@
             return div;
         }
 
+        // Opens a specific chat room and displays its messages
         async function openChatRoom(roomId, roomData) {
             currentRoom = roomId;
             currentRoomData = roomData;
             document.getElementById('chat-room-name').textContent = roomData.name;
             
-            // Update role badge
+            // Update user role badge in the chat header
             const userRole = roomData.users[currentUser.uid]?.role || 'member';
             const roleDisplay = userRole.charAt(0).toUpperCase() + userRole.slice(1);
             const roleBadge = document.getElementById('user-role-badge');
             roleBadge.textContent = roleDisplay;
             
-            // Set badge color based on role
+            // Apply appropriate styling to the role badge
             roleBadge.className = 'ml-3 px-2 py-1 text-xs rounded-full';
             if (userRole === 'host') {
                 roleBadge.classList.add('bg-yellow-200', 'text-yellow-800', 'dark:bg-yellow-800', 'dark:text-yellow-200');
@@ -1127,43 +1210,48 @@
                 roleBadge.classList.add('bg-gray-200', 'text-gray-800', 'dark:bg-gray-700', 'dark:text-gray-200');
             }
             
-            // Update lastSeen timestamp when entering room
+            // Update lastSeen timestamp when entering room to mark messages as read
             try {
                 await database.ref(`rooms/${roomId}/users/${currentUser.uid}/lastSeen`).set(Date.now());
             } catch (error) {
                 console.error('Error updating lastSeen:', error);
             }
             
-            showChatView();
-            loadMessages();
+            showChatView(); // Switch to chat view
+            loadMessages(); // Load messages for the current room
         }
 
+        // Shows the rooms list view and hides the chat view
         function showRoomsView() {
             document.getElementById('rooms-view').classList.remove('hidden');
             document.getElementById('chat-view').classList.add('hidden');
+            // Detach messages listener when leaving a chat room
             if (messagesListener) {
                 database.ref(`rooms/${currentRoom}/messages`).off('value', messagesListener);
                 messagesListener = null;
             }
-            currentRoom = null;
+            currentRoom = null; // Clear current room data
             currentRoomData = null;
-            replyToMessage = null;
-            hideReplyIndicator();
+            replyToMessage = null; // Clear any pending reply
+            hideReplyIndicator(); // Hide reply indicator
+            loadRooms(); // Reload rooms list to update unread counts etc.
         }
 
+        // Shows the chat view and hides the rooms list view
         function showChatView() {
             document.getElementById('rooms-view').classList.add('hidden');
             document.getElementById('chat-view').classList.remove('hidden');
         }
 
+        // Loads and displays room settings in the room settings modal
         async function loadRoomSettings() {
-            if (!currentRoom || !currentRoomData) return;
+            if (!currentRoom || !currentRoomData) return; // Ensure a room is selected
             
             const currentUserRole = currentRoomData.users[currentUser.uid]?.role;
             const canEdit = currentUserRole === 'host' || currentUserRole === 'admin';
             const isHost = currentUserRole === 'host';
             
-            // Show/hide edit controls based on permissions
+            // Enable/disable input fields and buttons based on user permissions
             document.getElementById('edit-room-name').disabled = !canEdit;
             document.getElementById('invite-friend-select').disabled = !canEdit;
             document.getElementById('invite-friend-btn').disabled = !canEdit;
@@ -1181,14 +1269,15 @@
                 });
             }
             
-            document.getElementById('edit-room-name').value = currentRoomData.name;
+            document.getElementById('edit-room-name').value = currentRoomData.name; // Populate room name
             
-            // Load friends for invitation dropdown (only if can edit)
+            // Load friends for invitation dropdown (only if user has permission)
             const inviteSelect = document.getElementById('invite-friend-select');
             inviteSelect.innerHTML = '<option value="">Select a friend...</option>';
             
             if (canEdit && Object.keys(userFriends).length > 0) {
                 for (const [friendId, status] of Object.entries(userFriends)) {
+                    // Only show accepted friends who are not already in the room
                     if (status === 'accepted' && (!currentRoomData.users || !currentRoomData.users[friendId])) {
                         try {
                             const friendSnapshot = await database.ref(`users/${friendId}`).once('value');
@@ -1200,7 +1289,7 @@
                                 inviteSelect.appendChild(option);
                             }
                         } catch (error) {
-                            console.error('Error loading friend data:', error);
+                            console.error('Error loading friend data for invite:', error);
                         }
                     }
                 }
@@ -1208,7 +1297,7 @@
             
             // Load room members
             const membersList = document.getElementById('room-members-list');
-            membersList.innerHTML = '';
+            membersList.innerHTML = ''; // Clear existing member list
             
             if (currentRoomData.users) {
                 for (const [userId, userData] of Object.entries(currentRoomData.users)) {
@@ -1220,22 +1309,23 @@
                             membersList.appendChild(memberElement);
                         }
                     } catch (error) {
-                        console.error('Error loading member:', error);
+                        console.error('Error loading member profile:', error);
                     }
                 }
             }
         }
 
+        // Creates an HTML element for a single room member
         function createMemberElement(userId, userProfile, userData, canManage) {
             const div = document.createElement('div');
             div.className = 'flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg';
             
             const isCurrentUser = userId === currentUser.uid;
             const userRole = userData.role || 'member';
-            const canRemove = canManage && !isCurrentUser;
-            const canChangeRole = canManage && !isCurrentUser && userRole !== 'host';
+            const canRemove = canManage && !isCurrentUser; // Host can remove anyone but themselves
+            const canChangeRole = canManage && !isCurrentUser && userRole !== 'host'; // Host can change role of anyone but themselves and other hosts
             
-            // Role color mapping
+            // Determine role badge color
             let roleClass = 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-200';
             if (userRole === 'host') {
                 roleClass = 'bg-yellow-200 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-200';
@@ -1275,13 +1365,18 @@
             return div;
         }
 
+        // Changes a user's role within the current room
         window.changeUserRole = async function(userId, newRole) {
-            if (!currentRoom || currentRoomData.createdBy !== currentUser.uid) return;
+            // Only host can change roles
+            if (!currentRoom || currentRoomData.users[currentUser.uid]?.role !== 'host') {
+                showCustomAlert('You do not have permission to change user roles');
+                return;
+            }
             
             try {
                 await database.ref(`rooms/${currentRoom}/users/${userId}/role`).set(newRole);
                 
-                // Refresh room data and reload settings
+                // Refresh room data and reload settings to update UI
                 const roomSnapshot = await database.ref(`rooms/${currentRoom}`).once('value');
                 if (roomSnapshot.exists()) {
                     currentRoomData = roomSnapshot.val();
@@ -1294,10 +1389,12 @@
             }
         };
 
+        // Saves the updated room settings (e.g., room name)
         async function saveRoomSettings() {
-            if (!currentRoom) return;
+            if (!currentRoom) return; // Ensure a room is selected
             
             const currentUserRole = currentRoomData.users[currentUser.uid]?.role;
+            // Only host or admin can save settings
             if (currentUserRole !== 'host' && currentUserRole !== 'admin') {
                 showCustomAlert('You do not have permission to edit room settings');
                 return;
@@ -1310,40 +1407,46 @@
             }
             
             try {
-                await database.ref(`rooms/${currentRoom}/name`).set(newRoomName);
-                currentRoomData.name = newRoomName;
-                document.getElementById('chat-room-name').textContent = newRoomName;
-                hideModal('room-settings-modal');
+                await database.ref(`rooms/${currentRoom}/name`).set(newRoomName); // Update room name
+                currentRoomData.name = newRoomName; // Update local room data
+                document.getElementById('chat-room-name').textContent = newRoomName; // Update header
+                hideModal('room-settings-modal'); // Hide modal
                 showCustomAlert('Room settings saved!', 'success');
             } catch (error) {
                 showCustomAlert('Error saving room settings: ' + error.message);
             }
         }
 
+        // Invites a friend to the current room
         async function inviteFriendToRoom() {
             const friendId = document.getElementById('invite-friend-select').value;
-            if (!friendId || !currentRoom) return;
+            if (!friendId || !currentRoom) {
+                showCustomAlert('Please select a friend to invite');
+                return;
+            }
             
             const currentUserRole = currentRoomData.users[currentUser.uid]?.role;
+            // Only host or admin can invite users
             if (currentUserRole !== 'host' && currentUserRole !== 'admin') {
                 showCustomAlert('You do not have permission to invite users');
                 return;
             }
             
             try {
-                // Check if user is actually a friend
+                // Check if the selected user is actually an accepted friend
                 if (!userFriends[friendId] || userFriends[friendId] !== 'accepted') {
                     showCustomAlert('You can only invite friends to rooms');
                     return;
                 }
                 
+                // Add the friend to the room's user list
                 await database.ref(`rooms/${currentRoom}/users/${friendId}`).set({
                     joinedAt: Date.now(),
                     lastSeen: Date.now(),
-                    role: 'member'
+                    role: 'member' // Invited user starts as a member
                 });
                 
-                // Refresh room data and reload settings
+                // Refresh room data and reload settings to update member list and invite options
                 const roomSnapshot = await database.ref(`rooms/${currentRoom}`).once('value');
                 if (roomSnapshot.exists()) {
                     currentRoomData = roomSnapshot.val();
@@ -1357,6 +1460,7 @@
             }
         }
 
+        // Allows the current user to leave the current room
         async function leaveRoom() {
             if (!currentRoom) return;
             
@@ -1364,25 +1468,31 @@
             document.getElementById('confirm-message').textContent = 'Are you sure you want to leave this room?';
             document.getElementById('confirm-ok').onclick = async () => {
                 try {
+                    // Remove current user from the room's user list
                     await database.ref(`rooms/${currentRoom}/users/${currentUser.uid}`).remove();
                     hideModal('confirm-modal');
                     hideModal('room-settings-modal');
-                    showRoomsView();
+                    showRoomsView(); // Go back to rooms list
                     showCustomAlert('You have left the room', 'info');
                 } catch (error) {
                     showCustomAlert('Error leaving room: ' + error.message);
                 }
             };
-            showModal('confirm-modal');
+            showModal('confirm-modal'); // Show confirmation modal
         }
 
+        // Removes a member from the current room (only for host)
         window.removeMemberFromRoom = async function(userId) {
-            if (!currentRoom || currentRoomData.users[currentUser.uid]?.role !== 'host') return;
+            // Only host can remove members
+            if (!currentRoom || currentRoomData.users[currentUser.uid]?.role !== 'host') {
+                showCustomAlert('You do not have permission to remove members');
+                return;
+            }
             
             try {
-                await database.ref(`rooms/${currentRoom}/users/${userId}`).remove();
+                await database.ref(`rooms/${currentRoom}/users/${userId}`).remove(); // Remove member
                 
-                // Refresh room data and reload settings
+                // Refresh room data and reload settings to update the member list
                 const roomSnapshot = await database.ref(`rooms/${currentRoom}`).once('value');
                 if (roomSnapshot.exists()) {
                     currentRoomData = roomSnapshot.val();
@@ -1395,29 +1505,39 @@
             }
         };
 
+        // Loads and displays messages for the current chat room
         function loadMessages() {
+            // Detach previous messages listener if exists
             if (messagesListener) {
                 database.ref(`rooms/${currentRoom}/messages`).off('value', messagesListener);
             }
+            // Attach a new listener to the 'messages' node of the current room
             messagesListener = database.ref(`rooms/${currentRoom}/messages`).on('value', (snapshot) => {
                 const messagesContainer = document.getElementById('messages-container');
-                messagesContainer.innerHTML = '';
+                messagesContainer.innerHTML = ''; // Clear existing messages
                 if (snapshot.exists()) {
                     const messages = snapshot.val();
+                    // Sort messages by timestamp for correct display order
                     const sortedMessages = Object.entries(messages).sort((a, b) => a[1].timestamp - b[1].timestamp);
+                    // Create message elements and append them
                     Promise.all(sortedMessages.map(([messageId, messageData]) => createMessageElement(messageId, messageData)))
                         .then(messageElements => {
                             messageElements.forEach(element => {
                                 messagesContainer.appendChild(element);
                             });
+                            // Scroll to the bottom of the chat
                             messagesContainer.scrollTop = messagesContainer.scrollHeight;
                         });
                 } else {
                     messagesContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No messages yet. Start the conversation!</p>';
                 }
+            }, (error) => {
+                console.error('Error loading messages:', error);
+                showCustomAlert('Error loading messages: ' + error.message);
             });
         }
 
+        // Creates an HTML element for a single chat message
         async function createMessageElement(messageId, messageData) {
             const div = document.createElement('div');
             const isOwnMessage = messageData.senderId === currentUser.uid;
@@ -1425,16 +1545,20 @@
             
             let senderName = 'Unknown';
             try {
+                // Fetch sender's username
                 const senderSnapshot = await database.ref(`users/${messageData.senderId}`).once('value');
                 if (senderSnapshot.exists()) {
                     senderName = senderSnapshot.val().username;
                 }
-            } catch (error) {}
+            } catch (error) {
+                console.error('Error fetching sender name for message:', error);
+            }
 
-            // Check if this message is a reply
+            // Handle reply-to message display
             let replyHTML = '';
             if (messageData.replyTo) {
                 try {
+                    // Fetch the original message being replied to
                     const repliedMessage = await database.ref(`rooms/${currentRoom}/messages/${messageData.replyTo}`).once('value');
                     if (repliedMessage.exists()) {
                         const repliedData = repliedMessage.val();
@@ -1470,13 +1594,13 @@
                     
                     <!-- Message Actions -->
                     <div class="message-actions absolute top-0 ${isOwnMessage ? 'left-0' : 'right-0'} transform ${isOwnMessage ? '-translate-x-full' : 'translate-x-full'} flex flex-col space-y-1 mt-1">
-                        <button onclick="replyToMessage('${messageId}', '${messageData.text.replace(/'/g, "\\'")}', '${senderName}')" class="p-1 bg-gray-600 text-white rounded-full hover:bg-gray-700 transition-colors" title="Reply">
+                        <button onclick="replyToMessage('${messageId}', '${encodeURIComponent(messageData.text)}', '${encodeURIComponent(senderName)}')" class="p-1 bg-gray-600 text-white rounded-full hover:bg-gray-700 transition-colors" title="Reply">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
                             </svg>
                         </button>
                         ${isOwnMessage ? `
-                            <button onclick="editMessage('${messageId}', '${messageData.text.replace(/'/g, "\\'")}', '${senderName}')" class="p-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors" title="Edit">
+                            <button onclick="editMessage('${messageId}', '${encodeURIComponent(messageData.text)}')" class="p-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors" title="Edit">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>
@@ -1493,17 +1617,18 @@
             return div;
         }
 
-        // Reply functionality
-        window.replyToMessage = function(messageId, messageText, senderName) {
+        // Reply functionality: Sets the message to be replied to and displays the indicator
+        window.replyToMessage = function(messageId, encodedMessageText, encodedSenderName) {
             replyToMessage = {
                 id: messageId,
-                text: messageText,
-                senderName: senderName
+                text: decodeURIComponent(encodedMessageText), // Decode the message text
+                senderName: decodeURIComponent(encodedSenderName) // Decode the sender name
             };
-            showReplyIndicator();
-            document.getElementById('message-input').focus();
+            showReplyIndicator(); // Show the reply preview
+            document.getElementById('message-input').focus(); // Focus on the message input
         };
 
+        // Displays the reply indicator with a preview of the message being replied to
         function showReplyIndicator() {
             if (replyToMessage) {
                 document.getElementById('reply-preview').textContent = `${replyToMessage.senderName}: ${replyToMessage.text.substring(0, 50)}${replyToMessage.text.length > 50 ? '...' : ''}`;
@@ -1511,24 +1636,30 @@
             }
         }
 
+        // Hides the reply indicator and clears the replyToMessage state
         function hideReplyIndicator() {
             document.getElementById('reply-indicator').classList.add('hidden');
             replyToMessage = null;
         }
 
+        // Cancels the current reply operation
         function cancelReply() {
             hideReplyIndicator();
         }
 
-        // Edit functionality
-        window.editMessage = function(messageId, messageText, senderName) {
+        // Edit functionality: Sets the message to be edited and opens the edit modal
+        window.editMessage = function(messageId, encodedMessageText) {
             editingMessageId = messageId;
-            document.getElementById('edit-message-text').value = messageText;
-            showModal('edit-message-modal');
+            document.getElementById('edit-message-text').value = decodeURIComponent(encodedMessageText); // Decode the message text
+            showModal('edit-message-modal'); // Show the edit message modal
         };
 
+        // Saves the edited message
         async function saveEditMessage() {
-            if (!editingMessageId || !currentRoom) return;
+            if (!editingMessageId || !currentRoom) {
+                showCustomAlert('No message selected for editing or not in a room.');
+                return;
+            }
             
             const newText = document.getElementById('edit-message-text').value.trim();
             if (!newText) {
@@ -1539,57 +1670,58 @@
             try {
                 const updates = {};
                 updates[`rooms/${currentRoom}/messages/${editingMessageId}/text`] = newText;
-                updates[`rooms/${currentRoom}/messages/${editingMessageId}/edited`] = true;
-                updates[`rooms/${currentRoom}/messages/${editingMessageId}/editedAt`] = Date.now();
+                updates[`rooms/${currentRoom}/messages/${editingMessageId}/edited`] = true; // Mark as edited
+                updates[`rooms/${currentRoom}/messages/${editingMessageId}/editedAt`] = Date.now(); // Record edit timestamp
                 
                 await database.ref().update(updates);
                 
-                hideModal('edit-message-modal');
-                editingMessageId = null;
+                hideModal('edit-message-modal'); // Hide the edit modal
+                editingMessageId = null; // Clear editing state
                 showCustomAlert('Message edited successfully', 'success');
             } catch (error) {
                 showCustomAlert('Error editing message: ' + error.message);
             }
         }
 
-        // Delete functionality
+        // Delete functionality: Shows a confirmation for deleting a message
         window.deleteMessage = function(messageId) {
             document.getElementById('confirm-title').textContent = 'Delete Message';
             document.getElementById('confirm-message').textContent = 'Are you sure you want to delete this message? This action cannot be undone.';
             document.getElementById('confirm-ok').onclick = async () => {
                 try {
-                    await database.ref(`rooms/${currentRoom}/messages/${messageId}`).remove();
-                    hideModal('confirm-modal');
+                    await database.ref(`rooms/${currentRoom}/messages/${messageId}`).remove(); // Remove message from Firebase
+                    hideModal('confirm-modal'); // Hide confirmation modal
                     showCustomAlert('Message deleted', 'info');
                 } catch (error) {
                     showCustomAlert('Error deleting message: ' + error.message);
                 }
             };
-            showModal('confirm-modal');
+            showModal('confirm-modal'); // Show confirmation modal
         };
 
+        // Sends a new message to the current chat room
         async function sendMessage() {
             const messageInput = document.getElementById('message-input');
             const text = messageInput.value.trim();
-            if (!text || !currentRoom) return;
+            if (!text || !currentRoom) return; // Don't send empty messages or if no room is selected
             
             try {
-                const messageRef = database.ref(`rooms/${currentRoom}/messages`).push();
+                const messageRef = database.ref(`rooms/${currentRoom}/messages`).push(); // Generate unique message ID
                 const messageData = {
                     senderId: currentUser.uid,
-                    text,
+                    text: text,
                     timestamp: Date.now()
                 };
                 
-                // Add reply information if replying
+                // Add reply information if a message is being replied to
                 if (replyToMessage) {
                     messageData.replyTo = replyToMessage.id;
                 }
                 
-                await messageRef.set(messageData);
-                messageInput.value = '';
+                await messageRef.set(messageData); // Save message to Firebase
+                messageInput.value = ''; // Clear message input
                 
-                // Hide reply indicator after sending
+                // Hide reply indicator after sending if it was active
                 if (replyToMessage) {
                     hideReplyIndicator();
                 }
@@ -1598,11 +1730,12 @@
             }
         }
 
-        // Helper function to get last message and unread count for a room
+        // Helper function to get the last message and count unread messages for a room
         async function getLastMessageAndUnreadCount(roomId, roomData) {
             try {
+                // Get the last message in the room
                 const messagesSnapshot = await database.ref(`rooms/${roomId}/messages`).orderByChild('timestamp').limitToLast(1).once('value');
-                const userLastSeen = roomData.users[currentUser.uid]?.lastSeen || 0;
+                const userLastSeen = roomData.users[currentUser.uid]?.lastSeen || 0; // Get user's last seen timestamp
                 
                 let lastMessage = null;
                 let unreadCount = 0;
@@ -1611,7 +1744,7 @@
                     const messages = messagesSnapshot.val();
                     const lastMessageData = Object.values(messages)[0];
                     
-                    // Get sender name for last message
+                    // Fetch sender name for the last message
                     try {
                         const senderSnapshot = await database.ref(`users/${lastMessageData.senderId}`).once('value');
                         const senderName = senderSnapshot.exists() ? senderSnapshot.val().username : 'Unknown';
@@ -1622,6 +1755,7 @@
                             senderName: senderName
                         };
                     } catch (error) {
+                        console.error('Error fetching sender for last message:', error);
                         lastMessage = {
                             text: lastMessageData.text,
                             timestamp: lastMessageData.timestamp,
@@ -1629,7 +1763,7 @@
                         };
                     }
                     
-                    // Count unread messages
+                    // Count unread messages (messages sent after user's lastSeen timestamp)
                     const allMessagesSnapshot = await database.ref(`rooms/${roomId}/messages`).orderByChild('timestamp').startAt(userLastSeen + 1).once('value');
                     if (allMessagesSnapshot.exists()) {
                         unreadCount = Object.keys(allMessagesSnapshot.val()).length;
@@ -1643,7 +1777,7 @@
             }
         }
 
-        // Helper function to format timestamp
+        // Helper function to format timestamps into user-friendly strings
         function formatTimestamp(timestamp) {
             const now = new Date();
             const messageDate = new Date(timestamp);
@@ -1662,6 +1796,7 @@
             }
         }
 
+        // Custom alert function to display temporary notifications
         function showCustomAlert(message, type = 'error') {
             const alertDiv = document.createElement('div');
             const bgColor = type === 'success' ? 'bg-green-500' : type === 'info' ? 'bg-blue-500' : 'bg-red-500';
@@ -1669,7 +1804,7 @@
             alertDiv.textContent = message;
             document.body.appendChild(alertDiv);
             setTimeout(() => {
-                alertDiv.remove();
+                alertDiv.remove(); // Remove alert after 3 seconds
             }, 3000);
         }
     </script>
