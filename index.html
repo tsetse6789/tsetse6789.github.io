@@ -1673,11 +1673,10 @@
             }, 3000);
         }
     </script>
-    <script>
-        if (localStorage.getItem('theme') === 'dark') {
-            document.documentElement.classList.add('dark');
-            toggle.checked = true;
-        }
-    </script>
 </body>
+<script>
+    if (localStorage.getItem('theme') === 'dark') {
+        document.documentElement.classList.add('dark')
+    }
+</script>
 </html>
