@@ -58,11 +58,11 @@
         .dot {
             transition: transform 0.2s;
         }
-        input:checked + .block {
+        .toggle-checkbox:checked + .toggle-switch {
             background-color: #4CAF50;
         }
-        input:checked + .block + .dot {
-            transform: translateX(100%);
+        .toggle-checkbox:checked + .toggle-switch .toggle-dot {
+            transform: translateX(1.5rem);
         }
     </style>
 </head>
@@ -261,9 +261,10 @@
                     <div class="flex justify-center p-4">
                         <label for="theme-toggle" class="flex items-center cursor-pointer">
                             <div class="relative">
-                                <input type="checkbox" id="theme-toggle" class="hidden" />
-                                <div class="block bg-gray-600 w-14 h-8 rounded-full"></div>
-                                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+                                <input type="checkbox" id="theme-toggle" class="toggle-checkbox hidden" />
+                                <div class="toggle-switch block bg-gray-600 w-14 h-8 rounded-full relative">
+                                    <div class="toggle-dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-200"></div>
+                                </div>
                             </div>
                             <div class="ml-3 text-gray-700 dark:text-gray-300">Toggle Dark/Light Theme</div>
                         </label>
