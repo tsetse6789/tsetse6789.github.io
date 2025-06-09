@@ -286,27 +286,71 @@
             }
         }
 
-        // Check for ads periodically
+        // Check for ads periodically with multiple detection methods
         function checkForAds() {
-            if (!player || !player.getCurrentTime) return;
+            if (!player) return;
             
             try {
-                const currentTime = player.getCurrentTime();
-                const duration = player.getDuration();
+                let adDetected = false;
                 
-                // If getCurrentTime returns -1 or NaN, likely an ad is playing
-                // Also check if duration is not available (common during ads)
-                if (currentTime === -1 || isNaN(currentTime) || !duration || isNaN(duration)) {
-                    if (!isAdPlaying) {
-                        showAdOverlay();
+                // Method 1: Check if getCurrentTime returns -1 (common during ads)
+                if (player.getCurrentTime && player.getCurrentTime() === -1) {
+                    adDetected = true;
+                }
+                
+                // Method 2: Check if duration is unavailable or 0 (common during ads)
+                if (player.getDuration && (!player.getDuration() || player.getDuration() === 0)) {
+                    adDetected = true;
+                }
+                
+                // Method 3: Check player state - ads often show as buffering or unstarted
+                if (player.getPlayerState) {
+                    const state = player.getPlayerState();
+                    const currentTime = player.getCurrentTime();
+                    // If player is in buffering state but time isn't progressing, likely an ad
+                    if (state === YT.PlayerState.BUFFERING && currentTime <= 0) {
+                        adDetected = true;
                     }
-                } else {
-                    if (isAdPlaying) {
+                }
+                
+                // Method 4: Check if video URL is different (ads have different URLs)
+                if (player.getVideoUrl) {
+                    const url = player.getVideoUrl();
+                    if (url && url.includes('googleads') || url.includes('doubleclick')) {
+                        adDetected = true;
+                    }
+                }
+                
+                // Method 5: Check available quality levels (ads often have limited quality)
+                if (player.getAvailableQualityLevels) {
+                    const qualities = player.getAvailableQualityLevels();
+                    if (qualities && qualities.length <= 2) { // Ads typically have fewer quality options
+                        const currentTime = player.getCurrentTime();
+                        if (currentTime <= 3) { // Only in first few seconds
+                            adDetected = true;
+                        }
+                    }
+                }
+                
+                // Apply ad state
+                if (adDetected && !isAdPlaying) {
+                    console.log('Ad detected - showing overlay');
+                    showAdOverlay();
+                } else if (!adDetected && isAdPlaying) {
+                    // Only hide overlay if we're confident the ad is over
+                    const currentTime = player.getCurrentTime();
+                    const duration = player.getDuration();
+                    
+                    // Make sure we have valid video time and duration before hiding overlay
+                    if (currentTime > 0 && duration > 0 && currentTime < duration) {
+                        console.log('Ad ended - hiding overlay');
                         hideAdOverlay();
                     }
                 }
+                
             } catch (error) {
-                // Error getting player state, might be an ad
+                console.log('Error in ad detection:', error);
+                // On error, assume ad might be playing to be safe
                 if (!isAdPlaying) {
                     showAdOverlay();
                 }
@@ -691,10 +735,8 @@
             
             // Create dropdown menu
             const dropdown = document.createElement('div');
-            dropdown.className = 'playlist-dropdown absolute z-50 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg py-2 min-w-48';
-            dropdown.style.top = '100%';
-            dropdown.style.left = '0';
-            dropdown.style.marginTop = '4px';
+            dropdown.className = 'playlist-dropdown fixed bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl py-2 min-w-48 max-h-64 overflow-y-auto';
+            dropdown.style.zIndex = '9999';
             
             // Add header
             const header = document.createElement('div');
@@ -714,21 +756,43 @@
                 dropdown.appendChild(option);
             });
             
-            // Position dropdown relative to button
-            const card = buttonElement.closest('.bg-white, .bg-gray-700');
-            card.style.position = 'relative';
+            // Position dropdown using fixed positioning
             const buttonRect = buttonElement.getBoundingClientRect();
-            const cardRect = card.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
             
-            dropdown.style.position = 'absolute';
-            dropdown.style.top = (buttonRect.bottom - cardRect.top + 4) + 'px';
-            dropdown.style.left = (buttonRect.left - cardRect.left) + 'px';
+            // Calculate position
+            let top = buttonRect.bottom + 4;
+            let left = buttonRect.left;
             
-            card.appendChild(dropdown);
+            // Adjust if dropdown would go off-screen
+            const dropdownHeight = Math.min(playlistNames.length * 40 + 60, 256); // Estimate height
+            const dropdownWidth = 192; // min-w-48 = 192px
+            
+            // Adjust vertical position if it goes below viewport
+            if (top + dropdownHeight > viewportHeight) {
+                top = buttonRect.top - dropdownHeight - 4;
+            }
+            
+            // Adjust horizontal position if it goes off right edge
+            if (left + dropdownWidth > viewportWidth) {
+                left = viewportWidth - dropdownWidth - 10;
+            }
+            
+            // Ensure it doesn't go off left edge
+            if (left < 10) {
+                left = 10;
+            }
+            
+            dropdown.style.top = top + 'px';
+            dropdown.style.left = left + 'px';
+            
+            // Append to body for better positioning
+            document.body.appendChild(dropdown);
             
             // Close dropdown when clicking outside
             const closeDropdown = (e) => {
-                if (!dropdown.contains(e.target)) {
+                if (!dropdown.contains(e.target) && e.target !== buttonElement) {
                     dropdown.remove();
                     document.removeEventListener('click', closeDropdown);
                 }
@@ -814,8 +878,11 @@
                     }
                 });
                 
+                // Show overlay immediately when video starts (assume ad until proven otherwise)
+                showAdOverlay();
+                
                 // Start periodic ad checking
-                setInterval(checkForAds, 1000);
+                setInterval(checkForAds, 500); // Check more frequently
             } else {
                 // Update existing player
                 player.loadVideoById(videoId);
