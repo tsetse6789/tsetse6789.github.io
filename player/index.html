@@ -286,74 +286,31 @@
             }
         }
 
-        // Check for ads periodically with multiple detection methods
+        // Check for ads periodically with improved detection methods
         function checkForAds() {
             if (!player) return;
             
             try {
-                let adDetected = false;
+                const currentTime = player.getCurrentTime();
+                const duration = player.getDuration();
+                const state = player.getPlayerState();
                 
-                // Method 1: Check if getCurrentTime returns -1 (common during ads)
-                if (player.getCurrentTime && player.getCurrentTime() === -1) {
-                    adDetected = true;
-                }
+                // Video is properly playing if we have valid time and duration
+                const videoIsPlaying = currentTime > 0 && duration > 0 && currentTime <= duration && 
+                                     (state === YT.PlayerState.PLAYING || state === YT.PlayerState.PAUSED);
                 
-                // Method 2: Check if duration is unavailable or 0 (common during ads)
-                if (player.getDuration && (!player.getDuration() || player.getDuration() === 0)) {
-                    adDetected = true;
-                }
-                
-                // Method 3: Check player state - ads often show as buffering or unstarted
-                if (player.getPlayerState) {
-                    const state = player.getPlayerState();
-                    const currentTime = player.getCurrentTime();
-                    // If player is in buffering state but time isn't progressing, likely an ad
-                    if (state === YT.PlayerState.BUFFERING && currentTime <= 0) {
-                        adDetected = true;
-                    }
-                }
-                
-                // Method 4: Check if video URL is different (ads have different URLs)
-                if (player.getVideoUrl) {
-                    const url = player.getVideoUrl();
-                    if (url && url.includes('googleads') || url.includes('doubleclick')) {
-                        adDetected = true;
-                    }
-                }
-                
-                // Method 5: Check available quality levels (ads often have limited quality)
-                if (player.getAvailableQualityLevels) {
-                    const qualities = player.getAvailableQualityLevels();
-                    if (qualities && qualities.length <= 2) { // Ads typically have fewer quality options
-                        const currentTime = player.getCurrentTime();
-                        if (currentTime <= 3) { // Only in first few seconds
-                            adDetected = true;
-                        }
-                    }
-                }
-                
-                // Apply ad state
-                if (adDetected && !isAdPlaying) {
-                    console.log('Ad detected - showing overlay');
+                if (videoIsPlaying && isAdPlaying) {
+                    console.log('Video content detected - hiding overlay');
+                    hideAdOverlay();
+                } else if (!videoIsPlaying && !isAdPlaying && state !== YT.PlayerState.UNSTARTED) {
+                    // Only show overlay if player has started but video isn't playing properly
+                    // This catches ads and loading states but not initial unstarted state
+                    console.log('Non-video content detected - showing overlay');
                     showAdOverlay();
-                } else if (!adDetected && isAdPlaying) {
-                    // Only hide overlay if we're confident the ad is over
-                    const currentTime = player.getCurrentTime();
-                    const duration = player.getDuration();
-                    
-                    // Make sure we have valid video time and duration before hiding overlay
-                    if (currentTime > 0 && duration > 0 && currentTime < duration) {
-                        console.log('Ad ended - hiding overlay');
-                        hideAdOverlay();
-                    }
                 }
                 
             } catch (error) {
                 console.log('Error in ad detection:', error);
-                // On error, assume ad might be playing to be safe
-                if (!isAdPlaying) {
-                    showAdOverlay();
-                }
             }
         }
 
@@ -878,11 +835,8 @@
                     }
                 });
                 
-                // Show overlay immediately when video starts (assume ad until proven otherwise)
-                showAdOverlay();
-                
                 // Start periodic ad checking
-                setInterval(checkForAds, 500); // Check more frequently
+                setInterval(checkForAds, 1000); // Check every second
             } else {
                 // Update existing player
                 player.loadVideoById(videoId);
