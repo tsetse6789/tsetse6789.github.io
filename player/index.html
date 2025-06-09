@@ -143,8 +143,8 @@
                             <!-- Ad Overlay -->
                             <div id="adOverlay" class="ad-overlay hidden">
                                 <div class="spinner"></div>
-                                <div class="text-white text-lg font-medium mt-4">Please Wait...</div>
-                                <div class="text-white text-sm opacity-75 mt-2">Loading video content</div>
+                                <div class="text-white text-lg font-medium mt-4">Skipping Ads...</div>
+                                <div class="text-white text-sm opacity-75 mt-2">Automatically bypassing advertisements</div>
                             </div>
                         </div>
                     </div>
@@ -358,33 +358,230 @@
             }
         }
         
-        // Attempt to skip ads automatically
+        // Enhanced automatic ad skipping
         function trySkipAd() {
             if (!player) return;
             
+            console.log('Attempting to skip ad...');
+            
             try {
-                // Try to find and click skip button
+                // Strategy 1: Find and click skip button immediately and repeatedly
+                const skipButtonSelectors = [
+                    '.ytp-ad-skip-button',
+                    '.ytp-skip-ad-button', 
+                    '.ytp-ad-skip-button-modern',
+                    '.ytp-ad-skip-button-slot',
+                    '[aria-label*="Skip"]',
+                    'button[class*="skip"]',
+                    '.videoAdUiSkipButton',
+                    '.skip-button'
+                ];
+                
+                const findAndClickSkip = () => {
+                    for (const selector of skipButtonSelectors) {
+                        const skipButton = document.querySelector(selector);
+                        if (skipButton && skipButton.offsetParent !== null && !skipButton.disabled) {
+                            console.log('Clicking skip button:', selector);
+                            skipButton.click();
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+                
+                // Try clicking immediately
+                findAndClickSkip();
+                
+                // Try clicking every 500ms for first 5 seconds
+                const skipAttempts = setInterval(() => {
+                    if (findAndClickSkip()) {
+                        clearInterval(skipAttempts);
+                    }
+                }, 500);
+                
+                // Stop trying after 10 seconds
+                setTimeout(() => clearInterval(skipAttempts), 10000);
+                
+                // Strategy 2: Try seeking past ad
                 setTimeout(() => {
-                    const skipButton = document.querySelector('.ytp-ad-skip-button, .ytp-skip-ad-button');
-                    if (skipButton && skipButton.offsetParent !== null) {
-                        console.log('Clicking skip button');
-                        skipButton.click();
+                    if (player.getDuration && player.seekTo && player.getCurrentTime) {
+                        const duration = player.getDuration();
+                        const currentTime = player.getCurrentTime();
+                        
+                        // For short ads (under 60 seconds), try seeking to end
+                        if (duration > 0 && duration < 60) {
+                            console.log('Seeking to end of short ad, duration:', duration);
+                            player.seekTo(Math.max(duration - 1, currentTime + 5));
+                        }
+                        // For longer ads, try seeking forward in chunks
+                        else if (duration > 0) {
+                            console.log('Seeking forward in long ad');
+                            player.seekTo(currentTime + 30);
+                        }
                     }
                 }, 1000);
                 
-                // Try seeking to end of video if it's a short ad
+                // Strategy 3: Try muting and seeking aggressively
                 setTimeout(() => {
-                    if (player.getDuration && player.seekTo) {
-                        const duration = player.getDuration();
-                        if (duration > 0 && duration < 30) { // Short ad
-                            console.log('Seeking to end of short ad');
-                            player.seekTo(duration - 1);
-                        }
+                    if (player.mute && player.seekTo && player.getCurrentTime) {
+                        player.mute();
+                        const currentTime = player.getCurrentTime();
+                        
+                        // Try multiple seek positions
+                        const seekPositions = [currentTime + 15, currentTime + 30, currentTime + 45];
+                        seekPositions.forEach((pos, index) => {
+                            setTimeout(() => {
+                                player.seekTo(pos);
+                                console.log('Aggressive seek to:', pos);
+                            }, index * 1000);
+                        });
                     }
                 }, 2000);
                 
+                // Strategy 4: Try to get video URL and reload if it's an ad
+                setTimeout(() => {
+                    try {
+                        const videoUrl = player.getVideoUrl && player.getVideoUrl();
+                        if (videoUrl && (
+                            videoUrl.includes('googleads') || 
+                            videoUrl.includes('doubleclick') || 
+                            videoUrl.includes('/ads/') ||
+                            videoUrl.includes('googlevideo.com/videoplayback') && videoUrl.includes('adformat')
+                        )) {
+                            console.log('Ad URL detected, attempting to skip');
+                            // Try to reload the main video
+                            const videoId = getCurrentVideoId();
+                            if (videoId) {
+                                player.loadVideoById(videoId);
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Could not check video URL:', e);
+                    }
+                }, 3000);
+                
+                // Strategy 5: Rapid-fire ad element removal
+                setTimeout(() => {
+                    const adSelectors = [
+                        '.video-ads',
+                        '.ytp-ad-module',
+                        '.ytp-ad-overlay-container',
+                        '.ytp-ad-text',
+                        '.ytp-ad-preview-container',
+                        '[class*="ad-"]',
+                        '[id*="ad-"]'
+                    ];
+                    
+                    adSelectors.forEach(selector => {
+                        const adElements = document.querySelectorAll(selector);
+                        adElements.forEach(el => {
+                            try {
+                                el.style.display = 'none';
+                                el.remove();
+                            } catch (e) {
+                                console.log('Could not remove ad element:', e);
+                            }
+                        });
+                    });
+                }, 500);
+                
             } catch (error) {
-                console.log('Error trying to skip ad:', error);
+                console.log('Error in enhanced ad skipping:', error);
+            }
+        }
+        
+        // Get current video ID for reloading
+        function getCurrentVideoId() {
+            try {
+                if (currentPlaylist && playlists[currentPlaylist]) {
+                    const videos = playlists[currentPlaylist].videos;
+                    if (videos[currentVideoIndex]) {
+                        return videos[currentVideoIndex].id;
+                    }
+                }
+                
+                // Try to extract from URL
+                const url = player.getVideoUrl && player.getVideoUrl();
+                if (url) {
+                    const match = url.match(/[?&]v=([^&]+)/);
+                    return match ? match[1] : null;
+                }
+            } catch (e) {
+                console.log('Could not get current video ID:', e);
+            }
+            return null;
+        }
+        
+        // Enhanced ad detection with more aggressive checking
+        function enhancedAdDetection() {
+            if (!player) return false;
+            
+            try {
+                // Method 1: Check for ad indicators in player
+                const adIndicators = document.querySelectorAll('.ytp-ad-text, .ytp-ad-badge, [class*="ad-"], .video-ads');
+                if (adIndicators.length > 0) {
+                    return true;
+                }
+                
+                // Method 2: Check player properties
+                const currentTime = player.getCurrentTime();
+                const duration = player.getDuration();
+                const state = player.getPlayerState();
+                
+                // Ad indicators
+                if (currentTime === -1 || (currentTime === 0 && state === YT.PlayerState.PLAYING)) {
+                    return true;
+                }
+                
+                if (!duration || duration === 0 || isNaN(duration)) {
+                    return true;
+                }
+                
+                // Method 3: Check video URL for ad content
+                try {
+                    const videoUrl = player.getVideoUrl && player.getVideoUrl();
+                    if (videoUrl && (
+                        videoUrl.includes('googleads') || 
+                        videoUrl.includes('doubleclick') || 
+                        videoUrl.includes('/ads/') ||
+                        videoUrl.includes('adnxs.com') ||
+                        videoUrl.includes('adsystem')
+                    )) {
+                        return true;
+                    }
+                } catch (e) {
+                    // URL check failed
+                }
+                
+                // Method 4: Check for limited quality options and short duration
+                try {
+                    const qualities = player.getAvailableQualityLevels && player.getAvailableQualityLevels();
+                    if (qualities && qualities.length <= 2 && duration < 120) {
+                        return true;
+                    }
+                } catch (e) {
+                    // Quality check failed
+                }
+                
+                // Method 5: Check DOM for ad-related elements
+                const iframe = document.querySelector('#videoPlayer iframe');
+                if (iframe) {
+                    try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        const adElements = iframeDoc.querySelectorAll('[class*="ad"], [id*="ad"]');
+                        if (adElements.length > 5) { // Threshold for ad detection
+                            return true;
+                        }
+                    } catch (e) {
+                        // Can't access iframe content due to CORS
+                    }
+                }
+                
+                return false;
+                
+            } catch (error) {
+                console.log('Error in enhanced ad detection:', error);
+                return false; // Assume no ad on error
             }
         }
 
