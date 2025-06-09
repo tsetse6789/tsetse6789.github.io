@@ -105,16 +105,7 @@
                         </div>
 
                         <div class="relative w-full" style="padding-bottom: 56.25%; /* 16:9 aspect ratio */">
-                            <iframe 
-                                id="videoPlayer"
-                                class="absolute top-0 left-0 w-full h-full rounded-lg"
-                                src="" 
-                                title="YouTube video player" 
-                                frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                referrerpolicy="strict-origin-when-cross-origin" 
-                                allowfullscreen>
-                            </iframe>
+                            <div id="videoPlayer" class="absolute top-0 left-0 w-full h-full rounded-lg"></div>
                         </div>
                     </div>
                 </div>
@@ -215,7 +206,68 @@
         </div>
     </div>
 
+    <!-- YouTube Player API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    
     <script>
+        // YouTube Player API variables
+        let player;
+        let playerReady = false;
+
+        // YouTube Player API callback
+        function onYouTubeIframeAPIReady() {
+            console.log('YouTube API ready');
+            playerReady = true;
+        }
+
+        // Player state change event handler
+        function onPlayerStateChange(event) {
+            // YT.PlayerState.ENDED = 0
+            if (event.data === YT.PlayerState.ENDED) {
+                handleVideoEnd();
+            }
+        }
+
+        // Handle video end - auto advance to next video
+        function handleVideoEnd() {
+            if (!currentPlaylist) return;
+            
+            const videos = playlists[currentPlaylist].videos;
+            if (videos.length === 0) return;
+            
+            // Handle repeat one mode
+            if (playbackSettings.repeat === 'one') {
+                // Replay the same video
+                if (player && player.playVideo) {
+                    player.playVideo();
+                }
+                return;
+            }
+            
+            // Handle repeat all mode or normal playback
+            let nextIndex;
+            
+            if (playbackSettings.shuffle) {
+                // Shuffle mode: pick random video
+                nextIndex = Math.floor(Math.random() * videos.length);
+            } else {
+                // Normal mode: next video in sequence
+                nextIndex = currentVideoIndex + 1;
+                
+                // If at end of playlist
+                if (nextIndex >= videos.length) {
+                    if (playbackSettings.repeat === 'all') {
+                        nextIndex = 0; // Loop back to start
+                    } else {
+                        return; // Stop playing
+                    }
+                }
+            }
+            
+            // Auto-play next video
+            playVideoFromPlaylist(nextIndex);
+        }
+
         // Dark mode support
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             document.documentElement.classList.add('dark');
@@ -564,15 +616,40 @@
         // Video playback
         function playVideo(videoId, title, channel) {
             const videoContainer = document.getElementById('videoContainer');
-            const videoPlayer = document.getElementById('videoPlayer');
             const videoTitle = document.getElementById('videoTitle');
             const videoChannel = document.getElementById('videoChannel');
             
-            const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-            videoPlayer.src = embedUrl;
             videoTitle.textContent = title;
             videoChannel.textContent = channel;
             videoContainer.classList.remove('hidden');
+            
+            // Initialize or update YouTube player
+            if (!player) {
+                // Wait for API to be ready
+                if (!playerReady || !window.YT) {
+                    setTimeout(() => playVideo(videoId, title, channel), 100);
+                    return;
+                }
+                
+                // Create new player
+                player = new YT.Player('videoPlayer', {
+                    height: '100%',
+                    width: '100%',
+                    videoId: videoId,
+                    playerVars: {
+                        autoplay: 1,
+                        rel: 0,
+                        showinfo: 0,
+                        modestbranding: 1
+                    },
+                    events: {
+                        onStateChange: onPlayerStateChange
+                    }
+                });
+            } else {
+                // Update existing player
+                player.loadVideoById(videoId);
+            }
             
             videoContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -592,9 +669,13 @@
 
         function clearVideo() {
             const videoContainer = document.getElementById('videoContainer');
-            const videoPlayer = document.getElementById('videoPlayer');
             
-            videoPlayer.src = '';
+            // Destroy YouTube player if it exists
+            if (player && player.destroy) {
+                player.destroy();
+                player = null;
+            }
+            
             videoContainer.classList.add('hidden');
         }
 
