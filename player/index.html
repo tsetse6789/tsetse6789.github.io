@@ -45,6 +45,40 @@
             background: rgba(93, 92, 222, 0.1);
             border-left: 3px solid #5D5CDE;
         }
+
+        .ad-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            border-radius: 0.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .ad-overlay.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #5D5CDE;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
@@ -106,6 +140,12 @@
 
                         <div class="relative w-full" style="padding-bottom: 56.25%; /* 16:9 aspect ratio */">
                             <div id="videoPlayer" class="absolute top-0 left-0 w-full h-full rounded-lg"></div>
+                            <!-- Ad Overlay -->
+                            <div id="adOverlay" class="ad-overlay hidden">
+                                <div class="spinner"></div>
+                                <div class="text-white text-lg font-medium mt-4">Please Wait...</div>
+                                <div class="text-white text-sm opacity-75 mt-2">Loading video content</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -213,6 +253,8 @@
         // YouTube Player API variables
         let player;
         let playerReady = false;
+        let isAdPlaying = false;
+        let playerMutedForAd = false;
 
         // YouTube Player API callback
         function onYouTubeIframeAPIReady() {
@@ -225,6 +267,77 @@
             // YT.PlayerState.ENDED = 0
             if (event.data === YT.PlayerState.ENDED) {
                 handleVideoEnd();
+            }
+            
+            // Check for ads using getCurrentTime method
+            // If getCurrentTime returns -1, it usually means an ad is playing
+            checkForAds();
+        }
+
+        // Ad state change event handler
+        function onAdStateChange(event) {
+            // event.data: 1 = Ad Started, 2 = Ad Ended, others = other ad states
+            if (event.data === 1) {
+                // Ad started
+                showAdOverlay();
+            } else if (event.data === 2) {
+                // Ad ended
+                hideAdOverlay();
+            }
+        }
+
+        // Check for ads periodically
+        function checkForAds() {
+            if (!player || !player.getCurrentTime) return;
+            
+            try {
+                const currentTime = player.getCurrentTime();
+                const duration = player.getDuration();
+                
+                // If getCurrentTime returns -1 or NaN, likely an ad is playing
+                // Also check if duration is not available (common during ads)
+                if (currentTime === -1 || isNaN(currentTime) || !duration || isNaN(duration)) {
+                    if (!isAdPlaying) {
+                        showAdOverlay();
+                    }
+                } else {
+                    if (isAdPlaying) {
+                        hideAdOverlay();
+                    }
+                }
+            } catch (error) {
+                // Error getting player state, might be an ad
+                if (!isAdPlaying) {
+                    showAdOverlay();
+                }
+            }
+        }
+
+        // Show ad overlay and mute player
+        function showAdOverlay() {
+            isAdPlaying = true;
+            const overlay = document.getElementById('adOverlay');
+            overlay.classList.remove('hidden');
+            
+            // Mute the player during ads
+            if (player && player.isMuted && player.mute) {
+                if (!player.isMuted()) {
+                    player.mute();
+                    playerMutedForAd = true;
+                }
+            }
+        }
+
+        // Hide ad overlay and restore sound
+        function hideAdOverlay() {
+            isAdPlaying = false;
+            const overlay = document.getElementById('adOverlay');
+            overlay.classList.add('hidden');
+            
+            // Restore sound if we muted it for ads
+            if (player && player.unMute && playerMutedForAd) {
+                player.unMute();
+                playerMutedForAd = false;
             }
         }
 
@@ -696,9 +809,13 @@
                         disablekb: 0     // Enable keyboard controls
                     },
                     events: {
-                        onStateChange: onPlayerStateChange
+                        onStateChange: onPlayerStateChange,
+                        onAdStateChange: onAdStateChange
                     }
                 });
+                
+                // Start periodic ad checking
+                setInterval(checkForAds, 1000);
             } else {
                 // Update existing player
                 player.loadVideoById(videoId);
