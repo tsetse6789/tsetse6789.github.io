@@ -264,6 +264,9 @@
 
         // Player state change event handler
         function onPlayerStateChange(event) {
+            // Update media session playback state
+            updateMediaSessionPlaybackState(event.data);
+            
             // YT.PlayerState.ENDED = 0
             if (event.data === YT.PlayerState.ENDED) {
                 handleVideoEnd();
@@ -473,6 +476,13 @@
         let playbackSettings = {
             shuffle: false,
             repeat: 'off' // 'off', 'all', 'one'
+        };
+        
+        // Media Session variables
+        let currentVideoInfo = {
+            title: '',
+            artist: '',
+            artwork: ''
         };
 
         // Cookie utilities
@@ -867,6 +877,137 @@
             renderPlaylists();
         }
 
+        // Media Session API Integration
+        function initializeMediaSession() {
+            if ('mediaSession' in navigator) {
+                console.log('Media Session API supported');
+                
+                // Set up action handlers
+                navigator.mediaSession.setActionHandler('play', () => {
+                    if (player && player.playVideo) {
+                        player.playVideo();
+                    }
+                });
+                
+                navigator.mediaSession.setActionHandler('pause', () => {
+                    if (player && player.pauseVideo) {
+                        player.pauseVideo();
+                    }
+                });
+                
+                navigator.mediaSession.setActionHandler('previoustrack', () => {
+                    playPrevious();
+                });
+                
+                navigator.mediaSession.setActionHandler('nexttrack', () => {
+                    playNext();
+                });
+                
+                navigator.mediaSession.setActionHandler('stop', () => {
+                    clearVideo();
+                });
+                
+                // Seek handlers for more granular control
+                navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+                    if (player && player.getCurrentTime && player.seekTo) {
+                        const currentTime = player.getCurrentTime();
+                        const seekTime = Math.max(0, currentTime - (details.seekOffset || 10));
+                        player.seekTo(seekTime);
+                    }
+                });
+                
+                navigator.mediaSession.setActionHandler('seekforward', (details) => {
+                    if (player && player.getCurrentTime && player.seekTo && player.getDuration) {
+                        const currentTime = player.getCurrentTime();
+                        const duration = player.getDuration();
+                        const seekTime = Math.min(duration, currentTime + (details.seekOffset || 10));
+                        player.seekTo(seekTime);
+                    }
+                });
+                
+                navigator.mediaSession.setActionHandler('seekto', (details) => {
+                    if (player && player.seekTo && details.seekTime) {
+                        player.seekTo(details.seekTime);
+                    }
+                });
+            } else {
+                console.log('Media Session API not supported');
+            }
+        }
+        
+        function updateMediaSessionMetadata(title, artist, artwork) {
+            if ('mediaSession' in navigator) {
+                currentVideoInfo = { title, artist, artwork };
+                
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: title,
+                    artist: artist,
+                    album: 'YouTube Player',
+                    artwork: [
+                        { src: artwork, sizes: '96x96', type: 'image/jpeg' },
+                        { src: artwork, sizes: '128x128', type: 'image/jpeg' },
+                        { src: artwork, sizes: '192x192', type: 'image/jpeg' },
+                        { src: artwork, sizes: '256x256', type: 'image/jpeg' },
+                        { src: artwork, sizes: '384x384', type: 'image/jpeg' },
+                        { src: artwork, sizes: '512x512', type: 'image/jpeg' }
+                    ]
+                });
+            }
+        }
+        
+        function updateMediaSessionPlaybackState(playerState) {
+            if ('mediaSession' in navigator) {
+                // Update playback state based on YouTube player state
+                switch (playerState) {
+                    case YT.PlayerState.PLAYING:
+                        navigator.mediaSession.playbackState = 'playing';
+                        updateMediaSessionPosition();
+                        break;
+                    case YT.PlayerState.PAUSED:
+                        navigator.mediaSession.playbackState = 'paused';
+                        break;
+                    case YT.PlayerState.ENDED:
+                        navigator.mediaSession.playbackState = 'none';
+                        break;
+                    case YT.PlayerState.BUFFERING:
+                        // Keep current state while buffering
+                        break;
+                    default:
+                        navigator.mediaSession.playbackState = 'none';
+                }
+            }
+        }
+        
+        function updateMediaSessionPosition() {
+            if ('mediaSession' in navigator && player && player.getCurrentTime && player.getDuration) {
+                try {
+                    const currentTime = player.getCurrentTime();
+                    const duration = player.getDuration();
+                    const playbackRate = player.getPlaybackRate && player.getPlaybackRate() || 1;
+                    
+                    if (currentTime >= 0 && duration > 0 && !isAdPlaying) {
+                        navigator.mediaSession.setPositionState({
+                            duration: duration,
+                            playbackRate: playbackRate,
+                            position: currentTime
+                        });
+                    }
+                } catch (error) {
+                    console.log('Error updating media session position:', error);
+                }
+            }
+        }
+        
+        // Start periodic position updates when media session is active
+        function startMediaSessionPositionUpdates() {
+            // Update position every 5 seconds when playing
+            setInterval(() => {
+                if (player && navigator.mediaSession && navigator.mediaSession.playbackState === 'playing') {
+                    updateMediaSessionPosition();
+                }
+            }, 5000);
+        }
+
         // Video playback
         function playVideo(videoId, title, channel) {
             const videoContainer = document.getElementById('videoContainer');
@@ -876,6 +1017,18 @@
             videoTitle.textContent = title;
             videoChannel.textContent = channel;
             videoContainer.classList.remove('hidden');
+            
+            // Initialize media session if not already done
+            if (!navigator.mediaSession || !navigator.mediaSession.metadata) {
+                initializeMediaSession();
+                startMediaSessionPositionUpdates();
+            }
+            
+            // Get video thumbnail URL for media session
+            const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+            
+            // Update media session metadata
+            updateMediaSessionMetadata(title, channel, thumbnailUrl);
             
             // Initialize or update YouTube player
             if (!player) {
@@ -931,6 +1084,12 @@
 
         function clearVideo() {
             const videoContainer = document.getElementById('videoContainer');
+            
+            // Clear media session
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'none';
+                navigator.mediaSession.metadata = null;
+            }
             
             // Destroy YouTube player if it exists
             if (player && player.destroy) {
