@@ -119,45 +119,8 @@
                     </div>
                 </div>
 
-                <!-- API Key Setup Section -->
-                <div id="apiKeySection" class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 mb-6 border border-yellow-200 dark:border-yellow-800">
-                    <h3 class="text-lg font-semibold mb-3 text-yellow-800 dark:text-yellow-200">YouTube API Setup Required</h3>
-                    <p class="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
-                        To search videos, you need a YouTube Data API key. This is free and takes 2 minutes to set up.
-                    </p>
-                    <div class="mb-4">
-                        <label for="apiKeyInput" class="block text-sm font-medium mb-2 text-yellow-800 dark:text-yellow-200">
-                            Enter your YouTube Data API Key:
-                        </label>
-                        <div class="flex flex-col sm:flex-row gap-3">
-                            <input 
-                                type="text" 
-                                id="apiKeyInput" 
-                                placeholder="AIzaSyC..."
-                                class="flex-1 px-4 py-2 text-base border border-yellow-300 dark:border-yellow-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-white dark:bg-yellow-900/50 text-gray-900 dark:text-yellow-100"
-                            >
-                            <button 
-                                onclick="saveApiKey()" 
-                                class="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium"
-                            >
-                                Save API Key
-                            </button>
-                        </div>
-                    </div>
-                    <div class="text-xs text-yellow-600 dark:text-yellow-400">
-                        <p class="mb-2"><strong>How to get API Key:</strong></p>
-                        <ol class="list-decimal list-inside space-y-1 ml-2">
-                            <li>Go to <a href="https://console.developers.google.com" target="_blank" class="underline">Google Cloud Console</a></li>
-                            <li>Create a new project or select existing one</li>
-                            <li>Enable "YouTube Data API v3"</li>
-                            <li>Go to "Credentials" → "Create Credentials" → "API Key"</li>
-                            <li>Copy the API key and paste it above</li>
-                        </ol>
-                    </div>
-                </div>
-
                 <!-- YouTube Search Section -->
-                <div id="searchSection" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm hidden">
+                <div id="searchSection" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm">
                     <h3 class="text-lg font-semibold mb-4">Search Videos on YouTube:</h3>
                     <div class="flex flex-col sm:flex-row gap-3 mb-6">
                         <input 
@@ -302,8 +265,6 @@
         // Initialize app
         window.addEventListener('DOMContentLoaded', function() {
             loadSettings();
-            document.getElementById('apiKeyInput').value = apiKey;
-            showSearchSection();
             updatePlaybackUI();
         });
 
@@ -334,25 +295,7 @@
             setCookie('ytplayer_apikey', apiKey);
         }
 
-        // API Key management
-        function saveApiKey() {
-            const input = document.getElementById('apiKeyInput');
-            const key = input.value.trim();
-            
-            if (!key) {
-                alert('Please enter a valid API key');
-                return;
-            }
-            
-            apiKey = key;
-            saveSettings();
-            showSearchSection();
-        }
 
-        function showSearchSection() {
-            document.getElementById('apiKeySection').classList.add('hidden');
-            document.getElementById('searchSection').classList.remove('hidden');
-        }
 
         // Video search functionality
         async function searchVideos() {
