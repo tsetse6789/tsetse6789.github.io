@@ -286,7 +286,7 @@
             }
         }
 
-        // Check for ads periodically with improved detection methods
+        // Enhanced ad detection and blocking
         function checkForAds() {
             if (!player) return;
             
@@ -295,22 +295,93 @@
                 const duration = player.getDuration();
                 const state = player.getPlayerState();
                 
-                // Video is properly playing if we have valid time and duration
-                const videoIsPlaying = currentTime > 0 && duration > 0 && currentTime <= duration && 
-                                     (state === YT.PlayerState.PLAYING || state === YT.PlayerState.PAUSED);
+                let adDetected = false;
                 
-                if (videoIsPlaying && isAdPlaying) {
-                    console.log('Video content detected - hiding overlay');
-                    hideAdOverlay();
-                } else if (!videoIsPlaying && !isAdPlaying && state !== YT.PlayerState.UNSTARTED) {
-                    // Only show overlay if player has started but video isn't playing properly
-                    // This catches ads and loading states but not initial unstarted state
-                    console.log('Non-video content detected - showing overlay');
+                // Method 1: Check for invalid/missing time data (common during ads)
+                if (currentTime === -1 || currentTime === 0 && state === YT.PlayerState.PLAYING) {
+                    adDetected = true;
+                }
+                
+                // Method 2: Check for missing duration (ads often don't have proper duration)
+                if (!duration || duration === 0) {
+                    adDetected = true;
+                }
+                
+                // Method 3: Check video URL for ad indicators
+                try {
+                    const videoUrl = player.getVideoUrl && player.getVideoUrl();
+                    if (videoUrl && (videoUrl.includes('googleads') || videoUrl.includes('doubleclick') || videoUrl.includes('/ads/'))) {
+                        adDetected = true;
+                    }
+                } catch (e) {
+                    // URL check failed, might be an ad
+                }
+                
+                // Method 4: Check for limited quality options (ads typically have fewer)
+                try {
+                    const qualities = player.getAvailableQualityLevels && player.getAvailableQualityLevels();
+                    if (qualities && qualities.length <= 2 && currentTime <= 5) {
+                        adDetected = true;
+                    }
+                } catch (e) {
+                    // Quality check failed
+                }
+                
+                // Method 5: Check player state inconsistencies
+                if (state === YT.PlayerState.BUFFERING && currentTime <= 0) {
+                    adDetected = true;
+                }
+                
+                // Video is properly playing
+                const videoIsPlaying = currentTime > 0 && duration > 0 && currentTime <= duration && 
+                                     !adDetected && (state === YT.PlayerState.PLAYING || state === YT.PlayerState.PAUSED);
+                
+                if (adDetected && !isAdPlaying) {
+                    console.log('Ad detected - hiding ads');
                     showAdOverlay();
+                    // Try to skip ad automatically
+                    trySkipAd();
+                } else if (videoIsPlaying && isAdPlaying) {
+                    console.log('Video content detected - showing video');
+                    hideAdOverlay();
                 }
                 
             } catch (error) {
                 console.log('Error in ad detection:', error);
+                // On error, assume there might be an ad to be safe
+                if (!isAdPlaying && player.getPlayerState && player.getPlayerState() !== YT.PlayerState.UNSTARTED) {
+                    showAdOverlay();
+                }
+            }
+        }
+        
+        // Attempt to skip ads automatically
+        function trySkipAd() {
+            if (!player) return;
+            
+            try {
+                // Try to find and click skip button
+                setTimeout(() => {
+                    const skipButton = document.querySelector('.ytp-ad-skip-button, .ytp-skip-ad-button');
+                    if (skipButton && skipButton.offsetParent !== null) {
+                        console.log('Clicking skip button');
+                        skipButton.click();
+                    }
+                }, 1000);
+                
+                // Try seeking to end of video if it's a short ad
+                setTimeout(() => {
+                    if (player.getDuration && player.seekTo) {
+                        const duration = player.getDuration();
+                        if (duration > 0 && duration < 30) { // Short ad
+                            console.log('Seeking to end of short ad');
+                            player.seekTo(duration - 1);
+                        }
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.log('Error trying to skip ad:', error);
             }
         }
 
