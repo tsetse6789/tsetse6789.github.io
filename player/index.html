@@ -246,6 +246,20 @@
         </div>
     </div>
 
+    <!-- Theme Toggle -->
+    <div class="fixed bottom-4 right-4 z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 p-3">
+            <div class="flex items-center gap-3">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">🌞</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="themeToggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/40 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                </label>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">🌙</span>
+            </div>
+        </div>
+    </div>
+
     <!-- YouTube Player API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
@@ -425,15 +439,59 @@
             playVideoFromPlaylist(nextIndex);
         }
 
-        // Dark mode support
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.documentElement.classList.add('dark');
-        }
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-            if (event.matches) {
-                document.documentElement.classList.add('dark');
+        // Theme management
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('ytplayer_theme');
+            const themeToggle = document.getElementById('themeToggle');
+            
+            if (savedTheme) {
+                // Use saved theme preference
+                if (savedTheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    themeToggle.checked = true;
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    themeToggle.checked = false;
+                }
             } else {
+                // Fall back to system preference
+                const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                    themeToggle.checked = true;
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    themeToggle.checked = false;
+                }
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            if (isDark) {
                 document.documentElement.classList.remove('dark');
+                localStorage.setItem('ytplayer_theme', 'light');
+                document.getElementById('themeToggle').checked = false;
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('ytplayer_theme', 'dark');
+                document.getElementById('themeToggle').checked = true;
+            }
+        }
+
+        // Listen for system theme changes (only if user hasn't set a preference)
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            const savedTheme = localStorage.getItem('ytplayer_theme');
+            if (!savedTheme) {
+                // Only follow system preference if user hasn't manually set a theme
+                if (event.matches) {
+                    document.documentElement.classList.add('dark');
+                    document.getElementById('themeToggle').checked = true;
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.getElementById('themeToggle').checked = false;
+                }
             }
         });
 
@@ -475,6 +533,10 @@
         window.addEventListener('DOMContentLoaded', function() {
             loadSettings();
             updatePlaybackUI();
+            initializeTheme();
+            
+            // Add theme toggle event listener
+            document.getElementById('themeToggle').addEventListener('change', toggleTheme);
         });
 
         // Load settings from cookies
