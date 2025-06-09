@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Player</title>
+    <title>YouTube Playlist Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -25,134 +25,229 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .playlist-item {
+            transition: all 0.2s ease;
+        }
+
+        .playlist-item:hover {
+            transform: translateX(4px);
+        }
+
+        .playlist-item.active {
+            background: rgba(93, 92, 222, 0.1);
+            border-left: 3px solid #5D5CDE;
+        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
-    <div class="container mx-auto px-4 py-6 max-w-6xl">
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-primary mb-2">No Ads YouTube Player</h1>
-            <p class="text-gray-600 dark:text-gray-400">Search videos on YouTube or paste a video URL to play</p>
+            <h1 class="text-3xl font-bold text-primary mb-2">YouTube Playlist Player</h1>
+            <p class="text-gray-600 dark:text-gray-400">Search videos and create custom playlists</p>
         </div>
 
-        <!-- URL Input Section -->
-        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-6 shadow-sm">
-            <label for="urlInput" class="block text-sm font-medium mb-3">
-                Paste YouTube URL to play video:
-            </label>
-            <div class="flex flex-col sm:flex-row gap-3">
-                <input 
-                    type="text" 
-                    id="urlInput" 
-                    placeholder="https://youtu.be/dQw4w9WgXcQ or https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                    class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                >
-                <button 
-                    onclick="loadVideo()" 
-                    class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium"
-                >
-                    Play Video
-                </button>
-            </div>
-            <div id="urlError" class="text-red-500 text-sm mt-2 hidden"></div>
-        </div>
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Main Content Area -->
+            <div class="flex-1">
+                <!-- Video Player Section -->
+                <div id="videoContainer" class="hidden fade-in mb-6">
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-1" id="videoTitle">Now Playing:</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400" id="videoChannel"></p>
+                            </div>
+                            <button 
+                                onclick="clearVideo()" 
+                                class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <!-- Playback Controls -->
+                        <div class="flex flex-wrap gap-3 mb-4">
+                            <button 
+                                onclick="toggleShuffle()" 
+                                id="shuffleBtn"
+                                class="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm flex items-center gap-2"
+                            >
+                                🔀 Shuffle: <span id="shuffleStatus">Off</span>
+                            </button>
+                            <button 
+                                onclick="toggleRepeat()" 
+                                id="repeatBtn"
+                                class="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm flex items-center gap-2"
+                            >
+                                🔁 Repeat: <span id="repeatStatus">Off</span>
+                            </button>
+                            <button 
+                                onclick="playPrevious()" 
+                                class="px-3 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
+                            >
+                                ⏮️ Previous
+                            </button>
+                            <button 
+                                onclick="playNext()" 
+                                class="px-3 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
+                            >
+                                Next ⏭️
+                            </button>
+                        </div>
 
-        <!-- Video Player Section -->
-        <div id="videoContainer" class="hidden fade-in mb-6">
-            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-                <h3 class="text-lg font-semibold mb-4">Now Playing:</h3>
-                <div class="relative w-full" style="padding-bottom: 56.25%; /* 16:9 aspect ratio */">
-                    <iframe 
-                        id="videoPlayer"
-                        class="absolute top-0 left-0 w-full h-full rounded-lg"
-                        src="" 
-                        title="YouTube video player" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                        referrerpolicy="strict-origin-when-cross-origin" 
-                        allowfullscreen>
-                    </iframe>
+                        <div class="relative w-full" style="padding-bottom: 56.25%; /* 16:9 aspect ratio */">
+                            <iframe 
+                                id="videoPlayer"
+                                class="absolute top-0 left-0 w-full h-full rounded-lg"
+                                src="" 
+                                title="YouTube video player" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                referrerpolicy="strict-origin-when-cross-origin" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
                 </div>
-                <button 
-                    onclick="clearVideo()" 
-                    class="mt-4 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                    Clear Video
-                </button>
-            </div>
-        </div>
 
-        <!-- API Key Setup Section -->
-        <div id="apiKeySection" class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 mb-6 border border-yellow-200 dark:border-yellow-800">
-            <h3 class="text-lg font-semibold mb-3 text-yellow-800 dark:text-yellow-200">YouTube API Setup Required</h3>
-            <p class="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
-                To search videos directly in the app, you need a YouTube Data API key. This is free and takes 2 minutes to set up.
-            </p>
-            <div class="mb-4">
-                <label for="apiKeyInput" class="block text-sm font-medium mb-2 text-yellow-800 dark:text-yellow-200">
-                    Enter your YouTube Data API Key:
-                </label>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <input 
-                        type="text" 
-                        id="apiKeyInput" 
-                        placeholder="AIzaSyC..."
-                        class="flex-1 px-4 py-2 text-base border border-yellow-300 dark:border-yellow-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-white dark:bg-yellow-900/50 text-gray-900 dark:text-yellow-100"
-                    >
-                    <button 
-                        onclick="saveApiKey()" 
-                        class="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium"
-                    >
-                        Save API Key
-                    </button>
+                <!-- API Key Setup Section -->
+                <div id="apiKeySection" class="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 mb-6 border border-yellow-200 dark:border-yellow-800">
+                    <h3 class="text-lg font-semibold mb-3 text-yellow-800 dark:text-yellow-200">YouTube API Setup Required</h3>
+                    <p class="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
+                        To search videos, you need a YouTube Data API key. This is free and takes 2 minutes to set up.
+                    </p>
+                    <div class="mb-4">
+                        <label for="apiKeyInput" class="block text-sm font-medium mb-2 text-yellow-800 dark:text-yellow-200">
+                            Enter your YouTube Data API Key:
+                        </label>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <input 
+                                type="text" 
+                                id="apiKeyInput" 
+                                placeholder="AIzaSyC..."
+                                class="flex-1 px-4 py-2 text-base border border-yellow-300 dark:border-yellow-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent bg-white dark:bg-yellow-900/50 text-gray-900 dark:text-yellow-100"
+                            >
+                            <button 
+                                onclick="saveApiKey()" 
+                                class="px-6 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium"
+                            >
+                                Save API Key
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-xs text-yellow-600 dark:text-yellow-400">
+                        <p class="mb-2"><strong>How to get API Key:</strong></p>
+                        <ol class="list-decimal list-inside space-y-1 ml-2">
+                            <li>Go to <a href="https://console.developers.google.com" target="_blank" class="underline">Google Cloud Console</a></li>
+                            <li>Create a new project or select existing one</li>
+                            <li>Enable "YouTube Data API v3"</li>
+                            <li>Go to "Credentials" → "Create Credentials" → "API Key"</li>
+                            <li>Copy the API key and paste it above</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- YouTube Search Section -->
+                <div id="searchSection" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm hidden">
+                    <h3 class="text-lg font-semibold mb-4">Search Videos on YouTube:</h3>
+                    <div class="flex flex-col sm:flex-row gap-3 mb-6">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Search for videos..."
+                            class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        >
+                        <button 
+                            onclick="searchVideos()" 
+                            id="searchButton"
+                            class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                        >
+                            🔍 Search
+                        </button>
+                    </div>
+                    
+                    <!-- Loading State -->
+                    <div id="loadingState" class="text-center py-8 hidden">
+                        <div class="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-primary rounded-full" role="status"></div>
+                        <p class="mt-2 text-gray-600 dark:text-gray-400">Searching videos...</p>
+                    </div>
+                    
+                    <!-- Search Results -->
+                    <div id="searchResults" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    
+                    <!-- No Results -->
+                    <div id="noResults" class="text-center py-8 hidden">
+                        <p class="text-gray-600 dark:text-gray-400">No videos found. Try a different search term.</p>
+                    </div>
                 </div>
             </div>
-            <div class="text-xs text-yellow-600 dark:text-yellow-400">
-                <p class="mb-2"><strong>How to get API Key:</strong></p>
-                <ol class="list-decimal list-inside space-y-1 ml-2">
-                    <li>Go to <a href="https://console.developers.google.com" target="_blank" class="underline">Google Cloud Console</a></li>
-                    <li>Create a new project or select existing one</li>
-                    <li>Enable "YouTube Data API v3"</li>
-                    <li>Go to "Credentials" → "Create Credentials" → "API Key"</li>
-                    <li>Copy the API key and paste it above</li>
-                </ol>
-            </div>
-        </div>
 
-        <!-- YouTube Search Section -->
-        <div id="searchSection" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm hidden">
-            <h3 class="text-lg font-semibold mb-4">Search Videos on YouTube:</h3>
-            <div class="flex flex-col sm:flex-row gap-3 mb-6">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="Search for videos..."
-                    class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                <button 
-                    onclick="searchVideos()" 
-                    id="searchButton"
-                    class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-                >
-                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    Search
-                </button>
-            </div>
-            
-            <!-- Loading State -->
-            <div id="loadingState" class="text-center py-8 hidden">
-                <div class="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent text-primary rounded-full" role="status"></div>
-                <p class="mt-2 text-gray-600 dark:text-gray-400">Searching videos...</p>
-            </div>
-            
-            <!-- Search Results -->
-            <div id="searchResults" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
-            
-            <!-- No Results -->
-            <div id="noResults" class="text-center py-8 hidden">
-                <p class="text-gray-600 dark:text-gray-400">No videos found. Try a different search term.</p>
+            <!-- Playlist Sidebar -->
+            <div class="lg:w-80">
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Playlists</h3>
+                        <button 
+                            onclick="showCreatePlaylistForm()" 
+                            class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
+                        >
+                            ➕ New
+                        </button>
+                    </div>
+
+                    <!-- Create Playlist Form -->
+                    <div id="createPlaylistForm" class="hidden mb-4 p-4 bg-white dark:bg-gray-700 rounded-lg border">
+                        <input 
+                            type="text" 
+                            id="playlistNameInput" 
+                            placeholder="Playlist name..."
+                            class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded mb-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        >
+                        <div class="flex gap-2">
+                            <button 
+                                onclick="createPlaylist()" 
+                                class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+                            >
+                                Create
+                            </button>
+                            <button 
+                                onclick="hideCreatePlaylistForm()" 
+                                class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Playlists List -->
+                    <div id="playlistsList" class="space-y-2">
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">No playlists yet. Create one to get started!</p>
+                    </div>
+
+                    <!-- Current Playlist -->
+                    <div id="currentPlaylistSection" class="hidden mt-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-semibold" id="currentPlaylistTitle">Current Playlist</h4>
+                            <button 
+                                onclick="clearCurrentPlaylist()" 
+                                class="text-gray-500 hover:text-red-500 transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div id="currentPlaylistVideos" class="space-y-2 max-h-96 overflow-y-auto">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -170,109 +265,76 @@
             }
         });
 
-        // Extract video ID from various YouTube URL formats
-        function extractVideoId(url) {
-            // Handle different YouTube URL formats
-            const patterns = [
-                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
-                /^([a-zA-Z0-9_-]{11})$/ // Direct video ID
-            ];
-            
-            for (const pattern of patterns) {
-                const match = url.match(pattern);
-                if (match) {
-                    return match[1];
+        // Global variables
+        let apiKey = 'AIzaSyCQExuj8PVT14tgxr9jUB7qGsG364P_u48';
+        let playlists = {};
+        let currentPlaylist = null;
+        let currentVideoIndex = 0;
+        let playbackSettings = {
+            shuffle: false,
+            repeat: 'off' // 'off', 'all', 'one'
+        };
+
+        // Cookie utilities
+        function setCookie(name, value, days = 30) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) {
+                    try {
+                        return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
+                    } catch (e) {
+                        return null;
+                    }
                 }
             }
             return null;
         }
 
-        // Load and play video
-        function loadVideo() {
-            const urlInput = document.getElementById('urlInput');
-            const videoContainer = document.getElementById('videoContainer');
-            const videoPlayer = document.getElementById('videoPlayer');
-            const urlError = document.getElementById('urlError');
-            
-            const url = urlInput.value.trim();
-            
-            if (!url) {
-                showError('Please enter a YouTube URL');
-                return;
-            }
-            
-            const videoId = extractVideoId(url);
-            
-            if (!videoId) {
-                showError('Invalid YouTube URL. Please use a valid YouTube video URL.');
-                return;
-            }
-            
-            // Hide error and show video
-            hideError();
-            const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-            videoPlayer.src = embedUrl;
-            videoContainer.classList.remove('hidden');
-            
-            // Scroll to video
-            videoContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
-            console.log('Loading video with ID:', videoId);
-        }
-
-        // Clear video player
-        function clearVideo() {
-            const videoContainer = document.getElementById('videoContainer');
-            const videoPlayer = document.getElementById('videoPlayer');
-            const urlInput = document.getElementById('urlInput');
-            
-            videoPlayer.src = '';
-            videoContainer.classList.add('hidden');
-            urlInput.value = '';
-            hideError();
-        }
-
-        // Show error message
-        function showError(message) {
-            const urlError = document.getElementById('urlError');
-            urlError.textContent = message;
-            urlError.classList.remove('hidden');
-        }
-
-        // Hide error message
-        function hideError() {
-            const urlError = document.getElementById('urlError');
-            urlError.classList.add('hidden');
-        }
-
-        // Handle Enter key in input field
-        document.getElementById('urlInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                loadVideo();
-            }
-        });
-
-        // Auto-load video if URL is pasted
-        document.getElementById('urlInput').addEventListener('paste', function(event) {
-            setTimeout(() => {
-                const url = event.target.value.trim();
-                if (url && extractVideoId(url)) {
-                    loadVideo();
-                }
-            }, 100);
-        });
-
-        // YouTube API functionality
-        let apiKey = 'AIzaSyCQExuj8PVT14tgxr9jUB7qGsG364P_u48';
-
-        // Auto-initialize with provided API key
+        // Initialize app
         window.addEventListener('DOMContentLoaded', function() {
-            // Set the API key in the input field and show search section
+            loadSettings();
             document.getElementById('apiKeyInput').value = apiKey;
             showSearchSection();
+            updatePlaybackUI();
         });
 
-        // Save API key
+        // Load settings from cookies
+        function loadSettings() {
+            const savedPlaylists = getCookie('ytplayer_playlists');
+            const savedPlaybackSettings = getCookie('ytplayer_playback');
+            const savedApiKey = getCookie('ytplayer_apikey');
+
+            if (savedPlaylists) {
+                playlists = savedPlaylists;
+                renderPlaylists();
+            }
+
+            if (savedPlaybackSettings) {
+                playbackSettings = savedPlaybackSettings;
+            }
+
+            if (savedApiKey) {
+                apiKey = savedApiKey;
+            }
+        }
+
+        // Save settings to cookies
+        function saveSettings() {
+            setCookie('ytplayer_playlists', playlists);
+            setCookie('ytplayer_playback', playbackSettings);
+            setCookie('ytplayer_apikey', apiKey);
+        }
+
+        // API Key management
         function saveApiKey() {
             const input = document.getElementById('apiKeyInput');
             const key = input.value.trim();
@@ -283,16 +345,16 @@
             }
             
             apiKey = key;
+            saveSettings();
             showSearchSection();
         }
 
-        // Show search section and hide API setup
         function showSearchSection() {
             document.getElementById('apiKeySection').classList.add('hidden');
             document.getElementById('searchSection').classList.remove('hidden');
         }
 
-        // Search videos using YouTube API
+        // Video search functionality
         async function searchVideos() {
             const searchInput = document.getElementById('searchInput');
             const query = searchInput.value.trim();
@@ -307,86 +369,26 @@
                 return;
             }
             
-            // Show loading state
             showLoading();
             
             try {
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
-                console.log('API Request URL:', url);
-                
                 const response = await fetch(url);
-                console.log('Response status:', response.status);
                 
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('API Error Response:', errorText);
-                    
-                    let errorMessage = `API Error (${response.status})`;
-                    
-                    try {
-                        const errorData = JSON.parse(errorText);
-                        if (errorData.error && errorData.error.message) {
-                            errorMessage += `: ${errorData.error.message}`;
-                        }
-                        
-                        // Common error messages
-                        if (response.status === 403) {
-                            if (errorText.includes('disabled')) {
-                                errorMessage = 'YouTube Data API v3 is not enabled for this project. Please enable it in Google Cloud Console.';
-                            } else if (errorText.includes('referer')) {
-                                errorMessage = 'API key has referer restrictions. Please remove restrictions or add your domain.';
-                            } else {
-                                errorMessage = 'API key access denied. Check if YouTube Data API v3 is enabled and key is valid.';
-                            }
-                        } else if (response.status === 400) {
-                            errorMessage = 'Invalid API request. Please check your API key format.';
-                        } else if (response.status === 429) {
-                            errorMessage = 'API quota exceeded. Please try again later or check your quota limits.';
-                        }
-                    } catch (e) {
-                        // If we can't parse the error response, just show the status
-                    }
-                    
-                    throw new Error(errorMessage);
+                    throw new Error(`API Error (${response.status})`);
                 }
                 
                 const data = await response.json();
-                console.log('API Response:', data);
                 displaySearchResults(data.items);
                 
             } catch (error) {
                 console.error('Search error:', error);
                 hideLoading();
-                
-                // Show detailed error message
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mt-4';
-                errorDiv.innerHTML = `
-                    <h4 class="font-semibold text-red-800 dark:text-red-200 mb-2">Search Failed</h4>
-                    <p class="text-sm text-red-700 dark:text-red-300 mb-3">${error.message}</p>
-                    <div class="text-xs text-red-600 dark:text-red-400">
-                        <p class="mb-1"><strong>Common fixes:</strong></p>
-                        <ul class="list-disc list-inside space-y-1 ml-2">
-                            <li>Make sure YouTube Data API v3 is enabled in Google Cloud Console</li>
-                            <li>Check if your API key has any restrictions (remove them for testing)</li>
-                            <li>Verify the API key is copied correctly</li>
-                            <li>Check if you've exceeded your daily quota</li>
-                        </ul>
-                    </div>
-                `;
-                
-                // Insert error message after search section
-                const searchSection = document.getElementById('searchSection');
-                const existingError = document.querySelector('.search-error');
-                if (existingError) {
-                    existingError.remove();
-                }
-                errorDiv.classList.add('search-error');
-                searchSection.appendChild(errorDiv);
+                alert(`Search failed: ${error.message}`);
             }
         }
 
-        // Display search results
         function displaySearchResults(videos) {
             hideLoading();
             const resultsContainer = document.getElementById('searchResults');
@@ -401,61 +403,333 @@
             noResultsDiv.classList.add('hidden');
             
             resultsContainer.innerHTML = videos.map(video => `
-                <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onclick="playVideoFromSearch('${video.id.videoId}')">
+                <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden">
                     <div class="relative">
-                        <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}" class="w-full h-48 object-cover">
-                        <div class="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                            <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                            </svg>
-                            Play
-                        </div>
+                        <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}" class="w-full h-32 object-cover">
                     </div>
-                    <div class="p-4">
+                    <div class="p-3">
                         <h4 class="font-semibold text-sm line-clamp-2 mb-2" title="${video.snippet.title}">
                             ${video.snippet.title}
                         </h4>
-                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
                             ${video.snippet.channelTitle}
                         </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-500">
-                            ${formatDate(video.snippet.publishedAt)}
-                        </p>
+                        <div class="flex gap-2">
+                            <button 
+                                onclick="playVideo('${video.id.videoId}', '${escapeHtml(video.snippet.title)}', '${escapeHtml(video.snippet.channelTitle)}')" 
+                                class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-xs"
+                            >
+                                ▶️ Play
+                            </button>
+                            <button 
+                                onclick="showAddToPlaylistMenu('${video.id.videoId}', '${escapeHtml(video.snippet.title)}', '${escapeHtml(video.snippet.channelTitle)}', '${video.snippet.thumbnails.default.url}')" 
+                                class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
+                            >
+                                ➕ Add
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Play video from search results
-        function playVideoFromSearch(videoId) {
-            const videoContainer = document.getElementById('videoContainer');
-            const videoPlayer = document.getElementById('videoPlayer');
-            const urlInput = document.getElementById('urlInput');
-            
-            const embedUrl = `https://www.youtube.com/embed/${videoId}`;
-            videoPlayer.src = embedUrl;
-            videoContainer.classList.remove('hidden');
-            
-            // Update URL input with the video URL
-            urlInput.value = `https://youtu.be/${videoId}`;
-            
-            // Scroll to video
-            videoContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        function escapeHtml(text) {
+            return text.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
         }
 
-        // Show loading state
         function showLoading() {
             document.getElementById('loadingState').classList.remove('hidden');
             document.getElementById('searchResults').innerHTML = '';
             document.getElementById('noResults').classList.add('hidden');
         }
 
-        // Hide loading state
         function hideLoading() {
             document.getElementById('loadingState').classList.add('hidden');
         }
 
-        // Format date
+        // Playlist management
+        function showCreatePlaylistForm() {
+            document.getElementById('createPlaylistForm').classList.remove('hidden');
+            document.getElementById('playlistNameInput').focus();
+        }
+
+        function hideCreatePlaylistForm() {
+            document.getElementById('createPlaylistForm').classList.add('hidden');
+            document.getElementById('playlistNameInput').value = '';
+        }
+
+        function createPlaylist() {
+            const nameInput = document.getElementById('playlistNameInput');
+            const name = nameInput.value.trim();
+            
+            if (!name) {
+                alert('Please enter a playlist name');
+                return;
+            }
+            
+            if (playlists[name]) {
+                alert('Playlist already exists');
+                return;
+            }
+            
+            playlists[name] = {
+                name: name,
+                videos: [],
+                created: new Date().toISOString()
+            };
+            
+            saveSettings();
+            renderPlaylists();
+            hideCreatePlaylistForm();
+        }
+
+        function deletePlaylist(name) {
+            if (confirm(`Delete playlist "${name}"?`)) {
+                delete playlists[name];
+                if (currentPlaylist === name) {
+                    clearCurrentPlaylist();
+                }
+                saveSettings();
+                renderPlaylists();
+            }
+        }
+
+        function renderPlaylists() {
+            const container = document.getElementById('playlistsList');
+            const playlistNames = Object.keys(playlists);
+            
+            if (playlistNames.length === 0) {
+                container.innerHTML = '<p class="text-gray-600 dark:text-gray-400 text-sm">No playlists yet. Create one to get started!</p>';
+                return;
+            }
+            
+            container.innerHTML = playlistNames.map(name => `
+                <div class="flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-lg">
+                    <div class="flex-1 cursor-pointer" onclick="loadPlaylist('${name}')">
+                        <div class="font-medium">${name}</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length} videos</div>
+                    </div>
+                    <button 
+                        onclick="deletePlaylist('${name}')" 
+                        class="text-red-500 hover:text-red-700 transition-colors ml-2"
+                    >
+                        🗑️
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function loadPlaylist(name) {
+            currentPlaylist = name;
+            currentVideoIndex = 0;
+            renderCurrentPlaylist();
+        }
+
+        function clearCurrentPlaylist() {
+            currentPlaylist = null;
+            currentVideoIndex = 0;
+            document.getElementById('currentPlaylistSection').classList.add('hidden');
+            clearVideo();
+        }
+
+        function renderCurrentPlaylist() {
+            if (!currentPlaylist) return;
+            
+            const section = document.getElementById('currentPlaylistSection');
+            const title = document.getElementById('currentPlaylistTitle');
+            const container = document.getElementById('currentPlaylistVideos');
+            
+            title.textContent = currentPlaylist;
+            section.classList.remove('hidden');
+            
+            const videos = playlists[currentPlaylist].videos;
+            
+            if (videos.length === 0) {
+                container.innerHTML = '<p class="text-gray-600 dark:text-gray-400 text-sm">No videos in this playlist yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = videos.map((video, index) => `
+                <div class="playlist-item flex items-center gap-3 p-2 rounded cursor-pointer ${index === currentVideoIndex ? 'active' : ''}" 
+                     onclick="playVideoFromPlaylist(${index})">
+                    <img src="${video.thumbnail}" alt="${video.title}" class="w-16 h-12 object-cover rounded">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm line-clamp-2">${video.title}</div>
+                        <div class="text-xs text-gray-600 dark:text-gray-400">${video.channel}</div>
+                    </div>
+                    <button 
+                        onclick="removeFromPlaylist(${index}); event.stopPropagation();" 
+                        class="text-red-500 hover:text-red-700 transition-colors"
+                    >
+                        ✕
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function showAddToPlaylistMenu(videoId, title, channel, thumbnail) {
+            const playlistNames = Object.keys(playlists);
+            
+            if (playlistNames.length === 0) {
+                alert('Create a playlist first!');
+                return;
+            }
+            
+            const selectedPlaylist = prompt(`Add "${title}" to playlist:\n\n${playlistNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}\n\nEnter playlist number:`);
+            
+            if (selectedPlaylist && selectedPlaylist > 0 && selectedPlaylist <= playlistNames.length) {
+                const playlistName = playlistNames[selectedPlaylist - 1];
+                addToPlaylist(playlistName, { id: videoId, title, channel, thumbnail });
+            }
+        }
+
+        function addToPlaylist(playlistName, video) {
+            if (!playlists[playlistName]) return;
+            
+            // Check if video already exists in playlist
+            const exists = playlists[playlistName].videos.some(v => v.id === video.id);
+            if (exists) {
+                alert('Video already in playlist!');
+                return;
+            }
+            
+            playlists[playlistName].videos.push(video);
+            saveSettings();
+            
+            if (currentPlaylist === playlistName) {
+                renderCurrentPlaylist();
+            }
+            
+            renderPlaylists();
+        }
+
+        function removeFromPlaylist(index) {
+            if (!currentPlaylist) return;
+            
+            playlists[currentPlaylist].videos.splice(index, 1);
+            
+            // Adjust current video index if needed
+            if (currentVideoIndex >= index && currentVideoIndex > 0) {
+                currentVideoIndex--;
+            }
+            
+            saveSettings();
+            renderCurrentPlaylist();
+            renderPlaylists();
+        }
+
+        // Video playback
+        function playVideo(videoId, title, channel) {
+            const videoContainer = document.getElementById('videoContainer');
+            const videoPlayer = document.getElementById('videoPlayer');
+            const videoTitle = document.getElementById('videoTitle');
+            const videoChannel = document.getElementById('videoChannel');
+            
+            const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            videoPlayer.src = embedUrl;
+            videoTitle.textContent = title;
+            videoChannel.textContent = channel;
+            videoContainer.classList.remove('hidden');
+            
+            videoContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function playVideoFromPlaylist(index) {
+            if (!currentPlaylist) return;
+            
+            const videos = playlists[currentPlaylist].videos;
+            if (index < 0 || index >= videos.length) return;
+            
+            currentVideoIndex = index;
+            const video = videos[index];
+            
+            playVideo(video.id, video.title, video.channel);
+            renderCurrentPlaylist(); // Update active indicator
+        }
+
+        function clearVideo() {
+            const videoContainer = document.getElementById('videoContainer');
+            const videoPlayer = document.getElementById('videoPlayer');
+            
+            videoPlayer.src = '';
+            videoContainer.classList.add('hidden');
+        }
+
+        // Playback controls
+        function toggleShuffle() {
+            playbackSettings.shuffle = !playbackSettings.shuffle;
+            saveSettings();
+            updatePlaybackUI();
+        }
+
+        function toggleRepeat() {
+            const modes = ['off', 'all', 'one'];
+            const currentIndex = modes.indexOf(playbackSettings.repeat);
+            playbackSettings.repeat = modes[(currentIndex + 1) % modes.length];
+            saveSettings();
+            updatePlaybackUI();
+        }
+
+        function updatePlaybackUI() {
+            document.getElementById('shuffleStatus').textContent = playbackSettings.shuffle ? 'On' : 'Off';
+            document.getElementById('shuffleBtn').classList.toggle('bg-primary', playbackSettings.shuffle);
+            document.getElementById('shuffleBtn').classList.toggle('bg-gray-600', !playbackSettings.shuffle);
+            
+            const repeatText = playbackSettings.repeat === 'off' ? 'Off' : 
+                              playbackSettings.repeat === 'all' ? 'All' : 'One';
+            document.getElementById('repeatStatus').textContent = repeatText;
+            document.getElementById('repeatBtn').classList.toggle('bg-primary', playbackSettings.repeat !== 'off');
+            document.getElementById('repeatBtn').classList.toggle('bg-gray-600', playbackSettings.repeat === 'off');
+        }
+
+        function playNext() {
+            if (!currentPlaylist) return;
+            
+            const videos = playlists[currentPlaylist].videos;
+            if (videos.length === 0) return;
+            
+            let nextIndex;
+            
+            if (playbackSettings.shuffle) {
+                nextIndex = Math.floor(Math.random() * videos.length);
+            } else {
+                nextIndex = (currentVideoIndex + 1) % videos.length;
+            }
+            
+            playVideoFromPlaylist(nextIndex);
+        }
+
+        function playPrevious() {
+            if (!currentPlaylist) return;
+            
+            const videos = playlists[currentPlaylist].videos;
+            if (videos.length === 0) return;
+            
+            let prevIndex;
+            
+            if (playbackSettings.shuffle) {
+                prevIndex = Math.floor(Math.random() * videos.length);
+            } else {
+                prevIndex = currentVideoIndex === 0 ? videos.length - 1 : currentVideoIndex - 1;
+            }
+            
+            playVideoFromPlaylist(prevIndex);
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                searchVideos();
+            }
+        });
+
+        document.getElementById('playlistNameInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                createPlaylist();
+            }
+        });
+
+        // Format date helper
         function formatDate(dateString) {
             const date = new Date(dateString);
             const now = new Date();
@@ -468,13 +742,6 @@
             if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
             return `${Math.floor(diffDays / 365)} years ago`;
         }
-
-        // Handle Enter key in search input
-        document.getElementById('searchInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                searchVideos();
-            }
-        });
     </script>
 </body>
 </html>
