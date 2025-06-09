@@ -79,6 +79,42 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .background-toggle {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background-color: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-switch.active {
+            background-color: #5D5CDE;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(20px);
+        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
@@ -106,6 +142,22 @@
                             >
                                 ✕
                             </button>
+                        </div>
+                        
+                        <!-- Background Playback Toggle -->
+                        <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <div class="background-toggle">
+                                <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Background Playback:</span>
+                                <div 
+                                    id="backgroundToggle" 
+                                    class="toggle-switch active" 
+                                    onclick="toggleBackgroundPlayback()"
+                                >
+                                    <div class="toggle-slider"></div>
+                                </div>
+                                <span class="text-sm text-blue-600 dark:text-blue-400" id="backgroundStatus">Enabled</span>
+                            </div>
+                            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">Keep playing when browser is minimized or screen is locked</p>
                         </div>
                         
                         <!-- Playback Controls -->
@@ -255,11 +307,147 @@
         let playerReady = false;
         let isAdPlaying = false;
         let playerMutedForAd = false;
+        let wasPlayingBeforeHidden = false;
+        let backgroundPlaybackEnabled = true;
+
+        // Background playback functionality
+        function initializeBackgroundPlayback() {
+            // Page Visibility API - handles tab switching, minimizing browser
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Window focus/blur events - handles window switching
+            window.addEventListener('blur', handleWindowBlur);
+            window.addEventListener('focus', handleWindowFocus);
+            
+            // Prevent automatic pause on focus loss
+            window.addEventListener('pagehide', handlePageHide);
+            window.addEventListener('pageshow', handlePageShow);
+            
+            // Mobile specific events
+            document.addEventListener('webkitvisibilitychange', handleVisibilityChange);
+            
+            console.log('Background playback initialized');
+        }
+
+        function handleVisibilityChange() {
+            if (!player || !backgroundPlaybackEnabled) return;
+            
+            if (document.hidden || document.webkitHidden) {
+                // Page became hidden - remember state but don't pause
+                if (player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                    wasPlayingBeforeHidden = true;
+                    console.log('Page hidden - keeping video playing');
+                    // Don't pause the video, let it continue playing
+                }
+            } else {
+                // Page became visible - resume if it was playing
+                if (wasPlayingBeforeHidden && player.getPlayerState && player.getPlayerState() !== YT.PlayerState.PLAYING) {
+                    setTimeout(() => {
+                        if (player.playVideo) {
+                            player.playVideo();
+                            console.log('Page visible - resuming video');
+                        }
+                    }, 100);
+                }
+                wasPlayingBeforeHidden = false;
+            }
+        }
+
+        function handleWindowBlur() {
+            if (!player || !backgroundPlaybackEnabled) return;
+            
+            // Window lost focus - remember state but don't pause
+            if (player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                wasPlayingBeforeHidden = true;
+                console.log('Window blur - keeping video playing');
+                // Prevent the default pause behavior
+                setTimeout(() => {
+                    if (player.getPlayerState && player.getPlayerState() !== YT.PlayerState.PLAYING && backgroundPlaybackEnabled) {
+                        player.playVideo();
+                    }
+                }, 50);
+            }
+        }
+
+        function handleWindowFocus() {
+            if (!player || !backgroundPlaybackEnabled) return;
+            
+            // Window gained focus - resume if needed
+            if (wasPlayingBeforeHidden) {
+                setTimeout(() => {
+                    if (player.playVideo) {
+                        player.playVideo();
+                        console.log('Window focus - resuming video');
+                    }
+                }, 100);
+                wasPlayingBeforeHidden = false;
+            }
+        }
+
+        function handlePageHide() {
+            if (!player || !backgroundPlaybackEnabled) return;
+            
+            // Page is being hidden (e.g., browser closing, navigation)
+            if (player.getPlayerState && player.getPlayerState() === YT.PlayerState.PLAYING) {
+                wasPlayingBeforeHidden = true;
+                console.log('Page hide - preserving play state');
+            }
+        }
+
+        function handlePageShow() {
+            if (!player || !backgroundPlaybackEnabled) return;
+            
+            // Page is being shown again
+            if (wasPlayingBeforeHidden) {
+                setTimeout(() => {
+                    if (player.playVideo) {
+                        player.playVideo();
+                        console.log('Page show - resuming video');
+                    }
+                }, 100);
+                wasPlayingBeforeHidden = false;
+            }
+        }
+
+        function toggleBackgroundPlayback() {
+            backgroundPlaybackEnabled = !backgroundPlaybackEnabled;
+            const toggle = document.getElementById('backgroundToggle');
+            const status = document.getElementById('backgroundStatus');
+            
+            if (backgroundPlaybackEnabled) {
+                toggle.classList.add('active');
+                status.textContent = 'Enabled';
+            } else {
+                toggle.classList.remove('active');
+                status.textContent = 'Disabled';
+            }
+            
+            // Save preference
+            saveSettings();
+            
+            console.log('Background playback:', backgroundPlaybackEnabled ? 'enabled' : 'disabled');
+        }
+
+        // Override default browser behavior that pauses videos
+        function preventAutoPause() {
+            // Intercept and prevent pause events when backgroundPlayback is enabled
+            if (player && player.addEventListener) {
+                const originalPauseVideo = player.pauseVideo;
+                player.pauseVideo = function() {
+                    if (backgroundPlaybackEnabled && (document.hidden || document.webkitHidden)) {
+                        console.log('Preventing auto-pause due to background playback setting');
+                        return; // Don't pause
+                    }
+                    return originalPauseVideo.call(this);
+                };
+            }
+        }
 
         // YouTube Player API callback
         function onYouTubeIframeAPIReady() {
             console.log('YouTube API ready');
             playerReady = true;
+            initializeBackgroundPlayback();
         }
 
         // Player state change event handler
@@ -275,6 +463,17 @@
             // Check for ads using getCurrentTime method
             // If getCurrentTime returns -1, it usually means an ad is playing
             checkForAds();
+            
+            // Prevent auto-pause on background
+            if (backgroundPlaybackEnabled && event.data === YT.PlayerState.PAUSED && 
+                (document.hidden || document.webkitHidden)) {
+                setTimeout(() => {
+                    if (player && player.playVideo) {
+                        player.playVideo();
+                        console.log('Re-starting video paused in background');
+                    }
+                }, 100);
+            }
         }
 
         // Ad state change event handler
@@ -672,7 +871,8 @@
         let currentVideoIndex = 0;
         let playbackSettings = {
             shuffle: false,
-            repeat: 'off' // 'off', 'all', 'one'
+            repeat: 'off', // 'off', 'all', 'one'
+            backgroundPlayback: true
         };
         
         // Media Session variables
@@ -725,21 +925,42 @@
 
             if (savedPlaybackSettings) {
                 playbackSettings = savedPlaybackSettings;
+                // Set background playback from saved settings
+                if (savedPlaybackSettings.backgroundPlayback !== undefined) {
+                    backgroundPlaybackEnabled = savedPlaybackSettings.backgroundPlayback;
+                }
             }
 
             if (savedApiKey) {
                 apiKey = savedApiKey;
             }
+            
+            // Update UI to reflect loaded settings
+            updateBackgroundPlaybackUI();
         }
 
         // Save settings to cookies
         function saveSettings() {
+            playbackSettings.backgroundPlayback = backgroundPlaybackEnabled;
             setCookie('ytplayer_playlists', playlists);
             setCookie('ytplayer_playback', playbackSettings);
             setCookie('ytplayer_apikey', apiKey);
         }
 
-
+        function updateBackgroundPlaybackUI() {
+            const toggle = document.getElementById('backgroundToggle');
+            const status = document.getElementById('backgroundStatus');
+            
+            if (toggle && status) {
+                if (backgroundPlaybackEnabled) {
+                    toggle.classList.add('active');
+                    status.textContent = 'Enabled';
+                } else {
+                    toggle.classList.remove('active');
+                    status.textContent = 'Disabled';
+                }
+            }
+        }
 
         // Video search functionality
         async function searchVideos() {
@@ -1252,7 +1473,11 @@
                     },
                     events: {
                         onStateChange: onPlayerStateChange,
-                        onAdStateChange: onAdStateChange
+                        onAdStateChange: onAdStateChange,
+                        onReady: function(event) {
+                            console.log('Player ready');
+                            preventAutoPause();
+                        }
                     }
                 });
                 
