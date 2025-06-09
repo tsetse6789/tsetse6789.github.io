@@ -417,7 +417,7 @@
                                 ▶️ Play
                             </button>
                             <button 
-                                onclick="showAddToPlaylistMenu('${video.id.videoId}', '${escapeHtml(video.snippet.title)}', '${escapeHtml(video.snippet.channelTitle)}', '${video.snippet.thumbnails.default.url}')" 
+                                onclick="showAddToPlaylistMenu('${video.id.videoId}', '${escapeHtml(video.snippet.title)}', '${escapeHtml(video.snippet.channelTitle)}', '${video.snippet.thumbnails.default.url}', this)" 
                                 class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
                             >
                                 ➕ Add
@@ -562,7 +562,7 @@
             `).join('');
         }
 
-        function showAddToPlaylistMenu(videoId, title, channel, thumbnail) {
+        function showAddToPlaylistMenu(videoId, title, channel, thumbnail, buttonElement) {
             const playlistNames = Object.keys(playlists);
             
             if (playlistNames.length === 0) {
@@ -570,12 +570,61 @@
                 return;
             }
             
-            const selectedPlaylist = prompt(`Add "${title}" to playlist:\n\n${playlistNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}\n\nEnter playlist number:`);
-            
-            if (selectedPlaylist && selectedPlaylist > 0 && selectedPlaylist <= playlistNames.length) {
-                const playlistName = playlistNames[selectedPlaylist - 1];
-                addToPlaylist(playlistName, { id: videoId, title, channel, thumbnail });
+            // Remove any existing dropdown
+            const existingDropdown = document.querySelector('.playlist-dropdown');
+            if (existingDropdown) {
+                existingDropdown.remove();
             }
+            
+            // Create dropdown menu
+            const dropdown = document.createElement('div');
+            dropdown.className = 'playlist-dropdown absolute z-50 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg py-2 min-w-48';
+            dropdown.style.top = '100%';
+            dropdown.style.left = '0';
+            dropdown.style.marginTop = '4px';
+            
+            // Add header
+            const header = document.createElement('div');
+            header.className = 'px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600';
+            header.textContent = 'Add to playlist:';
+            dropdown.appendChild(header);
+            
+            // Add playlist options
+            playlistNames.forEach(playlistName => {
+                const option = document.createElement('div');
+                option.className = 'px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors';
+                option.textContent = `${playlistName} (${playlists[playlistName].videos.length} videos)`;
+                option.onclick = () => {
+                    addToPlaylist(playlistName, { id: videoId, title, channel, thumbnail });
+                    dropdown.remove();
+                };
+                dropdown.appendChild(option);
+            });
+            
+            // Position dropdown relative to button
+            const card = buttonElement.closest('.bg-white, .bg-gray-700');
+            card.style.position = 'relative';
+            const buttonRect = buttonElement.getBoundingClientRect();
+            const cardRect = card.getBoundingClientRect();
+            
+            dropdown.style.position = 'absolute';
+            dropdown.style.top = (buttonRect.bottom - cardRect.top + 4) + 'px';
+            dropdown.style.left = (buttonRect.left - cardRect.left) + 'px';
+            
+            card.appendChild(dropdown);
+            
+            // Close dropdown when clicking outside
+            const closeDropdown = (e) => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.remove();
+                    document.removeEventListener('click', closeDropdown);
+                }
+            };
+            
+            // Add event listener after a small delay to prevent immediate closure
+            setTimeout(() => {
+                document.addEventListener('click', closeDropdown);
+            }, 100);
         }
 
         function addToPlaylist(playlistName, video) {
