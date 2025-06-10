@@ -85,8 +85,8 @@
     <div class="container mx-auto px-4 py-6 max-w-7xl">
         <!-- Header -->
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-primary mb-2">YouTube Player</h1>
-            <p class="text-gray-600 dark:text-gray-400">Search, Play, Reduced Ads</p>
+            <h1 class="text-3xl font-bold text-primary mb-2">YouTube Player by Nut</h1>
+            <p class="text-gray-600 dark:text-gray-400">Powered by YouTube</p>
         </div>
 
         <div class="flex flex-col lg:flex-row gap-6">
@@ -152,7 +152,26 @@
 
                 <!-- YouTube Search Section -->
                 <div id="searchSection" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                    <h3 class="text-lg font-semibold mb-4">Search Videos on YouTube:</h3>
+                    <h3 class="text-lg font-semibold mb-4">Search on YouTube:</h3>
+                    
+                    <!-- Search Type Selector -->
+                    <div class="flex gap-2 mb-4">
+                        <button 
+                            onclick="setSearchType('video')" 
+                            id="videoSearchBtn"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium"
+                        >
+                            📺 Videos
+                        </button>
+                        <button 
+                            onclick="setSearchType('channel')" 
+                            id="channelSearchBtn"
+                            class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                        >
+                            👤 Channels
+                        </button>
+                    </div>
+                    
                     <div class="flex flex-col sm:flex-row gap-3 mb-6">
                         <input 
                             type="text" 
@@ -161,11 +180,18 @@
                             class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         >
                         <button 
-                            onclick="searchVideos()" 
+                            onclick="performSearch()" 
                             id="searchButton"
                             class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                         >
                             🔍 Search
+                        </button>
+                        <button 
+                            onclick="clearSearchResults()" 
+                            id="clearButton"
+                            class="px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                        >
+                            ✕ Clear
                         </button>
                     </div>
                     
@@ -477,6 +503,8 @@
             shuffle: false,
             repeat: 'off' // 'off', 'all', 'one'
         };
+        let searchType = 'video'; // 'video' or 'channel'
+        let currentChannelId = null;
         
         // Media Session variables
         let currentVideoInfo = {
@@ -544,8 +572,73 @@
 
 
 
-        // Video search functionality
-        async function searchVideos() {
+        // Search functionality
+        function setSearchType(type) {
+            searchType = type;
+            currentChannelId = null;
+            
+            // Update button styles
+            document.getElementById('videoSearchBtn').classList.toggle('bg-primary', type === 'video');
+            document.getElementById('videoSearchBtn').classList.toggle('bg-gray-600', type !== 'video');
+            document.getElementById('channelSearchBtn').classList.toggle('bg-primary', type === 'channel');
+            document.getElementById('channelSearchBtn').classList.toggle('bg-gray-600', type !== 'channel');
+            
+            // Update placeholder
+            const placeholder = type === 'video' ? 'Search for videos...' : 'Search for channels...';
+            document.getElementById('searchInput').placeholder = placeholder;
+            
+            // Clear previous results
+            clearSearchResults();
+        }
+
+        function performSearch() {
+            if (searchType === 'video') {
+                searchVideos();
+            } else {
+                searchChannels();
+            }
+        }
+
+        async function searchVideos(channelId = null) {
+            const searchInput = document.getElementById('searchInput');
+            const query = searchInput.value.trim();
+            
+            if (!query && !channelId) {
+                alert('Please enter a search term');
+                return;
+            }
+            
+            if (!apiKey) {
+                alert('Please set up your API key first');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                let url;
+                if (channelId) {
+                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&channelId=${channelId}&type=video&order=relevance&key=${apiKey}`;
+                } else {
+                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
+                }
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`API Error (${response.status})`);
+                }
+                
+                const data = await response.json();
+                displayVideoResults(data.items);
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                hideLoading();
+                alert(`Search failed: ${error.message}`);
+            }
+        }
+
+        async function searchChannels() {
             const searchInput = document.getElementById('searchInput');
             const query = searchInput.value.trim();
             
@@ -562,7 +655,7 @@
             showLoading();
             
             try {
-                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q=${encodeURIComponent(query)}&type=channel&key=${apiKey}`;
                 const response = await fetch(url);
                 
                 if (!response.ok) {
@@ -570,7 +663,7 @@
                 }
                 
                 const data = await response.json();
-                displaySearchResults(data.items);
+                displayChannelResults(data.items);
                 
             } catch (error) {
                 console.error('Search error:', error);
@@ -579,7 +672,7 @@
             }
         }
 
-        function displaySearchResults(videos) {
+        function displayVideoResults(videos) {
             hideLoading();
             const resultsContainer = document.getElementById('searchResults');
             const noResultsDiv = document.getElementById('noResults');
@@ -621,6 +714,57 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        function displayChannelResults(channels) {
+            hideLoading();
+            const resultsContainer = document.getElementById('searchResults');
+            const noResultsDiv = document.getElementById('noResults');
+            
+            if (!channels || channels.length === 0) {
+                resultsContainer.innerHTML = '';
+                noResultsDiv.classList.remove('hidden');
+                return;
+            }
+            
+            noResultsDiv.classList.add('hidden');
+            
+            resultsContainer.innerHTML = channels.map(channel => `
+                <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden">
+                    <div class="relative">
+                        <img src="${channel.snippet.thumbnails.medium?.url || channel.snippet.thumbnails.default?.url || ''}" alt="${channel.snippet.title}" class="w-full h-32 object-cover">
+                    </div>
+                    <div class="p-3">
+                        <h4 class="font-semibold text-sm line-clamp-2 mb-2" title="${channel.snippet.title}">
+                            ${channel.snippet.title}
+                        </h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2 line-clamp-2">
+                            ${channel.snippet.description || 'No description available'}
+                        </p>
+                        <div class="flex gap-2">
+                            <button 
+                                onclick="viewChannelVideos('${channel.id.channelId}', '${escapeHtml(channel.snippet.title)}')" 
+                                class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-xs"
+                            >
+                                📺 Videos
+                            </button>
+                            <button 
+                                onclick="viewChannelPlaylists('${channel.id.channelId}', '${escapeHtml(channel.snippet.title)}')" 
+                                class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
+                            >
+                                📋 Playlists
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearSearchResults() {
+            document.getElementById('searchResults').innerHTML = '';
+            document.getElementById('noResults').classList.add('hidden');
+            document.getElementById('loadingState').classList.add('hidden');
+            currentChannelId = null;
         }
 
         function escapeHtml(text) {
@@ -1161,10 +1305,171 @@
             playVideoFromPlaylist(prevIndex);
         }
 
+        // Channel content functions
+        async function viewChannelVideos(channelId, channelTitle) {
+            currentChannelId = channelId;
+            document.getElementById('searchInput').value = `${channelTitle} - Videos`;
+            await searchVideos(channelId);
+        }
+
+        async function viewChannelPlaylists(channelId, channelTitle) {
+            if (!apiKey) {
+                alert('Please set up your API key first');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${channelId}&maxResults=12&key=${apiKey}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`API Error (${response.status})`);
+                }
+                
+                const data = await response.json();
+                displayYouTubePlaylists(data.items, channelTitle);
+                
+            } catch (error) {
+                console.error('Playlist search error:', error);
+                hideLoading();
+                alert(`Failed to load playlists: ${error.message}`);
+            }
+        }
+
+        function displayYouTubePlaylists(playlists, channelTitle) {
+            hideLoading();
+            const resultsContainer = document.getElementById('searchResults');
+            const noResultsDiv = document.getElementById('noResults');
+            
+            if (!playlists || playlists.length === 0) {
+                resultsContainer.innerHTML = '';
+                noResultsDiv.classList.remove('hidden');
+                return;
+            }
+            
+            noResultsDiv.classList.add('hidden');
+            document.getElementById('searchInput').value = `${channelTitle} - Playlists`;
+            
+            resultsContainer.innerHTML = playlists.map(playlist => `
+                <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden">
+                    <div class="relative">
+                        <img src="${playlist.snippet.thumbnails.medium?.url || playlist.snippet.thumbnails.default?.url || ''}" alt="${playlist.snippet.title}" class="w-full h-32 object-cover">
+                        <div class="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
+                            📋 Playlist
+                        </div>
+                    </div>
+                    <div class="p-3">
+                        <h4 class="font-semibold text-sm line-clamp-2 mb-2" title="${playlist.snippet.title}">
+                            ${playlist.snippet.title}
+                        </h4>
+                        <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            ${playlist.snippet.channelTitle}
+                        </p>
+                        <div class="flex gap-2">
+                            <button 
+                                onclick="viewPlaylistVideos('${playlist.id}', '${escapeHtml(playlist.snippet.title)}')" 
+                                class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-xs"
+                            >
+                                📺 View Videos
+                            </button>
+                            <button 
+                                onclick="importYouTubePlaylist('${playlist.id}', '${escapeHtml(playlist.snippet.title)}')" 
+                                class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
+                            >
+                                📥 Import
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function viewPlaylistVideos(playlistId, playlistTitle) {
+            if (!apiKey) {
+                alert('Please set up your API key first');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=12&key=${apiKey}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`API Error (${response.status})`);
+                }
+                
+                const data = await response.json();
+                const videos = data.items.map(item => ({
+                    id: { videoId: item.snippet.resourceId.videoId },
+                    snippet: item.snippet
+                }));
+                displayVideoResults(videos);
+                document.getElementById('searchInput').value = `${playlistTitle} - Videos`;
+                
+            } catch (error) {
+                console.error('Playlist videos error:', error);
+                hideLoading();
+                alert(`Failed to load playlist videos: ${error.message}`);
+            }
+        }
+
+        async function importYouTubePlaylist(playlistId, playlistTitle) {
+            if (!apiKey) {
+                alert('Please set up your API key first');
+                return;
+            }
+            
+            if (playlists[playlistTitle]) {
+                if (!confirm(`Playlist "${playlistTitle}" already exists. Overwrite it?`)) {
+                    return;
+                }
+            }
+            
+            showLoading();
+            
+            try {
+                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`API Error (${response.status})`);
+                }
+                
+                const data = await response.json();
+                const videos = data.items.map(item => ({
+                    id: item.snippet.resourceId.videoId,
+                    title: item.snippet.title,
+                    channel: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle,
+                    thumbnail: item.snippet.thumbnails.default?.url || ''
+                }));
+                
+                playlists[playlistTitle] = {
+                    name: playlistTitle,
+                    videos: videos,
+                    created: new Date().toISOString(),
+                    imported: true
+                };
+                
+                saveSettings();
+                renderPlaylists();
+                hideLoading();
+                alert(`Successfully imported ${videos.length} videos from "${playlistTitle}"`);
+                
+            } catch (error) {
+                console.error('Import playlist error:', error);
+                hideLoading();
+                alert(`Failed to import playlist: ${error.message}`);
+            }
+        }
+
         // Event listeners
         document.getElementById('searchInput').addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
-                searchVideos();
+                performSearch();
             }
         });
 
