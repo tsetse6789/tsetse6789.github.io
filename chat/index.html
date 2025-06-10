@@ -1382,13 +1382,10 @@
         function loadRooms() {
             if (roomsListener) {
                 database.ref('rooms').off('value', roomsListener);
-                roomsListener = null;
             }
-            
             roomsListener = database.ref('rooms').on('value', async (snapshot) => {
                 const roomsList = document.getElementById('rooms-list');
                 roomsList.innerHTML = '';
-                
                 if (snapshot.exists()) {
                     const rooms = snapshot.val();
                     let userRoomsCount = 0;
@@ -1397,17 +1394,13 @@
                     for (const [roomId, roomData] of Object.entries(rooms)) {
                         if (roomData.users && roomData.users[currentUser.uid]) {
                             userRoomsCount++;
-                            try {
-                                const roomElement = await createRoomElement(roomId, roomData);
-                                roomElements.push(roomElement);
-                            } catch (error) {
-                                console.error('Error creating room element:', error);
-                            }
+                            const roomElement = await createRoomElement(roomId, roomData);
+                            roomElements.push(roomElement);
                         }
                     }
                     
                     roomElements.forEach(element => {
-                        if (element) roomsList.appendChild(element);
+                        roomsList.appendChild(element);
                     });
                     
                     if (userRoomsCount === 0) {
@@ -1417,7 +1410,6 @@
                     roomsList.innerHTML = '<p class="text-gray-500 text-center py-4">No rooms yet. Create your first room!</p>';
                 }
             }, (error) => {
-                console.error('Error loading rooms:', error);
                 showCustomAlert('Error loading rooms: ' + error.message);
             });
         }
@@ -1796,40 +1788,26 @@
         function loadMessages() {
             if (messagesListener) {
                 database.ref(`rooms/${currentRoom}/messages`).off('value', messagesListener);
-                messagesListener = null;
             }
-            
             messagesListener = database.ref(`rooms/${currentRoom}/messages`).on('value', (snapshot) => {
                 const messagesContainer = document.getElementById('messages-container');
                 messagesContainer.innerHTML = '';
-                
                 if (snapshot.exists()) {
                     const messages = snapshot.val();
                     const sortedMessages = Object.entries(messages).sort((a, b) => a[1].timestamp - b[1].timestamp);
                     Promise.all(sortedMessages.map(([messageId, messageData]) => createMessageElement(messageId, messageData)))
                         .then(messageElements => {
                             messageElements.forEach(element => {
-                                if (element) messagesContainer.appendChild(element);
+                                messagesContainer.appendChild(element);
                             });
                             messagesContainer.scrollTop = messagesContainer.scrollHeight;
                             
-                            // Update lastSeen timestamp when viewing messages
-                            if (currentRoom && currentUser) {
-                                database.ref(`rooms/${currentRoom}/users/${currentUser.uid}/lastSeen`).set(Date.now()).catch(console.error);
-                            }
-                            
                             // Set up event listeners for message actions after elements are added
                             setupMessageActionListeners();
-                        })
-                        .catch(error => {
-                            console.error('Error creating message elements:', error);
                         });
                 } else {
                     messagesContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No messages yet. Start the conversation!</p>';
                 }
-            }, (error) => {
-                console.error('Error loading messages:', error);
-                showCustomAlert('Error loading messages: ' + error.message);
             });
         }
 
@@ -2047,10 +2025,6 @@
                 }
                 
                 await messageRef.set(messageData);
-                
-                // Update lastSeen timestamp when sending message
-                await database.ref(`rooms/${currentRoom}/users/${currentUser.uid}/lastSeen`).set(Date.now());
-                
                 messageInput.value = '';
                 
                 // Hide reply indicator after sending
@@ -2095,12 +2069,10 @@
                         };
                     }
                     
-                    // Count unread messages (exclude messages from current user)
+                    // Count unread messages
                     const allMessagesSnapshot = await database.ref(`rooms/${roomId}/messages`).orderByChild('timestamp').startAt(userLastSeen + 1).once('value');
                     if (allMessagesSnapshot.exists()) {
-                        const unreadMessages = Object.values(allMessagesSnapshot.val());
-                        // Only count messages that are not from the current user
-                        unreadCount = unreadMessages.filter(msg => msg.senderId !== currentUser.uid).length;
+                        unreadCount = Object.keys(allMessagesSnapshot.val()).length;
                     }
                 }
                 
