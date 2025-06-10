@@ -698,10 +698,18 @@
             if (!videos || videos.length === 0) {
                 resultsContainer.innerHTML = '';
                 noResultsDiv.classList.remove('hidden');
+                currentSearchData = null;
                 return;
             }
             
             noResultsDiv.classList.add('hidden');
+            
+            // Store the current search data
+            currentSearchData = {
+                type: 'videos',
+                data: videos,
+                channelTitle: ''
+            };
             
             resultsContainer.innerHTML = `
                 <div class="col-span-full mb-4 text-center text-sm text-gray-600 dark:text-gray-400">
@@ -746,10 +754,18 @@
             if (!channels || channels.length === 0) {
                 resultsContainer.innerHTML = '';
                 noResultsDiv.classList.remove('hidden');
+                currentSearchData = null;
                 return;
             }
             
             noResultsDiv.classList.add('hidden');
+            
+            // Store the current search data
+            currentSearchData = {
+                type: 'channels',
+                data: channels,
+                channelTitle: ''
+            };
             
             resultsContainer.innerHTML = `
                 <div class="col-span-full mb-4 text-center text-sm text-gray-600 dark:text-gray-400">
@@ -786,13 +802,7 @@
             `).join('');
         }
 
-        function clearSearchResults() {
-            document.getElementById('searchResults').innerHTML = '';
-            document.getElementById('noResults').classList.add('hidden');
-            document.getElementById('loadingState').classList.add('hidden');
-            currentChannelId = null;
-            hideNavigationBar();
-        }
+
 
         function showNavigationBar(pathText) {
             document.getElementById('navigationBar').classList.remove('hidden');
@@ -816,17 +826,16 @@
                 // Update search type buttons
                 setSearchTypeUI(searchType);
                 
-                // Show previous results
-                if (previousState.results && previousState.results.length > 0) {
-                    if (previousState.resultType === 'channels') {
-                        // Reconstruct channel results
-                        restoreSearchResults(previousState.results, previousState.resultType);
-                    } else if (previousState.resultType === 'playlists') {
-                        // Reconstruct playlist results  
-                        restoreSearchResults(previousState.results, previousState.resultType);
-                    } else {
-                        // Reconstruct video results
-                        restoreSearchResults(previousState.results, previousState.resultType);
+                // Show previous results using cached data (NO API calls)
+                if (previousState.searchData) {
+                    currentSearchData = previousState.searchData;
+                    
+                    if (previousState.searchData.type === 'channels') {
+                        displayChannelResults(previousState.searchData.data);
+                    } else if (previousState.searchData.type === 'playlists') {
+                        displayYouTubePlaylists(previousState.searchData.data, previousState.searchData.channelTitle);
+                    } else if (previousState.searchData.type === 'videos') {
+                        displayVideoResults(previousState.searchData.data);
                     }
                 } else {
                     clearSearchResults();
@@ -854,28 +863,13 @@
             document.getElementById('searchInput').placeholder = placeholder;
         }
 
-        function restoreSearchResults(results, resultType) {
-            hideLoading();
-            const resultsContainer = document.getElementById('searchResults');
-            const noResultsDiv = document.getElementById('noResults');
-            
-            if (!results || results.length === 0) {
-                resultsContainer.innerHTML = '';
-                noResultsDiv.classList.remove('hidden');
-                return;
-            }
-            
-            noResultsDiv.classList.add('hidden');
-            
-            // Add count header
-            const countText = resultType === 'channels' ? 'channels' : 
-                             resultType === 'playlists' ? 'playlists' : 'videos';
-            
-            resultsContainer.innerHTML = `
-                <div class="col-span-full mb-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                    Found ${results.length} ${countText}
-                </div>
-            ` + results.map(result => result.html).join('');
+        function clearSearchResults() {
+            document.getElementById('searchResults').innerHTML = '';
+            document.getElementById('noResults').classList.add('hidden');
+            document.getElementById('loadingState').classList.add('hidden');
+            currentChannelId = null;
+            currentSearchData = null;
+            hideNavigationBar();
         }
 
         function escapeHtml(text) {
@@ -1419,17 +1413,12 @@
         // Channel content functions
         async function viewChannelVideos(channelId, channelTitle) {
             // Save current state to navigation stack
-            const currentResults = Array.from(document.querySelectorAll('#searchResults > div')).length > 0 ? 
-                getCurrentSearchResults() : null;
-            
-            if (currentResults) {
+            if (currentSearchData) {
                 navigationStack.push({
                     searchType: searchType,
                     query: document.getElementById('searchInput').value,
                     channelId: currentChannelId,
-                    results: currentResults.results,
-                    resultType: currentResults.type,
-                    channelTitle: currentResults.channelTitle,
+                    searchData: currentSearchData,
                     pathText: `${channelTitle} - Channels`
                 });
             }
@@ -1447,17 +1436,12 @@
             }
             
             // Save current state to navigation stack
-            const currentResults = Array.from(document.querySelectorAll('#searchResults > div')).length > 0 ? 
-                getCurrentSearchResults() : null;
-            
-            if (currentResults) {
+            if (currentSearchData) {
                 navigationStack.push({
                     searchType: searchType,
                     query: document.getElementById('searchInput').value,
                     channelId: currentChannelId,
-                    results: currentResults.results,
-                    resultType: currentResults.type,
-                    channelTitle: currentResults.channelTitle,
+                    searchData: currentSearchData,
                     pathText: `${channelTitle} - Channels`
                 });
             }
@@ -1491,11 +1475,19 @@
             if (!playlists || playlists.length === 0) {
                 resultsContainer.innerHTML = '';
                 noResultsDiv.classList.remove('hidden');
+                currentSearchData = null;
                 return;
             }
             
             noResultsDiv.classList.add('hidden');
             document.getElementById('searchInput').value = `${channelTitle} - Playlists`;
+            
+            // Store the current search data
+            currentSearchData = {
+                type: 'playlists',
+                data: playlists,
+                channelTitle: channelTitle
+            };
             
             resultsContainer.innerHTML = `
                 <div class="col-span-full mb-4 text-center text-sm text-gray-600 dark:text-gray-400">
@@ -1542,10 +1534,7 @@
             }
             
             // Save current state to navigation stack (the playlists view)
-            const currentResults = Array.from(document.querySelectorAll('#searchResults > div')).length > 0 ? 
-                getCurrentSearchResults() : null;
-            
-            if (currentResults) {
+            if (currentSearchData) {
                 // Get the current navigation path to save it properly
                 const currentPath = document.getElementById('navigationPath').textContent;
                 
@@ -1553,9 +1542,7 @@
                     searchType: searchType,
                     query: document.getElementById('searchInput').value,
                     channelId: currentChannelId,
-                    results: currentResults.results,
-                    resultType: currentResults.type,
-                    channelTitle: currentResults.channelTitle,
+                    searchData: currentSearchData,
                     pathText: currentPath
                 });
             }
@@ -1586,38 +1573,8 @@
             }
         }
 
-        function getCurrentSearchResults() {
-            const resultElements = document.querySelectorAll('#searchResults > div:not(.col-span-full)'); // Exclude the count header
-            if (resultElements.length === 0) return null;
-            
-            // Try to determine the type of current results
-            const firstElement = resultElements[0];
-            const hasChannelButtons = firstElement.innerHTML.includes('📺 Videos') && firstElement.innerHTML.includes('📋 Playlists');
-            const hasPlaylistBadge = firstElement.innerHTML.includes('📋 Playlist');
-            const hasImportButton = firstElement.innerHTML.includes('📥 Import');
-            
-            let resultType = 'videos';
-            let channelTitle = '';
-            
-            if (hasChannelButtons) {
-                resultType = 'channels';
-            } else if (hasPlaylistBadge || hasImportButton) {
-                resultType = 'playlists';
-                // Extract channel title from navigation path or search input
-                const searchInput = document.getElementById('searchInput').value;
-                const match = searchInput.match(/^(.+) - Playlists$/);
-                if (match) {
-                    channelTitle = match[1];
-                }
-            }
-            
-            // Store the actual HTML elements to recreate the view exactly
-            return {
-                results: Array.from(resultElements).map(el => ({ html: el.outerHTML })),
-                type: resultType,
-                channelTitle: channelTitle
-            };
-        }
+        // Global variable to store current search results data
+        let currentSearchData = null;
 
         async function importYouTubePlaylist(playlistId, playlistTitle) {
             if (!apiKey) {
