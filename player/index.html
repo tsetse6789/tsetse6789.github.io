@@ -172,6 +172,20 @@
                         </button>
                     </div>
                     
+                    <!-- Navigation Breadcrumb -->
+                    <div id="navigationBar" class="hidden mb-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                        <div class="flex items-center gap-2 text-sm">
+                            <button 
+                                onclick="navigateUp()" 
+                                id="upButton"
+                                class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                            >
+                                ⬆️ Back
+                            </button>
+                            <span class="text-gray-600 dark:text-gray-300" id="navigationPath">Search Results</span>
+                        </div>
+                    </div>
+                    
                     <div class="flex flex-col sm:flex-row gap-3 mb-6">
                         <input 
                             type="text" 
@@ -505,6 +519,7 @@
         };
         let searchType = 'video'; // 'video' or 'channel'
         let currentChannelId = null;
+        let navigationStack = [];
         
         // Media Session variables
         let currentVideoInfo = {
@@ -513,28 +528,35 @@
             artwork: ''
         };
 
-        // Cookie utilities
-        function setCookie(name, value, days = 30) {
-            const expires = new Date();
-            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))};expires=${expires.toUTCString()};path=/`;
+        // LocalStorage utilities (much more reliable than cookies)
+        function setLocalStorage(key, value) {
+            try {
+                localStorage.setItem(key, JSON.stringify(value));
+                return true;
+            } catch (error) {
+                console.error('Error saving to localStorage:', error);
+                return false;
+            }
         }
 
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) {
-                    try {
-                        return JSON.parse(decodeURIComponent(c.substring(nameEQ.length, c.length)));
-                    } catch (e) {
-                        return null;
-                    }
-                }
+        function getLocalStorage(key) {
+            try {
+                const item = localStorage.getItem(key);
+                return item ? JSON.parse(item) : null;
+            } catch (error) {
+                console.error('Error reading from localStorage:', error);
+                return null;
             }
-            return null;
+        }
+
+        function removeLocalStorage(key) {
+            try {
+                localStorage.removeItem(key);
+                return true;
+            } catch (error) {
+                console.error('Error removing from localStorage:', error);
+                return false;
+            }
         }
 
         // Initialize app
@@ -543,15 +565,16 @@
             updatePlaybackUI();
         });
 
-        // Load settings from cookies
+        // Load settings from localStorage
         function loadSettings() {
-            const savedPlaylists = getCookie('ytplayer_playlists');
-            const savedPlaybackSettings = getCookie('ytplayer_playback');
-            const savedApiKey = getCookie('ytplayer_apikey');
+            const savedPlaylists = getLocalStorage('ytplayer_playlists');
+            const savedPlaybackSettings = getLocalStorage('ytplayer_playback');
+            const savedApiKey = getLocalStorage('ytplayer_apikey');
 
             if (savedPlaylists) {
                 playlists = savedPlaylists;
                 renderPlaylists();
+                console.log(`Loaded ${Object.keys(playlists).length} playlists from storage`);
             }
 
             if (savedPlaybackSettings) {
@@ -563,11 +586,17 @@
             }
         }
 
-        // Save settings to cookies
+        // Save settings to localStorage
         function saveSettings() {
-            setCookie('ytplayer_playlists', playlists);
-            setCookie('ytplayer_playback', playbackSettings);
-            setCookie('ytplayer_apikey', apiKey);
+            const success = setLocalStorage('ytplayer_playlists', playlists);
+            setLocalStorage('ytplayer_playback', playbackSettings);
+            setLocalStorage('ytplayer_apikey', apiKey);
+            
+            if (success) {
+                console.log(`Saved ${Object.keys(playlists).length} playlists to storage`);
+            } else {
+                console.error('Failed to save playlists to storage');
+            }
         }
 
 
@@ -576,18 +605,7 @@
         function setSearchType(type) {
             searchType = type;
             currentChannelId = null;
-            
-            // Update button styles
-            document.getElementById('videoSearchBtn').classList.toggle('bg-primary', type === 'video');
-            document.getElementById('videoSearchBtn').classList.toggle('bg-gray-600', type !== 'video');
-            document.getElementById('channelSearchBtn').classList.toggle('bg-primary', type === 'channel');
-            document.getElementById('channelSearchBtn').classList.toggle('bg-gray-600', type !== 'channel');
-            
-            // Update placeholder
-            const placeholder = type === 'video' ? 'Search for videos...' : 'Search for channels...';
-            document.getElementById('searchInput').placeholder = placeholder;
-            
-            // Clear previous results
+            setSearchTypeUI(type);
             clearSearchResults();
         }
 
@@ -618,9 +636,9 @@
             try {
                 let url;
                 if (channelId) {
-                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&channelId=${channelId}&type=video&order=relevance&key=${apiKey}`;
+                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&channelId=${channelId}&type=video&order=relevance&key=${apiKey}`;
                 } else {
-                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
+                    url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
                 }
                 const response = await fetch(url);
                 
@@ -655,7 +673,7 @@
             showLoading();
             
             try {
-                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q=${encodeURIComponent(query)}&type=channel&key=${apiKey}`;
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=50&q=${encodeURIComponent(query)}&type=channel&key=${apiKey}`;
                 const response = await fetch(url);
                 
                 if (!response.ok) {
@@ -685,7 +703,11 @@
             
             noResultsDiv.classList.add('hidden');
             
-            resultsContainer.innerHTML = videos.map(video => `
+            resultsContainer.innerHTML = `
+                <div class="col-span-full mb-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                    Found ${videos.length} videos
+                </div>
+            ` + videos.map(video => `
                 <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden">
                     <div class="relative">
                         <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}" class="w-full h-32 object-cover">
@@ -729,7 +751,11 @@
             
             noResultsDiv.classList.add('hidden');
             
-            resultsContainer.innerHTML = channels.map(channel => `
+            resultsContainer.innerHTML = `
+                <div class="col-span-full mb-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                    Found ${channels.length} channels
+                </div>
+            ` + channels.map(channel => `
                 <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden">
                     <div class="relative">
                         <img src="${channel.snippet.thumbnails.medium?.url || channel.snippet.thumbnails.default?.url || ''}" alt="${channel.snippet.title}" class="w-full h-32 object-cover">
@@ -765,6 +791,64 @@
             document.getElementById('noResults').classList.add('hidden');
             document.getElementById('loadingState').classList.add('hidden');
             currentChannelId = null;
+            hideNavigationBar();
+        }
+
+        function showNavigationBar(pathText) {
+            document.getElementById('navigationBar').classList.remove('hidden');
+            document.getElementById('navigationPath').textContent = pathText;
+        }
+
+        function hideNavigationBar() {
+            document.getElementById('navigationBar').classList.add('hidden');
+            navigationStack = [];
+        }
+
+        function navigateUp() {
+            if (navigationStack.length > 0) {
+                const previousState = navigationStack.pop();
+                
+                // Restore previous search state
+                searchType = previousState.searchType;
+                document.getElementById('searchInput').value = previousState.query;
+                currentChannelId = previousState.channelId;
+                
+                // Update search type buttons
+                setSearchTypeUI(searchType);
+                
+                // Show previous results
+                if (previousState.results && previousState.results.length > 0) {
+                    if (previousState.resultType === 'channels') {
+                        displayChannelResults(previousState.results);
+                    } else if (previousState.resultType === 'playlists') {
+                        displayYouTubePlaylists(previousState.results, previousState.channelTitle);
+                    } else {
+                        displayVideoResults(previousState.results);
+                    }
+                } else {
+                    clearSearchResults();
+                }
+                
+                // Update navigation
+                if (navigationStack.length === 0) {
+                    hideNavigationBar();
+                } else {
+                    showNavigationBar(navigationStack[navigationStack.length - 1].pathText);
+                }
+            } else {
+                hideNavigationBar();
+                clearSearchResults();
+            }
+        }
+
+        function setSearchTypeUI(type) {
+            document.getElementById('videoSearchBtn').classList.toggle('bg-primary', type === 'video');
+            document.getElementById('videoSearchBtn').classList.toggle('bg-gray-600', type !== 'video');
+            document.getElementById('channelSearchBtn').classList.toggle('bg-primary', type === 'channel');
+            document.getElementById('channelSearchBtn').classList.toggle('bg-gray-600', type !== 'channel');
+            
+            const placeholder = type === 'video' ? 'Search for videos...' : 'Search for channels...';
+            document.getElementById('searchInput').placeholder = placeholder;
         }
 
         function escapeHtml(text) {
@@ -1307,8 +1391,25 @@
 
         // Channel content functions
         async function viewChannelVideos(channelId, channelTitle) {
+            // Save current state to navigation stack
+            const currentResults = Array.from(document.querySelectorAll('#searchResults > div')).length > 0 ? 
+                getCurrentSearchResults() : null;
+            
+            if (currentResults) {
+                navigationStack.push({
+                    searchType: searchType,
+                    query: document.getElementById('searchInput').value,
+                    channelId: currentChannelId,
+                    results: currentResults.results,
+                    resultType: currentResults.type,
+                    channelTitle: currentResults.channelTitle,
+                    pathText: `${channelTitle} - Channels`
+                });
+            }
+            
             currentChannelId = channelId;
             document.getElementById('searchInput').value = `${channelTitle} - Videos`;
+            showNavigationBar(`${channelTitle} - Videos`);
             await searchVideos(channelId);
         }
 
@@ -1318,10 +1419,26 @@
                 return;
             }
             
+            // Save current state to navigation stack
+            const currentResults = Array.from(document.querySelectorAll('#searchResults > div')).length > 0 ? 
+                getCurrentSearchResults() : null;
+            
+            if (currentResults) {
+                navigationStack.push({
+                    searchType: searchType,
+                    query: document.getElementById('searchInput').value,
+                    channelId: currentChannelId,
+                    results: currentResults.results,
+                    resultType: currentResults.type,
+                    channelTitle: currentResults.channelTitle,
+                    pathText: `${channelTitle} - Channels`
+                });
+            }
+            
             showLoading();
             
             try {
-                const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${channelId}&maxResults=12&key=${apiKey}`;
+                const url = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&channelId=${channelId}&maxResults=50&key=${apiKey}`;
                 const response = await fetch(url);
                 
                 if (!response.ok) {
@@ -1329,6 +1446,7 @@
                 }
                 
                 const data = await response.json();
+                showNavigationBar(`${channelTitle} - Playlists`);
                 displayYouTubePlaylists(data.items, channelTitle);
                 
             } catch (error) {
@@ -1352,7 +1470,11 @@
             noResultsDiv.classList.add('hidden');
             document.getElementById('searchInput').value = `${channelTitle} - Playlists`;
             
-            resultsContainer.innerHTML = playlists.map(playlist => `
+            resultsContainer.innerHTML = `
+                <div class="col-span-full mb-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                    Found ${playlists.length} playlists
+                </div>
+            ` + playlists.map(playlist => `
                 <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden">
                     <div class="relative">
                         <img src="${playlist.snippet.thumbnails.medium?.url || playlist.snippet.thumbnails.default?.url || ''}" alt="${playlist.snippet.title}" class="w-full h-32 object-cover">
@@ -1392,10 +1514,26 @@
                 return;
             }
             
+            // Save current state to navigation stack
+            const currentResults = Array.from(document.querySelectorAll('#searchResults > div')).length > 0 ? 
+                getCurrentSearchResults() : null;
+            
+            if (currentResults) {
+                navigationStack.push({
+                    searchType: searchType,
+                    query: document.getElementById('searchInput').value,
+                    channelId: currentChannelId,
+                    results: currentResults.results,
+                    resultType: currentResults.type,
+                    channelTitle: currentResults.channelTitle,
+                    pathText: document.getElementById('navigationPath').textContent
+                });
+            }
+            
             showLoading();
             
             try {
-                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=12&key=${apiKey}`;
+                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
                 const response = await fetch(url);
                 
                 if (!response.ok) {
@@ -1409,12 +1547,38 @@
                 }));
                 displayVideoResults(videos);
                 document.getElementById('searchInput').value = `${playlistTitle} - Videos`;
+                showNavigationBar(`${playlistTitle} - Videos`);
                 
             } catch (error) {
                 console.error('Playlist videos error:', error);
                 hideLoading();
                 alert(`Failed to load playlist videos: ${error.message}`);
             }
+        }
+
+        function getCurrentSearchResults() {
+            const resultElements = document.querySelectorAll('#searchResults > div');
+            if (resultElements.length === 0) return null;
+            
+            // Try to determine the type of current results
+            const firstElement = resultElements[0];
+            const hasChannelButtons = firstElement.innerHTML.includes('📺 Videos') && firstElement.innerHTML.includes('📋 Playlists');
+            const hasPlaylistBadge = firstElement.innerHTML.includes('📋 Playlist');
+            const hasImportButton = firstElement.innerHTML.includes('📥 Import');
+            
+            let resultType = 'videos';
+            if (hasChannelButtons) {
+                resultType = 'channels';
+            } else if (hasPlaylistBadge || hasImportButton) {
+                resultType = 'playlists';
+            }
+            
+            // This is a simplified approach - in a real app you'd want to store the actual data
+            return {
+                results: Array.from(resultElements).map(el => ({ html: el.outerHTML })),
+                type: resultType,
+                channelTitle: ''
+            };
         }
 
         async function importYouTubePlaylist(playlistId, playlistTitle) {
@@ -1432,24 +1596,38 @@
             showLoading();
             
             try {
-                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&key=${apiKey}`;
-                const response = await fetch(url);
+                // Import ALL videos from playlist (no limits)
+                let allVideos = [];
+                let nextPageToken = '';
+                let totalFetched = 0;
                 
-                if (!response.ok) {
-                    throw new Error(`API Error (${response.status})`);
-                }
-                
-                const data = await response.json();
-                const videos = data.items.map(item => ({
-                    id: item.snippet.resourceId.videoId,
-                    title: item.snippet.title,
-                    channel: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle,
-                    thumbnail: item.snippet.thumbnails.default?.url || ''
-                }));
+                do {
+                    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50${nextPageToken ? '&pageToken=' + nextPageToken : ''}&key=${apiKey}`;
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`API Error (${response.status})`);
+                    }
+                    
+                    const data = await response.json();
+                    const videos = data.items.map(item => ({
+                        id: item.snippet.resourceId.videoId,
+                        title: item.snippet.title,
+                        channel: item.snippet.videoOwnerChannelTitle || item.snippet.channelTitle,
+                        thumbnail: item.snippet.thumbnails.default?.url || ''
+                    }));
+                    
+                    allVideos = allVideos.concat(videos);
+                    totalFetched += videos.length;
+                    nextPageToken = data.nextPageToken || '';
+                    
+                    console.log(`Imported ${totalFetched} videos so far...`);
+                    
+                } while (nextPageToken);
                 
                 playlists[playlistTitle] = {
                     name: playlistTitle,
-                    videos: videos,
+                    videos: allVideos,
                     created: new Date().toISOString(),
                     imported: true
                 };
@@ -1457,7 +1635,7 @@
                 saveSettings();
                 renderPlaylists();
                 hideLoading();
-                alert(`Successfully imported ${videos.length} videos from "${playlistTitle}"`);
+                alert(`Successfully imported ${allVideos.length} videos from "${playlistTitle}"`);
                 
             } catch (error) {
                 console.error('Import playlist error:', error);
