@@ -79,6 +79,78 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Video Details Drawer Styles */
+        .video-details-drawer {
+            margin-top: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .dark .video-details-drawer {
+            background: rgba(55, 65, 81, 0.95);
+        }
+
+        .drawer-header {
+            padding: 1rem;
+            background: rgba(249, 250, 251, 0.8);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .dark .drawer-header {
+            background: rgba(31, 41, 55, 0.8);
+            border-bottom: 1px solid rgba(75, 85, 99, 0.5);
+        }
+
+        .drawer-handle {
+            width: 2rem;
+            height: 0.25rem;
+            background: rgba(156, 163, 175, 0.6);
+            border-radius: 9999px;
+            transition: background-color 0.2s;
+        }
+
+        .drawer-header:hover .drawer-handle {
+            background: rgba(107, 114, 128, 0.8);
+        }
+
+        .drawer-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .video-details-drawer.open .drawer-content {
+            max-height: 600px;
+        }
+
+        .video-details-drawer.open .drawer-toggle-icon svg {
+            transform: rotate(180deg);
+        }
+
+        .line-clamp-4 {
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .stat-item {
+            transition: transform 0.2s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .description-content.expanded .line-clamp-4 {
+            -webkit-line-clamp: unset;
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
@@ -145,6 +217,88 @@
                                 <div class="spinner"></div>
                                 <div class="text-white text-lg font-medium mt-4">Please Wait...</div>
                                 <div class="text-white text-sm opacity-75 mt-2">Loading video content</div>
+                            </div>
+                        </div>
+
+                        <!-- Video Details Drawer -->
+                        <div id="videoDetailsDrawer" class="video-details-drawer">
+                            <!-- Drawer Header -->
+                            <div class="drawer-header" onclick="toggleVideoDetails()">
+                                <div class="flex items-center justify-between w-full cursor-pointer">
+                                    <div class="flex items-center gap-3">
+                                        <div class="drawer-handle"></div>
+                                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Video Details</span>
+                                    </div>
+                                    <div class="drawer-toggle-icon">
+                                        <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Drawer Content -->
+                            <div class="drawer-content">
+                                <!-- Loading State -->
+                                <div id="videoDetailsLoading" class="hidden p-4 text-center">
+                                    <div class="animate-spin inline-block w-6 h-6 border-2 border-current border-t-transparent text-primary rounded-full"></div>
+                                    <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Loading video details...</p>
+                                </div>
+
+                                <!-- Video Statistics -->
+                                <div id="videoStats" class="hidden p-4 border-b border-gray-200 dark:border-gray-600">
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                        <div class="stat-item">
+                                            <div class="text-lg font-semibold text-primary" id="viewCount">-</div>
+                                            <div class="text-xs text-gray-600 dark:text-gray-400">Views</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="text-lg font-semibold text-green-600" id="likeCount">-</div>
+                                            <div class="text-xs text-gray-600 dark:text-gray-400">Likes</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="text-lg font-semibold text-blue-600" id="commentCount">-</div>
+                                            <div class="text-xs text-gray-600 dark:text-gray-400">Comments</div>
+                                        </div>
+                                        <div class="stat-item">
+                                            <div class="text-lg font-semibold text-gray-600 dark:text-gray-400" id="publishedDate">-</div>
+                                            <div class="text-xs text-gray-600 dark:text-gray-400">Published</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Video Description -->
+                                <div id="videoDescription" class="hidden p-4">
+                                    <h4 class="font-semibold mb-3 text-gray-900 dark:text-white">Description</h4>
+                                    <div class="description-content">
+                                        <div id="descriptionText" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap line-clamp-4 mb-3"></div>
+                                        <button id="expandDescription" class="text-primary hover:text-opacity-80 text-sm font-medium hidden">
+                                            Show more
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Channel Info -->
+                                <div id="channelInfo" class="hidden p-4 border-t border-gray-200 dark:border-gray-600">
+                                    <div class="flex items-center gap-3">
+                                        <img id="channelThumbnail" src="" alt="Channel" class="w-12 h-12 rounded-full object-cover">
+                                        <div class="flex-1">
+                                            <div class="font-medium text-gray-900 dark:text-white" id="channelTitle"></div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-400" id="subscriberCount"></div>
+                                        </div>
+                                        <button 
+                                            onclick="viewChannelFromDetails()" 
+                                            class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
+                                        >
+                                            View Channel
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Error State -->
+                                <div id="videoDetailsError" class="hidden p-4 text-center">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Unable to load video details</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -295,6 +449,12 @@
         let playerReady = false;
         let isAdPlaying = false;
         let playerMutedForAd = false;
+        
+        // Background playback variables
+        let audioContext;
+        let isPageVisible = true;
+        let backgroundPlaybackEnabled = true;
+        let wakeLock = null;
 
         // YouTube Player API callback
         function onYouTubeIframeAPIReady() {
@@ -563,6 +723,7 @@
         window.addEventListener('DOMContentLoaded', function() {
             loadSettings();
             updatePlaybackUI();
+            initializeBackgroundPlayback();
         });
 
         // Load settings from localStorage
@@ -1315,7 +1476,178 @@
                 player.loadVideoById(videoId);
             }
             
+            // Load video details for the drawer
+            loadVideoDetails(videoId);
+            
             videoContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Video Details Drawer Functions
+        let currentVideoDetails = null;
+
+        function toggleVideoDetails() {
+            const drawer = document.getElementById('videoDetailsDrawer');
+            drawer.classList.toggle('open');
+        }
+
+        async function loadVideoDetails(videoId) {
+            if (!apiKey) {
+                showVideoDetailsError();
+                return;
+            }
+
+            showVideoDetailsLoading();
+            
+            try {
+                // Fetch video details including statistics
+                const videoUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoId}&key=${apiKey}`;
+                const videoResponse = await fetch(videoUrl);
+                
+                if (!videoResponse.ok) {
+                    throw new Error(`Video API Error (${videoResponse.status})`);
+                }
+                
+                const videoData = await videoResponse.json();
+                
+                if (!videoData.items || videoData.items.length === 0) {
+                    throw new Error('Video not found');
+                }
+                
+                const video = videoData.items[0];
+                
+                // Fetch channel details
+                const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${video.snippet.channelId}&key=${apiKey}`;
+                const channelResponse = await fetch(channelUrl);
+                
+                let channelData = null;
+                if (channelResponse.ok) {
+                    const channelJson = await channelResponse.json();
+                    if (channelJson.items && channelJson.items.length > 0) {
+                        channelData = channelJson.items[0];
+                    }
+                }
+                
+                // Store current video details
+                currentVideoDetails = {
+                    video: video,
+                    channel: channelData
+                };
+                
+                displayVideoDetails(video, channelData);
+                
+            } catch (error) {
+                console.error('Video details error:', error);
+                showVideoDetailsError();
+            }
+        }
+
+        function displayVideoDetails(video, channel) {
+            hideVideoDetailsLoading();
+            
+            // Show video statistics
+            const stats = video.statistics;
+            document.getElementById('viewCount').textContent = formatNumber(stats.viewCount || 0);
+            document.getElementById('likeCount').textContent = formatNumber(stats.likeCount || 0);
+            document.getElementById('commentCount').textContent = formatNumber(stats.commentCount || 0);
+            document.getElementById('publishedDate').textContent = formatPublishDate(video.snippet.publishedAt);
+            
+            document.getElementById('videoStats').classList.remove('hidden');
+            
+            // Show video description
+            const description = video.snippet.description || 'No description available.';
+            document.getElementById('descriptionText').textContent = description;
+            
+            // Show expand button if description is long
+            const expandBtn = document.getElementById('expandDescription');
+            if (description.length > 300) {
+                expandBtn.classList.remove('hidden');
+                expandBtn.onclick = toggleDescription;
+            } else {
+                expandBtn.classList.add('hidden');
+            }
+            
+            document.getElementById('videoDescription').classList.remove('hidden');
+            
+            // Show channel information
+            if (channel) {
+                document.getElementById('channelThumbnail').src = channel.snippet.thumbnails.default?.url || '';
+                document.getElementById('channelTitle').textContent = channel.snippet.title;
+                
+                const subscriberCount = formatNumber(channel.statistics.subscriberCount || 0);
+                document.getElementById('subscriberCount').textContent = `${subscriberCount} subscribers`;
+                
+                document.getElementById('channelInfo').classList.remove('hidden');
+            }
+        }
+
+        function formatNumber(num) {
+            const number = parseInt(num);
+            if (number >= 1000000000) {
+                return (number / 1000000000).toFixed(1) + 'B';
+            } else if (number >= 1000000) {
+                return (number / 1000000).toFixed(1) + 'M';
+            } else if (number >= 1000) {
+                return (number / 1000).toFixed(1) + 'K';
+            }
+            return number.toLocaleString();
+        }
+
+        function formatPublishDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const diffMonths = Math.floor(diffDays / 30);
+            const diffYears = Math.floor(diffDays / 365);
+            
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return '1 day ago';
+            if (diffDays < 30) return `${diffDays} days ago`;
+            if (diffMonths === 1) return '1 month ago';
+            if (diffMonths < 12) return `${diffMonths} months ago`;
+            if (diffYears === 1) return '1 year ago';
+            return `${diffYears} years ago`;
+        }
+
+        function toggleDescription() {
+            const content = document.querySelector('.description-content');
+            const btn = document.getElementById('expandDescription');
+            
+            content.classList.toggle('expanded');
+            btn.textContent = content.classList.contains('expanded') ? 'Show less' : 'Show more';
+        }
+
+        function showVideoDetailsLoading() {
+            // Hide all sections
+            document.getElementById('videoStats').classList.add('hidden');
+            document.getElementById('videoDescription').classList.add('hidden');
+            document.getElementById('channelInfo').classList.add('hidden');
+            document.getElementById('videoDetailsError').classList.add('hidden');
+            
+            // Show loading
+            document.getElementById('videoDetailsLoading').classList.remove('hidden');
+        }
+
+        function hideVideoDetailsLoading() {
+            document.getElementById('videoDetailsLoading').classList.add('hidden');
+        }
+
+        function showVideoDetailsError() {
+            // Hide all sections
+            document.getElementById('videoStats').classList.add('hidden');
+            document.getElementById('videoDescription').classList.add('hidden');
+            document.getElementById('channelInfo').classList.add('hidden');
+            document.getElementById('videoDetailsLoading').classList.add('hidden');
+            
+            // Show error
+            document.getElementById('videoDetailsError').classList.remove('hidden');
+        }
+
+        function viewChannelFromDetails() {
+            if (!currentVideoDetails || !currentVideoDetails.channel) return;
+            
+            const channel = currentVideoDetails.channel;
+            viewChannelVideos(channel.id, channel.snippet.title);
         }
 
         function playVideoFromPlaylist(index) {
@@ -1651,6 +1983,290 @@
                 createPlaylist();
             }
         });
+
+        // Background Playback System
+        function initializeBackgroundPlayback() {
+            console.log('Initializing background playback system...');
+            
+            // Initialize Audio Context for background playback
+            initializeAudioContext();
+            
+            // Set up Page Visibility API
+            setupPageVisibilityHandling();
+            
+            // Set up Wake Lock (if supported)
+            setupWakeLock();
+            
+            // Set up beforeunload handling
+            setupUnloadHandling();
+            
+            // Ensure media session is active
+            if ('mediaSession' in navigator) {
+                // Set initial playback state
+                navigator.mediaSession.playbackState = 'none';
+            }
+            
+            console.log('Background playback system initialized');
+        }
+        
+        function initializeAudioContext() {
+            try {
+                // Create AudioContext to maintain audio processing in background
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (window.AudioContext) {
+                    audioContext = new AudioContext();
+                    
+                    // Create a silent audio buffer to keep context active
+                    const buffer = audioContext.createBuffer(1, 1, 22050);
+                    const source = audioContext.createBufferSource();
+                    source.buffer = buffer;
+                    source.connect(audioContext.destination);
+                    source.start();
+                    
+                    console.log('Audio context initialized for background playback');
+                }
+            } catch (error) {
+                console.log('Audio context initialization failed:', error);
+            }
+        }
+        
+        function setupPageVisibilityHandling() {
+            // Page Visibility API to handle tab switching
+            let visibilityChange;
+            let hidden;
+            
+            if (typeof document.hidden !== "undefined") {
+                hidden = "hidden";
+                visibilityChange = "visibilitychange";
+            } else if (typeof document.msHidden !== "undefined") {
+                hidden = "msHidden";
+                visibilityChange = "msvisibilitychange";
+            } else if (typeof document.webkitHidden !== "undefined") {
+                hidden = "webkitHidden";
+                visibilityChange = "webkitvisibilitychange";
+            }
+            
+            if (typeof document[hidden] !== "undefined") {
+                document.addEventListener(visibilityChange, handleVisibilityChange, false);
+                console.log('Page visibility handling enabled');
+            }
+            
+            // Handle page focus/blur events as backup
+            window.addEventListener('focus', handlePageFocus);
+            window.addEventListener('blur', handlePageBlur);
+        }
+        
+        function handleVisibilityChange() {
+            isPageVisible = !document.hidden;
+            
+            if (!backgroundPlaybackEnabled || !player) return;
+            
+            if (isPageVisible) {
+                console.log('Page became visible - resuming normal playback');
+                handlePageFocus();
+            } else {
+                console.log('Page became hidden - maintaining background playback');
+                handlePageBlur();
+            }
+        }
+        
+        function handlePageFocus() {
+            // Page became visible/focused
+            if (player && backgroundPlaybackEnabled) {
+                // Resume audio context if suspended
+                if (audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume().catch(console.error);
+                }
+                
+                // Ensure video continues playing if it was playing
+                try {
+                    const state = player.getPlayerState();
+                    if (state === YT.PlayerState.PAUSED && navigator.mediaSession?.playbackState === 'playing') {
+                        // Resume if media session indicates it should be playing
+                        player.playVideo();
+                    }
+                } catch (error) {
+                    console.log('Error resuming playback on focus:', error);
+                }
+            }
+        }
+        
+        function handlePageBlur() {
+            // Page became hidden/lost focus
+            if (player && backgroundPlaybackEnabled) {
+                try {
+                    const state = player.getPlayerState();
+                    
+                    // Maintain audio context
+                    if (audioContext && audioContext.state !== 'running') {
+                        audioContext.resume().catch(console.error);
+                    }
+                    
+                    // Apply background playback strategies
+                    maintainBackgroundPlayback();
+                    
+                } catch (error) {
+                    console.log('Error in background playback handling:', error);
+                }
+            }
+        }
+        
+        function maintainBackgroundPlayback() {
+            if (!player || !backgroundPlaybackEnabled) return;
+            
+            try {
+                // Strategy 1: Ensure media session is properly set
+                if ('mediaSession' in navigator && currentVideoInfo.title) {
+                    updateMediaSessionMetadata(currentVideoInfo.title, currentVideoInfo.artist, currentVideoInfo.artwork);
+                    navigator.mediaSession.playbackState = 'playing';
+                }
+                
+                // Strategy 2: Keep audio context active
+                if (audioContext) {
+                    // Create periodic silent audio to maintain context
+                    setInterval(() => {
+                        if (!isPageVisible && audioContext.state === 'running') {
+                            const buffer = audioContext.createBuffer(1, 1, 22050);
+                            const source = audioContext.createBufferSource();
+                            source.buffer = buffer;
+                            source.connect(audioContext.destination);
+                            source.start();
+                        }
+                    }, 10000); // Every 10 seconds
+                }
+                
+                // Strategy 3: Prevent player from being paused by mobile browser
+                const checkPlaybackState = () => {
+                    if (!isPageVisible && player) {
+                        try {
+                            const state = player.getPlayerState();
+                            if (state === YT.PlayerState.PAUSED && backgroundPlaybackEnabled) {
+                                // Try to resume playback
+                                setTimeout(() => {
+                                    if (player && player.playVideo) {
+                                        player.playVideo();
+                                    }
+                                }, 100);
+                            }
+                        } catch (error) {
+                            console.log('Error checking playback state:', error);
+                        }
+                    }
+                };
+                
+                // Check every 2 seconds when page is hidden
+                const backgroundCheck = setInterval(() => {
+                    if (isPageVisible) {
+                        clearInterval(backgroundCheck);
+                        return;
+                    }
+                    checkPlaybackState();
+                }, 2000);
+                
+                // Strategy 4: Use Web Locks API to maintain active state
+                if ('locks' in navigator) {
+                    navigator.locks.request('background-playback', { mode: 'shared' }, () => {
+                        return new Promise((resolve) => {
+                            // Keep lock active while playing in background
+                            const checkLock = () => {
+                                if (isPageVisible || !backgroundPlaybackEnabled || !player) {
+                                    resolve();
+                                    return;
+                                }
+                                setTimeout(checkLock, 5000);
+                            };
+                            checkLock();
+                        });
+                    }).catch(console.error);
+                }
+                
+            } catch (error) {
+                console.log('Error in maintainBackgroundPlayback:', error);
+            }
+        }
+        
+        function setupWakeLock() {
+            // Screen Wake Lock API to prevent device sleep during playback
+            if ('wakeLock' in navigator) {
+                const requestWakeLock = async () => {
+                    try {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        console.log('Screen wake lock activated');
+                        
+                        wakeLock.addEventListener('release', () => {
+                            console.log('Screen wake lock released');
+                            wakeLock = null;
+                        });
+                    } catch (error) {
+                        console.log('Wake lock request failed:', error);
+                    }
+                };
+                
+                // Request wake lock when video starts playing
+                const originalPlayVideo = window.playVideo;
+                if (originalPlayVideo) {
+                    window.playVideo = function(...args) {
+                        requestWakeLock();
+                        return originalPlayVideo.apply(this, args);
+                    };
+                }
+            }
+        }
+        
+        function setupUnloadHandling() {
+            // Handle page unload to maintain playback state
+            window.addEventListener('beforeunload', (event) => {
+                if (player && backgroundPlaybackEnabled) {
+                    try {
+                        const state = player.getPlayerState();
+                        if (state === YT.PlayerState.PLAYING) {
+                            // Save current playback state
+                            const currentTime = player.getCurrentTime();
+                            const videoId = player.getVideoData && player.getVideoData().video_id;
+                            
+                            if (videoId && currentTime) {
+                                setLocalStorage('ytplayer_last_position', {
+                                    videoId: videoId,
+                                    currentTime: currentTime,
+                                    timestamp: Date.now()
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        console.log('Error saving playback state:', error);
+                    }
+                }
+            });
+            
+            // Handle page show (when returning from background)
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted) {
+                    // Page was restored from cache
+                    handlePageFocus();
+                }
+            });
+        }
+        
+        function enableBackgroundPlayback() {
+            backgroundPlaybackEnabled = true;
+            console.log('Background playback enabled');
+            
+            // Initialize audio context if not already done
+            if (!audioContext) {
+                initializeAudioContext();
+            }
+        }
+        
+        function disableBackgroundPlayback() {
+            backgroundPlaybackEnabled = false;
+            console.log('Background playback disabled');
+            
+            // Release wake lock if active
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
 
         // Format date helper
         function formatDate(dateString) {
