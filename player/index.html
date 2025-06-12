@@ -126,6 +126,7 @@
 
         .video-details-drawer.open .drawer-content {
             max-height: 600px;
+            overflow-y: auto;
         }
 
         .video-details-drawer.open .drawer-toggle-icon svg {
@@ -151,318 +152,20 @@
             -webkit-line-clamp: unset;
             display: block;
         }
-
-        /* Navigation Drawer Styles */
-        .drawer-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 40;
-            transition: opacity 0.3s ease;
-        }
-
-        .navigation-drawer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            width: 280px;
-            background: white;
-            z-index: 50;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .dark .navigation-drawer {
-            background: #1f2937;
-        }
-
-        .navigation-drawer.open {
-            transform: translateX(0);
-        }
-
-        .navigation-drawer .drawer-content {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            max-height: none;
-            overflow: visible;
-        }
-
-        .navigation-drawer .drawer-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem;
-            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
-            background: rgba(249, 250, 251, 0.8);
-            backdrop-filter: none;
-        }
-
-        .dark .navigation-drawer .drawer-header {
-            border-bottom: 1px solid rgba(75, 85, 99, 0.5);
-            background: rgba(31, 41, 55, 0.8);
-        }
-
-        .close-btn {
-            padding: 0.5rem;
-            color: #6b7280;
-            hover:color: #374151;
-            transition: color 0.2s;
-        }
-
-        .dark .close-btn {
-            color: #9ca3af;
-            hover:color: #d1d5db;
-        }
-
-        .nav-menu {
-            flex: 1;
-            padding: 1rem 0;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 1rem 1.5rem;
-            text-align: left;
-            color: #6b7280;
-            hover:background: rgba(229, 231, 235, 0.5);
-            hover:color: #374151;
-            transition: all 0.2s;
-            font-medium: true;
-        }
-
-        .dark .nav-item {
-            color: #9ca3af;
-            hover:background: rgba(75, 85, 99, 0.5);
-            hover:color: #d1d5db;
-        }
-
-        .nav-item.active {
-            background: rgba(93, 92, 222, 0.1);
-            color: #5D5CDE;
-            border-right: 3px solid #5D5CDE;
-        }
-
-        .dark .nav-item.active {
-            background: rgba(93, 92, 222, 0.2);
-        }
-
-        .drawer-player-info {
-            margin-top: auto;
-            padding: 1rem 1.5rem;
-            border-top: 1px solid rgba(229, 231, 235, 0.5);
-            background: rgba(249, 250, 251, 0.5);
-        }
-
-        .dark .drawer-player-info {
-            border-top: 1px solid rgba(75, 85, 99, 0.5);
-            background: rgba(31, 41, 55, 0.5);
-        }
-
-        .player-info-header {
-            margin-bottom: 0.5rem;
-        }
-
-        /* App Layout Styles */
-        .app-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .app-header {
-            background: white;
-            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
-            padding: 1rem;
-            position: sticky;
-            top: 0;
-            z-index: 30;
-            backdrop-filter: blur(8px);
-            background: rgba(255, 255, 255, 0.95);
-        }
-
-        .dark .app-header {
-            background: rgba(17, 24, 39, 0.95);
-            border-bottom: 1px solid rgba(75, 85, 99, 0.5);
-        }
-
-        .header-content {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .menu-btn {
-            padding: 0.5rem;
-            color: #6b7280;
-            hover:color: #374151;
-            transition: color 0.2s;
-        }
-
-        .dark .menu-btn {
-            color: #9ca3af;
-            hover:color: #d1d5db;
-        }
-
-        .header-title {
-            flex: 1;
-        }
-
-        .header-player-toggle {
-            display: flex;
-            align-items: center;
-        }
-
-        .mini-player-btn {
-            padding: 0.5rem;
-            background: #5D5CDE;
-            color: white;
-            border-radius: 0.5rem;
-            hover:background: rgba(93, 92, 222, 0.9);
-            transition: background 0.2s;
-        }
-
-        .app-main {
-            flex: 1;
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 1.5rem;
-            width: 100%;
-        }
-
-        /* View Container Styles */
-        .view-container {
-            display: none;
-        }
-
-        .view-container.active {
-            display: block;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .navigation-drawer {
-                width: 260px;
-            }
-            
-            .app-main {
-                padding: 1rem;
-            }
-        }
-
-        /* Utility classes */
-        .line-clamp-1 {
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
-    <!-- Navigation Drawer Overlay -->
-    <div id="drawerOverlay" class="drawer-overlay hidden" onclick="closeNavigationDrawer()"></div>
-    
-    <!-- Navigation Drawer -->
-    <div id="navigationDrawer" class="navigation-drawer">
-        <div class="drawer-content">
-            <!-- Drawer Header -->
-            <div class="drawer-header">
-                <h2 class="text-xl font-bold text-primary">YouTube Player</h2>
-                <button onclick="closeNavigationDrawer()" class="close-btn">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            
-            <!-- Navigation Menu -->
-            <nav class="nav-menu">
-                <button onclick="navigateToView('search')" class="nav-item active" id="nav-search">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    <span>Search</span>
-                </button>
-                
-                <button onclick="navigateToView('playlists')" class="nav-item" id="nav-playlists">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
-                    </svg>
-                    <span>Playlists</span>
-                </button>
-                
-                <button onclick="navigateToView('player')" class="nav-item" id="nav-player">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>Player</span>
-                </button>
-            </nav>
-            
-            <!-- Current Playing Info -->
-            <div id="drawerPlayerInfo" class="drawer-player-info hidden">
-                <div class="player-info-header">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Now Playing</span>
-                </div>
-                <div class="player-info-content">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-9 bg-gray-300 dark:bg-gray-600 rounded overflow-hidden">
-                            <img id="drawerVideoThumbnail" src="" alt="Video" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="font-medium text-sm line-clamp-1" id="drawerVideoTitle">No video playing</div>
-                            <div class="text-xs text-gray-600 dark:text-gray-400 line-clamp-1" id="drawerVideoChannel">Select a video to start</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="container mx-auto px-4 py-6 max-w-7xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-primary mb-2">YouTube Player by Nut</h1>
+            <p class="text-gray-600 dark:text-gray-400">Powered by YouTube</p>
         </div>
-    </div>
 
-    <div class="app-container">
-        <!-- Top Header -->
-        <header class="app-header">
-            <div class="header-content">
-                <button onclick="openNavigationDrawer()" class="menu-btn">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
-                
-                <div class="header-title">
-                    <h1 class="text-xl font-bold text-primary" id="viewTitle">Search</h1>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">YouTube Player by Nut</p>
-                </div>
-                
-                <!-- Mini Player Toggle (when video is playing) -->
-                <div id="headerPlayerToggle" class="header-player-toggle hidden">
-                    <button onclick="navigateToView('player')" class="mini-player-btn">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content Area -->
-        <main class="app-main">
-            <!-- Search View -->
-            <div id="searchView" class="view-container active">
-                <!-- Video Player Section (Mini when not in player view) -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Main Content Area -->
+            <div class="flex-1">
+                <!-- Video Player Section -->
                 <div id="videoContainer" class="hidden fade-in mb-6">
                     <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                         <div class="flex justify-between items-start mb-4">
@@ -675,155 +378,67 @@
                         <p class="text-gray-600 dark:text-gray-400">No videos found. Try a different search term.</p>
                     </div>
                 </div>
-
-                <!-- Playlist Sidebar (only visible in search view) -->
-                <div class="lg:w-80">
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold">Playlists</h3>
-                            <button 
-                                onclick="showCreatePlaylistForm()" 
-                                class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
-                            >
-                                ➕ New
-                            </button>
-                        </div>
-
-                        <!-- Create Playlist Form (Search View) -->
-                        <div id="createPlaylistForm" class="hidden mb-4 p-4 bg-white dark:bg-gray-700 rounded-lg border">
-                            <input 
-                                type="text" 
-                                id="playlistNameInput" 
-                                placeholder="Playlist name..."
-                                class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded mb-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                            >
-                            <div class="flex gap-2">
-                                <button 
-                                    onclick="createPlaylist()" 
-                                    class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
-                                >
-                                    Create
-                                </button>
-                                <button 
-                                    onclick="hideCreatePlaylistForm()" 
-                                    class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm"
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Playlists List -->
-                        <div id="playlistsList" class="space-y-2">
-                            <p class="text-gray-600 dark:text-gray-400 text-sm">No playlists yet. Create one to get started!</p>
-                        </div>
-
-                        <!-- Current Playlist -->
-                        <div id="currentPlaylistSection" class="hidden mt-6">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="font-semibold" id="currentPlaylistTitle">Current Playlist</h4>
-                                <button 
-                                    onclick="clearCurrentPlaylist()" 
-                                    class="text-gray-500 hover:text-red-500 transition-colors"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                            <div id="currentPlaylistVideos" class="space-y-2 max-h-96 overflow-y-auto">
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <!-- Playlists View -->
-            <div id="playlistsView" class="view-container">
+            <!-- Playlist Sidebar -->
+            <div class="lg:w-80">
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold">Your Playlists</h3>
+                        <h3 class="text-lg font-semibold">Playlists</h3>
                         <button 
-                            onclick="showCreatePlaylistFormMain()" 
-                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium"
+                            onclick="showCreatePlaylistForm()" 
+                            class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
                         >
-                            ➕ Create New Playlist
+                            ➕ New
                         </button>
                     </div>
 
                     <!-- Create Playlist Form -->
-                    <div id="createPlaylistFormMain" class="hidden mb-6 p-4 bg-white dark:bg-gray-700 rounded-lg border">
-                        <h4 class="font-semibold mb-3">Create New Playlist</h4>
+                    <div id="createPlaylistForm" class="hidden mb-4 p-4 bg-white dark:bg-gray-700 rounded-lg border">
                         <input 
                             type="text" 
-                            id="playlistNameInputMain" 
-                            placeholder="Enter playlist name..."
-                            class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg mb-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                            id="playlistNameInput" 
+                            placeholder="Playlist name..."
+                            class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded mb-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         >
-                        <div class="flex gap-3">
+                        <div class="flex gap-2">
                             <button 
-                                onclick="createPlaylistFromMain()" 
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                                onclick="createPlaylist()" 
+                                class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
                             >
-                                Create Playlist
+                                Create
                             </button>
                             <button 
-                                onclick="hideCreatePlaylistFormMain()" 
-                                class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                                onclick="hideCreatePlaylistForm()" 
+                                class="px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm"
                             >
                                 Cancel
                             </button>
                         </div>
                     </div>
 
-                    <!-- Playlists Grid -->
-                    <div id="playlistsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="col-span-full text-center py-12 text-gray-600 dark:text-gray-400">
-                            <div class="text-6xl mb-4">🎵</div>
-                            <h3 class="text-lg font-medium mb-2">No playlists yet</h3>
-                            <p class="text-sm">Create your first playlist to get started!</p>
-                        </div>
+                    <!-- Playlists List -->
+                    <div id="playlistsList" class="space-y-2">
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">No playlists yet. Create one to get started!</p>
                     </div>
 
-                    <!-- Current Playlist Details -->
-                    <div id="currentPlaylistDetails" class="hidden mt-8">
-                        <div class="bg-white dark:bg-gray-700 rounded-lg p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h4 class="text-xl font-bold" id="currentPlaylistName">Playlist Name</h4>
-                                    <p class="text-gray-600 dark:text-gray-400" id="currentPlaylistStats">0 videos</p>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button 
-                                        onclick="playPlaylist()" 
-                                        class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors font-medium"
-                                    >
-                                        ▶️ Play All
-                                    </button>
-                                    <button 
-                                        onclick="clearCurrentPlaylistView()" 
-                                        class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
-                                    >
-                                        ✕ Close
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div id="playlistVideosGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <!-- Videos will be rendered here -->
-                            </div>
+                    <!-- Current Playlist -->
+                    <div id="currentPlaylistSection" class="hidden mt-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-semibold" id="currentPlaylistTitle">Current Playlist</h4>
+                            <button 
+                                onclick="clearCurrentPlaylist()" 
+                                class="text-gray-500 hover:text-red-500 transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div id="currentPlaylistVideos" class="space-y-2 max-h-96 overflow-y-auto">
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Player View -->
-            <div id="playerView" class="view-container">
-                <div id="playerViewContent" class="text-center py-12 text-gray-600 dark:text-gray-400">
-                    <div class="text-6xl mb-4">🎬</div>
-                    <h3 class="text-lg font-medium mb-2">No video playing</h3>
-                    <p class="text-sm">Go to Search to find videos or Playlists to start playing</p>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
 
     <!-- YouTube Player API -->
@@ -1105,300 +720,12 @@
             }
         }
 
-        // Navigation and view management
-        let currentView = 'search';
-
         // Initialize app
         window.addEventListener('DOMContentLoaded', function() {
             loadSettings();
             updatePlaybackUI();
             initializeBackgroundPlayback();
-            initializeViews();
         });
-
-        function initializeViews() {
-            // Show default view
-            navigateToView('search');
-            
-            // Update playlists view
-            updatePlaylistsView();
-        }
-
-        // Navigation Drawer Functions
-        function openNavigationDrawer() {
-            document.getElementById('navigationDrawer').classList.add('open');
-            document.getElementById('drawerOverlay').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeNavigationDrawer() {
-            document.getElementById('navigationDrawer').classList.remove('open');
-            document.getElementById('drawerOverlay').classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-
-        function navigateToView(viewName) {
-            // Update current view
-            currentView = viewName;
-            
-            // Hide all views
-            document.querySelectorAll('.view-container').forEach(view => {
-                view.classList.remove('active');
-            });
-            
-            // Show selected view
-            document.getElementById(viewName + 'View').classList.add('active');
-            
-            // Update navigation menu
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            document.getElementById('nav-' + viewName).classList.add('active');
-            
-            // Update page title
-            const titles = {
-                'search': 'Search',
-                'playlists': 'Playlists', 
-                'player': 'Player'
-            };
-            document.getElementById('viewTitle').textContent = titles[viewName];
-            
-            // Handle view-specific logic
-            if (viewName === 'player') {
-                updatePlayerView();
-            } else if (viewName === 'playlists') {
-                updatePlaylistsView();
-            }
-            
-            // Close drawer on mobile
-            closeNavigationDrawer();
-        }
-
-        function updatePlayerView() {
-            const playerContainer = document.getElementById('videoContainer');
-            const playerViewContent = document.getElementById('playerViewContent');
-            
-            if (player && !playerContainer.classList.contains('hidden')) {
-                // Move player to player view
-                playerViewContent.innerHTML = '';
-                playerViewContent.appendChild(playerContainer);
-                playerContainer.classList.remove('hidden');
-                
-                // Ensure drawer player info is visible
-                updateDrawerPlayerInfo();
-            } else {
-                // Show empty state
-                playerViewContent.innerHTML = `
-                    <div class="text-center py-12 text-gray-600 dark:text-gray-400">
-                        <div class="text-6xl mb-4">🎬</div>
-                        <h3 class="text-lg font-medium mb-2">No video playing</h3>
-                        <p class="text-sm">Go to Search to find videos or Playlists to start playing</p>
-                    </div>
-                `;
-            }
-        }
-
-        // Playlist management for main view
-        function showCreatePlaylistFormMain() {
-            document.getElementById('createPlaylistFormMain').classList.remove('hidden');
-            document.getElementById('playlistNameInputMain').focus();
-        }
-
-        function hideCreatePlaylistFormMain() {
-            document.getElementById('createPlaylistFormMain').classList.add('hidden');
-            document.getElementById('playlistNameInputMain').value = '';
-        }
-
-        function createPlaylistFromMain() {
-            const nameInput = document.getElementById('playlistNameInputMain');
-            const name = nameInput.value.trim();
-            
-            if (!name) {
-                alert('Please enter a playlist name');
-                return;
-            }
-            
-            if (playlists[name]) {
-                alert('Playlist already exists');
-                return;
-            }
-            
-            playlists[name] = {
-                name: name,
-                videos: [],
-                created: new Date().toISOString()
-            };
-            
-            saveSettings();
-            updatePlaylistsView();
-            hideCreatePlaylistFormMain();
-        }
-
-        function updatePlaylistsView() {
-            const container = document.getElementById('playlistsGrid');
-            const playlistNames = Object.keys(playlists);
-            
-            if (playlistNames.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-12 text-gray-600 dark:text-gray-400">
-                        <div class="text-6xl mb-4">🎵</div>
-                        <h3 class="text-lg font-medium mb-2">No playlists yet</h3>
-                        <p class="text-sm">Create your first playlist to get started!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = playlistNames.map(name => {
-                const playlist = playlists[name];
-                const videoCount = playlist.videos.length;
-                const firstVideoThumbnail = videoCount > 0 ? playlist.videos[0].thumbnail : '';
-                
-                return `
-                    <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                        <div class="relative h-32 bg-gray-200 dark:bg-gray-600">
-                            ${firstVideoThumbnail ? 
-                                `<img src="${firstVideoThumbnail}" alt="${name}" class="w-full h-full object-cover">` :
-                                `<div class="w-full h-full flex items-center justify-center text-4xl text-gray-400">🎵</div>`
-                            }
-                            <div class="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                                ${videoCount} videos
-                            </div>
-                        </div>
-                        <div class="p-4">
-                            <h4 class="font-semibold mb-2 line-clamp-1" title="${name}">${name}</h4>
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                Created ${formatDate(playlist.created)}
-                            </p>
-                            <div class="flex gap-2">
-                                <button 
-                                    onclick="openPlaylistDetails('${name}')" 
-                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm flex-1"
-                                >
-                                    View
-                                </button>
-                                <button 
-                                    onclick="deletePlaylistMain('${name}')" 
-                                    class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function openPlaylistDetails(playlistName) {
-            const playlist = playlists[playlistName];
-            if (!playlist) return;
-            
-            document.getElementById('currentPlaylistName').textContent = playlistName;
-            document.getElementById('currentPlaylistStats').textContent = `${playlist.videos.length} videos`;
-            
-            // Render playlist videos
-            const container = document.getElementById('playlistVideosGrid');
-            if (playlist.videos.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-8 text-gray-600 dark:text-gray-400">
-                        <p>No videos in this playlist yet.</p>
-                    </div>
-                `;
-            } else {
-                container.innerHTML = playlist.videos.map((video, index) => `
-                    <div class="bg-white dark:bg-gray-600 rounded-lg shadow-sm overflow-hidden">
-                        <div class="relative">
-                            <img src="${video.thumbnail}" alt="${video.title}" class="w-full h-24 object-cover">
-                        </div>
-                        <div class="p-3">
-                            <h5 class="font-medium text-sm line-clamp-2 mb-1" title="${video.title}">
-                                ${video.title}
-                            </h5>
-                            <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                                ${video.channel}
-                            </p>
-                            <div class="flex gap-1">
-                                <button 
-                                    onclick="playVideoFromPlaylistMain('${playlistName}', ${index})" 
-                                    class="px-2 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-xs flex-1"
-                                >
-                                    Play
-                                </button>
-                                <button 
-                                    onclick="removeFromPlaylistMain('${playlistName}', ${index})" 
-                                    class="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs"
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
-            }
-            
-            document.getElementById('currentPlaylistDetails').classList.remove('hidden');
-        }
-
-        function clearCurrentPlaylistView() {
-            document.getElementById('currentPlaylistDetails').classList.add('hidden');
-        }
-
-        function deletePlaylistMain(name) {
-            if (confirm(`Delete playlist "${name}"?`)) {
-                delete playlists[name];
-                if (currentPlaylist === name) {
-                    clearCurrentPlaylist();
-                }
-                saveSettings();
-                updatePlaylistsView();
-                clearCurrentPlaylistView();
-            }
-        }
-
-        function playPlaylist() {
-            const playlistName = document.getElementById('currentPlaylistName').textContent;
-            if (playlists[playlistName] && playlists[playlistName].videos.length > 0) {
-                loadPlaylist(playlistName);
-                playVideoFromPlaylist(0);
-                navigateToView('player');
-            }
-        }
-
-        function playVideoFromPlaylistMain(playlistName, index) {
-            loadPlaylist(playlistName);
-            playVideoFromPlaylist(index);
-            navigateToView('player');
-        }
-
-        function removeFromPlaylistMain(playlistName, index) {
-            if (!playlists[playlistName]) return;
-            
-            playlists[playlistName].videos.splice(index, 1);
-            saveSettings();
-            updatePlaylistsView();
-            openPlaylistDetails(playlistName); // Refresh the details view
-        }
-
-        function updateDrawerPlayerInfo() {
-            const drawerPlayerInfo = document.getElementById('drawerPlayerInfo');
-            const drawerVideoThumbnail = document.getElementById('drawerVideoThumbnail');
-            const drawerVideoTitle = document.getElementById('drawerVideoTitle');
-            const drawerVideoChannel = document.getElementById('drawerVideoChannel');
-            const headerPlayerToggle = document.getElementById('headerPlayerToggle');
-            
-            if (player && currentVideoInfo.title) {
-                drawerPlayerInfo.classList.remove('hidden');
-                headerPlayerToggle.classList.remove('hidden');
-                
-                drawerVideoThumbnail.src = currentVideoInfo.artwork || '';
-                drawerVideoTitle.textContent = currentVideoInfo.title;
-                drawerVideoChannel.textContent = currentVideoInfo.artist || 'Unknown Channel';
-            } else {
-                drawerPlayerInfo.classList.add('hidden');
-                headerPlayerToggle.classList.add('hidden');
-            }
-        }
 
         // Load settings from localStorage
         function loadSettings() {
