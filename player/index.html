@@ -2923,11 +2923,96 @@
                 return;
             }
             
-            const targetPlaylist = prompt(`Move ${selectedVideos.size} videos to which playlist?\n\nAvailable playlists:\n${playlistNames.join('\n')}`);
-            
-            if (!targetPlaylist || !playlists[targetPlaylist]) {
+            showMoveVideosDialog();
+        }
+
+        function copySelectedVideos() {
+            if (selectedVideos.size === 0) {
+                alert('Please select videos to copy');
                 return;
             }
+            
+            const playlistNames = Object.keys(playlists).filter(name => name !== currentPlaylist);
+            
+            if (playlistNames.length === 0) {
+                alert('No other playlists available');
+                return;
+            }
+            
+            showCopyVideosDialog();
+        }
+
+        // Move Videos Dialog
+        function showMoveVideosDialog() {
+            const playlistNames = Object.keys(playlists).filter(name => name !== currentPlaylist);
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'moveVideosOverlay';
+            
+            const form = document.createElement('div');
+            form.className = 'rename-form';
+            form.style.minWidth = '350px';
+            
+            form.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Move Videos</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Select playlist to move ${selectedVideos.size} selected videos to:
+                </p>
+                <div class="max-h-64 overflow-y-auto mb-4 space-y-2">
+                    ${playlistNames.map(name => `
+                        <label class="flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-600 rounded cursor-pointer border border-gray-200 dark:border-gray-600">
+                            <input type="radio" name="targetPlaylist" value="${escapeHtml(name)}" class="move-radio">
+                            <div class="flex-1">
+                                <div class="font-medium">${name}</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length} videos</div>
+                            </div>
+                        </label>
+                    `).join('')}
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideMoveVideosDialog()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="confirmMoveVideos()" 
+                        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    >
+                        📁 Move Videos
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideMoveVideosDialog();
+                }
+            });
+        }
+
+        function hideMoveVideosDialog() {
+            const overlay = document.getElementById('moveVideosOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function confirmMoveVideos() {
+            const selectedRadio = document.querySelector('input[name="targetPlaylist"]:checked');
+            
+            if (!selectedRadio) {
+                alert('Please select a playlist');
+                return;
+            }
+            
+            const targetPlaylist = selectedRadio.value;
             
             const currentVideos = playlists[currentPlaylist].videos;
             const selectedIndices = Array.from(selectedVideos).sort((a, b) => b - a); // Sort descending
@@ -2956,28 +3041,82 @@
             renderCurrentPlaylist();
             selectedVideos.clear();
             updateSelectedCount();
+            hideMoveVideosDialog();
             
             alert(`Moved ${videosToMove.length} videos to "${targetPlaylist}"`);
         }
 
-        function copySelectedVideos() {
-            if (selectedVideos.size === 0) {
-                alert('Please select videos to copy');
-                return;
-            }
-            
+        // Copy Videos Dialog
+        function showCopyVideosDialog() {
             const playlistNames = Object.keys(playlists).filter(name => name !== currentPlaylist);
             
-            if (playlistNames.length === 0) {
-                alert('No other playlists available');
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'copyVideosOverlay';
+            
+            const form = document.createElement('div');
+            form.className = 'rename-form';
+            form.style.minWidth = '350px';
+            
+            form.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Copy Videos</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Select playlist to copy ${selectedVideos.size} selected videos to:
+                </p>
+                <div class="max-h-64 overflow-y-auto mb-4 space-y-2">
+                    ${playlistNames.map(name => `
+                        <label class="flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-600 rounded cursor-pointer border border-gray-200 dark:border-gray-600">
+                            <input type="radio" name="targetPlaylist" value="${escapeHtml(name)}" class="copy-radio">
+                            <div class="flex-1">
+                                <div class="font-medium">${name}</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length} videos</div>
+                            </div>
+                        </label>
+                    `).join('')}
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideCopyVideosDialog()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="confirmCopyVideos()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                        📋 Copy Videos
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideCopyVideosDialog();
+                }
+            });
+        }
+
+        function hideCopyVideosDialog() {
+            const overlay = document.getElementById('copyVideosOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function confirmCopyVideos() {
+            const selectedRadio = document.querySelector('input[name="targetPlaylist"]:checked');
+            
+            if (!selectedRadio) {
+                alert('Please select a playlist');
                 return;
             }
             
-            const targetPlaylist = prompt(`Copy ${selectedVideos.size} videos to which playlist?\n\nAvailable playlists:\n${playlistNames.join('\n')}`);
-            
-            if (!targetPlaylist || !playlists[targetPlaylist]) {
-                return;
-            }
+            const targetPlaylist = selectedRadio.value;
             
             const currentVideos = playlists[currentPlaylist].videos;
             const videosToCopy = Array.from(selectedVideos).map(index => ({ ...currentVideos[index] }));
@@ -2992,6 +3131,7 @@
             renderPlaylists();
             selectedVideos.clear();
             updateSelectedCount();
+            hideCopyVideosDialog();
             
             if (newVideos.length < videosToCopy.length) {
                 alert(`Copied ${newVideos.length} videos to "${targetPlaylist}" (${videosToCopy.length - newVideos.length} duplicates skipped)`);
