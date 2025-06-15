@@ -201,6 +201,15 @@
         .playlist-video-item {
             transition: all 0.2s ease;
             cursor: grab;
+            /* Disable text selection for touch devices */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            /* Disable touch callouts on iOS */
+            -webkit-touch-callout: none;
+            /* Disable text selection highlighting */
+            -webkit-tap-highlight-color: transparent;
         }
 
         .playlist-video-item:active {
@@ -215,6 +224,20 @@
         .playlist-video-item.drag-over {
             border-top: 3px solid #5D5CDE;
             margin-top: 6px;
+        }
+
+        /* Touch feedback for mobile */
+        .playlist-video-item.touch-active {
+            background-color: rgba(93, 92, 222, 0.2);
+            transform: scale(0.98);
+        }
+
+        /* Prevent text selection on playlist items */
+        .playlist-item * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
         /* Selection Mode Styles */
@@ -1260,9 +1283,10 @@
             }
             
             container.innerHTML = playlistNames.map(name => `
-                <div class="flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-lg" 
+                <div class="playlist-item flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-lg" 
                      oncontextmenu="showPlaylistContextMenu(event, '${escapeHtml(name)}')"
                      ontouchstart="handlePlaylistTouchStart(event, '${escapeHtml(name)}')"
+                     ontouchmove="handlePlaylistTouchMove(event)"
                      ontouchend="handlePlaylistTouchEnd(event)">
                     <div class="flex-1 cursor-pointer" onclick="loadPlaylist('${name}')">
                         <div class="font-medium">${name}</div>
@@ -1318,7 +1342,10 @@
                      ondragstart="handleDragStart(event, ${index})"
                      ondragover="handleDragOver(event)"
                      ondrop="handleDrop(event, ${index})"
-                     ondragend="handleDragEnd(event)">
+                     ondragend="handleDragEnd(event)"
+                     ontouchstart="handleVideoTouchStart(event, ${index})"
+                     ontouchmove="handleVideoTouchMove(event, ${index})"
+                     ontouchend="handleVideoTouchEnd(event, ${index})">
                     ${isSelectionMode ? `
                         <input type="checkbox" class="video-checkbox" data-index="${index}" onchange="updateSelectedCount()">
                     ` : ''}
@@ -2507,13 +2534,33 @@
             currentContextPlaylist = null;
         }
 
+        // Enhanced Touch Support for Mobile
+        let touchStartTime = 0;
+        let touchStartPosition = { x: 0, y: 0 };
+        let longPressTriggered = false;
+
         // Touch Support for Context Menu
         function handlePlaylistTouchStart(event, playlistName) {
+            // Prevent text selection during touch
+            event.preventDefault();
+            
+            touchStartTime = Date.now();
+            touchStartPosition = {
+                x: event.touches[0].clientX,
+                y: event.touches[0].clientY
+            };
+            longPressTriggered = false;
+            
+            // Add touch feedback
+            event.target.closest('.playlist-item')?.classList.add('touch-active');
+            
             contextMenuTimeout = setTimeout(() => {
+                longPressTriggered = true;
+                
                 // Simulate right click for touch devices
                 const touchEvent = {
-                    preventDefault: event.preventDefault.bind(event),
-                    stopPropagation: event.stopPropagation.bind(event),
+                    preventDefault: () => {},
+                    stopPropagation: () => {},
                     pageX: event.touches[0].pageX,
                     pageY: event.touches[0].pageY
                 };
@@ -2521,15 +2568,49 @@
                 
                 // Add haptic feedback if available
                 if (navigator.vibrate) {
-                    navigator.vibrate(50);
+                    navigator.vibrate([50, 30, 50]);
                 }
             }, 500); // 500ms long press
         }
 
         function handlePlaylistTouchEnd(event) {
+            // Remove touch feedback
+            event.target.closest('.playlist-item')?.classList.remove('touch-active');
+            
             if (contextMenuTimeout) {
                 clearTimeout(contextMenuTimeout);
                 contextMenuTimeout = null;
+            }
+            
+            // Check if it was a quick tap (not long press)
+            const touchEndTime = Date.now();
+            const touchDuration = touchEndTime - touchStartTime;
+            
+            if (!longPressTriggered && touchDuration < 500) {
+                // This was a quick tap, allow normal click behavior
+                // The onclick will handle it
+            }
+        }
+
+        function handlePlaylistTouchMove(event) {
+            // Cancel long press if finger moves too much
+            if (contextMenuTimeout && event.touches[0]) {
+                const currentPos = {
+                    x: event.touches[0].clientX,
+                    y: event.touches[0].clientY
+                };
+                
+                const distance = Math.sqrt(
+                    Math.pow(currentPos.x - touchStartPosition.x, 2) +
+                    Math.pow(currentPos.y - touchStartPosition.y, 2)
+                );
+                
+                // Cancel if moved more than 10 pixels
+                if (distance > 10) {
+                    clearTimeout(contextMenuTimeout);
+                    contextMenuTimeout = null;
+                    event.target.closest('.playlist-item')?.classList.remove('touch-active');
+                }
             }
         }
 
@@ -3172,6 +3253,155 @@
             renderCurrentPlaylist();
             selectedVideos.clear();
             updateSelectedCount();
+        }
+
+        // Enhanced Touch Support for Video Items (Drag and Drop on Mobile)
+        let videoDragData = {
+            isDragging: false,
+            startPos: { x: 0, y: 0 },
+            currentIndex: -1,
+            dragElement: null,
+            dragThreshold: 15
+        };
+
+        function handleVideoTouchStart(event, index) {
+            if (isSelectionMode) return;
+            
+            // Store initial touch data
+            videoDragData.startPos = {
+                x: event.touches[0].clientX,
+                y: event.touches[0].clientY
+            };
+            videoDragData.currentIndex = index;
+            videoDragData.dragElement = event.target.closest('.playlist-video-item');
+            videoDragData.isDragging = false;
+            
+            // Prevent text selection
+            event.preventDefault();
+            
+            // Add touch feedback
+            videoDragData.dragElement?.classList.add('touch-active');
+        }
+
+        function handleVideoTouchMove(event, index) {
+            if (isSelectionMode || videoDragData.currentIndex !== index) return;
+            
+            event.preventDefault(); // Prevent scrolling while dragging
+            
+            const currentPos = {
+                x: event.touches[0].clientX,
+                y: event.touches[0].clientY
+            };
+            
+            const distance = Math.sqrt(
+                Math.pow(currentPos.x - videoDragData.startPos.x, 2) +
+                Math.pow(currentPos.y - videoDragData.startPos.y, 2)
+            );
+            
+            // Start dragging if moved beyond threshold
+            if (!videoDragData.isDragging && distance > videoDragData.dragThreshold) {
+                videoDragData.isDragging = true;
+                
+                // Add dragging visual feedback
+                videoDragData.dragElement?.classList.add('dragging');
+                videoDragData.dragElement?.classList.remove('touch-active');
+                
+                // Add haptic feedback if available
+                if (navigator.vibrate) {
+                    navigator.vibrate(30);
+                }
+            }
+            
+            if (videoDragData.isDragging) {
+                // Find the element under the touch point
+                const elementBelow = document.elementFromPoint(currentPos.x, currentPos.y);
+                const videoItemBelow = elementBelow?.closest('.playlist-video-item');
+                
+                // Remove drag-over class from all items
+                document.querySelectorAll('.playlist-video-item').forEach(item => {
+                    item.classList.remove('drag-over');
+                });
+                
+                // Add drag-over class to target item
+                if (videoItemBelow && videoItemBelow !== videoDragData.dragElement) {
+                    videoItemBelow.classList.add('drag-over');
+                }
+            }
+        }
+
+        function handleVideoTouchEnd(event, index) {
+            videoDragData.dragElement?.classList.remove('touch-active');
+            
+            if (videoDragData.isDragging && videoDragData.currentIndex === index) {
+                // Find the drop target
+                const lastTouchPos = {
+                    x: event.changedTouches[0].clientX,
+                    y: event.changedTouches[0].clientY
+                };
+                
+                const elementBelow = document.elementFromPoint(lastTouchPos.x, lastTouchPos.y);
+                const dropTarget = elementBelow?.closest('.playlist-video-item');
+                
+                if (dropTarget && dropTarget !== videoDragData.dragElement) {
+                    const dropIndex = parseInt(dropTarget.dataset.index);
+                    
+                    if (!isNaN(dropIndex) && dropIndex !== index) {
+                        // Perform the move operation
+                        performVideoMove(index, dropIndex);
+                        
+                        // Add haptic feedback for successful drop
+                        if (navigator.vibrate) {
+                            navigator.vibrate([50, 30, 50]);
+                        }
+                    }
+                }
+                
+                // Clean up dragging state
+                videoDragData.dragElement?.classList.remove('dragging');
+                document.querySelectorAll('.drag-over').forEach(el => {
+                    el.classList.remove('drag-over');
+                });
+            }
+            
+            // Reset drag data
+            videoDragData = {
+                isDragging: false,
+                startPos: { x: 0, y: 0 },
+                currentIndex: -1,
+                dragElement: null,
+                dragThreshold: 15
+            };
+        }
+
+        function performVideoMove(fromIndex, toIndex) {
+            if (!currentPlaylist || fromIndex === toIndex) return;
+            
+            const videos = playlists[currentPlaylist].videos;
+            const movedVideo = videos[fromIndex];
+            
+            // Remove the video from its current position
+            videos.splice(fromIndex, 1);
+            
+            // Adjust the target index if needed
+            let targetIndex = toIndex;
+            if (fromIndex < toIndex) {
+                targetIndex--;
+            }
+            
+            // Insert the video at the new position
+            videos.splice(targetIndex, 0, movedVideo);
+            
+            // Update current video index if needed
+            if (currentVideoIndex === fromIndex) {
+                currentVideoIndex = targetIndex;
+            } else if (currentVideoIndex > fromIndex && currentVideoIndex <= toIndex) {
+                currentVideoIndex--;
+            } else if (currentVideoIndex < fromIndex && currentVideoIndex >= targetIndex) {
+                currentVideoIndex++;
+            }
+            
+            saveSettings();
+            renderCurrentPlaylist();
         }
 
         // Format date helper
