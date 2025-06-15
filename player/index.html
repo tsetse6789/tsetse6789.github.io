@@ -152,6 +152,120 @@
             -webkit-line-clamp: unset;
             display: block;
         }
+
+        /* Context Menu Styles */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem 0;
+            z-index: 9999;
+            min-width: 150px;
+        }
+
+        .dark .context-menu {
+            background: #374151;
+            border-color: #4b5563;
+        }
+
+        .context-menu-item {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.15s;
+        }
+
+        .context-menu-item:hover {
+            background: #f3f4f6;
+        }
+
+        .dark .context-menu-item:hover {
+            background: #4b5563;
+        }
+
+        .context-menu-item.danger {
+            color: #dc2626;
+        }
+
+        .context-menu-item.danger:hover {
+            background: #fef2f2;
+        }
+
+        .dark .context-menu-item.danger:hover {
+            background: #7f1d1d;
+        }
+
+        /* Drag and Drop Styles */
+        .playlist-video-item {
+            transition: all 0.2s ease;
+            cursor: grab;
+        }
+
+        .playlist-video-item:active {
+            cursor: grabbing;
+        }
+
+        .playlist-video-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .playlist-video-item.drag-over {
+            border-top: 3px solid #5D5CDE;
+            margin-top: 6px;
+        }
+
+        /* Selection Mode Styles */
+        .selection-mode .playlist-video-item {
+            cursor: default;
+        }
+
+        .video-checkbox {
+            margin-right: 0.75rem;
+        }
+
+        .selection-controls {
+            padding: 1rem;
+            background: #f3f4f6;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border: 2px dashed #9ca3af;
+        }
+
+        .dark .selection-controls {
+            background: #4b5563;
+            border-color: #6b7280;
+        }
+
+        /* Rename Form Styles */
+        .rename-form {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            z-index: 10000;
+            min-width: 300px;
+        }
+
+        .dark .rename-form {
+            background: #374151;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
@@ -426,13 +540,54 @@
                     <div id="currentPlaylistSection" class="hidden mt-6">
                         <div class="flex justify-between items-center mb-3">
                             <h4 class="font-semibold" id="currentPlaylistTitle">Current Playlist</h4>
-                            <button 
-                                onclick="clearCurrentPlaylist()" 
-                                class="text-gray-500 hover:text-red-500 transition-colors"
-                            >
-                                ✕
-                            </button>
+                            <div class="flex gap-2">
+                                <button 
+                                    id="playlistSelectButton"
+                                    onclick="toggleSelectionMode()" 
+                                    class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
+                                >
+                                    Select
+                                </button>
+                                <button 
+                                    onclick="clearCurrentPlaylist()" 
+                                    class="text-gray-500 hover:text-red-500 transition-colors"
+                                >
+                                    ✕
+                                </button>
+                            </div>
                         </div>
+                        
+                        <!-- Selection Controls -->
+                        <div id="selectionControls" class="selection-controls hidden">
+                            <div class="flex flex-wrap gap-2 text-sm">
+                                <span class="font-medium text-gray-700 dark:text-gray-300">
+                                    Selected: <span id="selectedCount">0</span>
+                                </span>
+                                <button onclick="selectAllVideos()" class="text-blue-600 hover:text-blue-800">Select All</button>
+                                <button onclick="deselectAllVideos()" class="text-blue-600 hover:text-blue-800">Deselect All</button>
+                            </div>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button 
+                                    onclick="moveSelectedVideos()" 
+                                    class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
+                                >
+                                    📁 Move to Playlist
+                                </button>
+                                <button 
+                                    onclick="copySelectedVideos()" 
+                                    class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
+                                >
+                                    📋 Copy to Playlist
+                                </button>
+                                <button 
+                                    onclick="deleteSelectedVideos()" 
+                                    class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs"
+                                >
+                                    🗑️ Delete Selected
+                                </button>
+                            </div>
+                        </div>
+                        
                         <div id="currentPlaylistVideos" class="space-y-2 max-h-96 overflow-y-auto">
                         </div>
                     </div>
@@ -1105,7 +1260,10 @@
             }
             
             container.innerHTML = playlistNames.map(name => `
-                <div class="flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-lg">
+                <div class="flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-lg" 
+                     oncontextmenu="showPlaylistContextMenu(event, '${escapeHtml(name)}')"
+                     ontouchstart="handlePlaylistTouchStart(event, '${escapeHtml(name)}')"
+                     ontouchend="handlePlaylistTouchEnd(event)">
                     <div class="flex-1 cursor-pointer" onclick="loadPlaylist('${name}')">
                         <div class="font-medium">${name}</div>
                         <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length} videos</div>
@@ -1150,20 +1308,33 @@
                 return;
             }
             
+            const isSelectionMode = container.classList.contains('selection-mode');
+            
             container.innerHTML = videos.map((video, index) => `
-                <div class="playlist-item flex items-center gap-3 p-2 rounded cursor-pointer ${index === currentVideoIndex ? 'active' : ''}" 
-                     onclick="playVideoFromPlaylist(${index})">
+                <div class="playlist-video-item playlist-item flex items-center gap-3 p-2 rounded cursor-pointer ${index === currentVideoIndex ? 'active' : ''}" 
+                     data-index="${index}"
+                     draggable="${!isSelectionMode}"
+                     onclick="${isSelectionMode ? `toggleVideoSelection(${index})` : `playVideoFromPlaylist(${index})`}"
+                     ondragstart="handleDragStart(event, ${index})"
+                     ondragover="handleDragOver(event)"
+                     ondrop="handleDrop(event, ${index})"
+                     ondragend="handleDragEnd(event)">
+                    ${isSelectionMode ? `
+                        <input type="checkbox" class="video-checkbox" data-index="${index}" onchange="updateSelectedCount()">
+                    ` : ''}
                     <img src="${video.thumbnail}" alt="${video.title}" class="w-16 h-12 object-cover rounded">
                     <div class="flex-1 min-w-0">
                         <div class="font-medium text-sm line-clamp-2">${video.title}</div>
                         <div class="text-xs text-gray-600 dark:text-gray-400">${video.channel}</div>
                     </div>
-                    <button 
-                        onclick="removeFromPlaylist(${index}); event.stopPropagation();" 
-                        class="text-red-500 hover:text-red-700 transition-colors"
-                    >
-                        ✕
-                    </button>
+                    ${!isSelectionMode ? `
+                        <button 
+                            onclick="removeFromPlaylist(${index}); event.stopPropagation();" 
+                            class="text-red-500 hover:text-red-700 transition-colors"
+                        >
+                            ✕
+                        </button>
+                    ` : ''}
                 </div>
             `).join('');
         }
@@ -2267,6 +2438,600 @@
                 wakeLock.release();
                 wakeLock = null;
             }
+        }
+
+        // Enhanced Playlist Management Features
+
+        // Context Menu Variables
+        let contextMenuTimeout = null;
+        let currentContextPlaylist = null;
+
+        // Drag and Drop Variables
+        let draggedIndex = null;
+        let draggedElement = null;
+
+        // Selection Mode Variables
+        let isSelectionMode = false;
+        let selectedVideos = new Set();
+
+        // Context Menu Functions
+        function showPlaylistContextMenu(event, playlistName) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Remove any existing context menu
+            hideContextMenu();
+            
+            currentContextPlaylist = playlistName;
+            
+            const contextMenu = document.createElement('div');
+            contextMenu.className = 'context-menu';
+            contextMenu.id = 'playlistContextMenu';
+            
+            const menuItems = [
+                { text: '📝 Rename', action: () => showRenameForm(playlistName) },
+                { text: '🔀 Merge Playlists', action: () => showMergeDialog(playlistName) },
+                { text: '📋 Duplicate', action: () => duplicatePlaylist(playlistName) },
+                { text: '📊 Playlist Info', action: () => showPlaylistInfo(playlistName) },
+                { text: '🗑️ Delete', action: () => deletePlaylist(playlistName), danger: true }
+            ];
+            
+            menuItems.forEach(item => {
+                const menuItem = document.createElement('div');
+                menuItem.className = `context-menu-item ${item.danger ? 'danger' : ''}`;
+                menuItem.textContent = item.text;
+                menuItem.onclick = () => {
+                    item.action();
+                    hideContextMenu();
+                };
+                contextMenu.appendChild(menuItem);
+            });
+            
+            // Position the context menu
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+            
+            document.body.appendChild(contextMenu);
+            
+            // Close menu when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', hideContextMenu, { once: true });
+            }, 10);
+        }
+
+        function hideContextMenu() {
+            const menu = document.getElementById('playlistContextMenu');
+            if (menu) {
+                menu.remove();
+            }
+            currentContextPlaylist = null;
+        }
+
+        // Touch Support for Context Menu
+        function handlePlaylistTouchStart(event, playlistName) {
+            contextMenuTimeout = setTimeout(() => {
+                // Simulate right click for touch devices
+                const touchEvent = {
+                    preventDefault: event.preventDefault.bind(event),
+                    stopPropagation: event.stopPropagation.bind(event),
+                    pageX: event.touches[0].pageX,
+                    pageY: event.touches[0].pageY
+                };
+                showPlaylistContextMenu(touchEvent, playlistName);
+                
+                // Add haptic feedback if available
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+            }, 500); // 500ms long press
+        }
+
+        function handlePlaylistTouchEnd(event) {
+            if (contextMenuTimeout) {
+                clearTimeout(contextMenuTimeout);
+                contextMenuTimeout = null;
+            }
+        }
+
+        // Rename Playlist Functions
+        function showRenameForm(oldName) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'renameOverlay';
+            
+            const form = document.createElement('div');
+            form.className = 'rename-form';
+            
+            form.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Rename Playlist</h3>
+                <input 
+                    type="text" 
+                    id="renameInput" 
+                    value="${oldName}"
+                    class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded mb-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    placeholder="Enter new name..."
+                >
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideRenameForm()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="confirmRename('${escapeHtml(oldName)}')" 
+                        class="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors"
+                    >
+                        Rename
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            
+            // Focus input and select text
+            const input = document.getElementById('renameInput');
+            input.focus();
+            input.select();
+            
+            // Handle Enter key
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    confirmRename(oldName);
+                }
+            });
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideRenameForm();
+                }
+            });
+        }
+
+        function hideRenameForm() {
+            const overlay = document.getElementById('renameOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function confirmRename(oldName) {
+            const input = document.getElementById('renameInput');
+            const newName = input.value.trim();
+            
+            if (!newName) {
+                alert('Please enter a valid name');
+                return;
+            }
+            
+            if (newName === oldName) {
+                hideRenameForm();
+                return;
+            }
+            
+            if (playlists[newName]) {
+                alert('A playlist with this name already exists');
+                return;
+            }
+            
+            // Rename the playlist
+            playlists[newName] = { ...playlists[oldName] };
+            playlists[newName].name = newName;
+            delete playlists[oldName];
+            
+            // Update current playlist if it was renamed
+            if (currentPlaylist === oldName) {
+                currentPlaylist = newName;
+            }
+            
+            saveSettings();
+            renderPlaylists();
+            renderCurrentPlaylist();
+            hideRenameForm();
+        }
+
+        // Merge Playlists Functions
+        function showMergeDialog(targetPlaylist) {
+            const playlistNames = Object.keys(playlists).filter(name => name !== targetPlaylist);
+            
+            if (playlistNames.length === 0) {
+                alert('No other playlists available to merge');
+                return;
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'mergeOverlay';
+            
+            const form = document.createElement('div');
+            form.className = 'rename-form';
+            form.style.minWidth = '400px';
+            
+            form.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Merge Playlists</h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Select playlists to merge into "${targetPlaylist}":
+                </p>
+                <div class="max-h-64 overflow-y-auto mb-4 space-y-2">
+                    ${playlistNames.map(name => `
+                        <label class="flex items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded cursor-pointer">
+                            <input type="checkbox" value="${name}" class="merge-checkbox">
+                            <span class="flex-1">${name} (${playlists[name].videos.length} videos)</span>
+                        </label>
+                    `).join('')}
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideMergeDialog()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="confirmMerge('${escapeHtml(targetPlaylist)}')" 
+                        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    >
+                        Merge
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideMergeDialog();
+                }
+            });
+        }
+
+        function hideMergeDialog() {
+            const overlay = document.getElementById('mergeOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function confirmMerge(targetPlaylist) {
+            const checkboxes = document.querySelectorAll('.merge-checkbox:checked');
+            const selectedPlaylists = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedPlaylists.length === 0) {
+                alert('Please select at least one playlist to merge');
+                return;
+            }
+            
+            let totalVideos = 0;
+            const allVideos = [...playlists[targetPlaylist].videos];
+            const existingVideoIds = new Set(allVideos.map(v => v.id));
+            
+            // Merge videos from selected playlists
+            selectedPlaylists.forEach(playlistName => {
+                const videos = playlists[playlistName].videos;
+                videos.forEach(video => {
+                    if (!existingVideoIds.has(video.id)) {
+                        allVideos.push(video);
+                        existingVideoIds.add(video.id);
+                        totalVideos++;
+                    }
+                });
+                
+                // Delete the merged playlist
+                delete playlists[playlistName];
+                
+                // Clear current playlist if it was one of the merged ones
+                if (currentPlaylist === playlistName) {
+                    clearCurrentPlaylist();
+                }
+            });
+            
+            playlists[targetPlaylist].videos = allVideos;
+            
+            saveSettings();
+            renderPlaylists();
+            renderCurrentPlaylist();
+            hideMergeDialog();
+            
+            alert(`Successfully merged ${selectedPlaylists.length} playlists. Added ${totalVideos} new videos to "${targetPlaylist}".`);
+        }
+
+        // Duplicate Playlist
+        function duplicatePlaylist(playlistName) {
+            let newName = `${playlistName} (Copy)`;
+            let counter = 2;
+            
+            while (playlists[newName]) {
+                newName = `${playlistName} (Copy ${counter})`;
+                counter++;
+            }
+            
+            playlists[newName] = {
+                name: newName,
+                videos: [...playlists[playlistName].videos],
+                created: new Date().toISOString(),
+                duplicatedFrom: playlistName
+            };
+            
+            saveSettings();
+            renderPlaylists();
+        }
+
+        // Show Playlist Info
+        function showPlaylistInfo(playlistName) {
+            const playlist = playlists[playlistName];
+            const createdDate = new Date(playlist.created).toLocaleDateString();
+            const totalDuration = 'Unknown'; // Would need video durations from API
+            
+            alert(`Playlist Info:\n\nName: ${playlistName}\nVideos: ${playlist.videos.length}\nCreated: ${createdDate}\n${playlist.imported ? 'Imported from YouTube' : 'Created locally'}`);
+        }
+
+        // Drag and Drop Functions
+        function handleDragStart(event, index) {
+            if (isSelectionMode) {
+                event.preventDefault();
+                return;
+            }
+            
+            draggedIndex = index;
+            draggedElement = event.target;
+            
+            event.target.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/html', event.target.outerHTML);
+        }
+
+        function handleDragOver(event) {
+            if (isSelectionMode || draggedIndex === null) return;
+            
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            
+            const rect = event.target.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            if (event.clientY < midpoint) {
+                event.target.classList.add('drag-over');
+            } else {
+                event.target.classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(event, dropIndex) {
+            if (isSelectionMode || draggedIndex === null) return;
+            
+            event.preventDefault();
+            
+            if (draggedIndex === dropIndex) return;
+            
+            const videos = playlists[currentPlaylist].videos;
+            const draggedVideo = videos[draggedIndex];
+            
+            // Remove dragged video
+            videos.splice(draggedIndex, 1);
+            
+            // Adjust drop index if needed
+            if (draggedIndex < dropIndex) {
+                dropIndex--;
+            }
+            
+            // Insert at new position
+            videos.splice(dropIndex, 0, draggedVideo);
+            
+            // Update current video index if needed
+            if (currentVideoIndex === draggedIndex) {
+                currentVideoIndex = dropIndex;
+            } else if (currentVideoIndex > draggedIndex && currentVideoIndex <= dropIndex) {
+                currentVideoIndex--;
+            } else if (currentVideoIndex < draggedIndex && currentVideoIndex >= dropIndex) {
+                currentVideoIndex++;
+            }
+            
+            saveSettings();
+            renderCurrentPlaylist();
+        }
+
+        function handleDragEnd(event) {
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+            }
+            
+            // Remove all drag-over classes
+            document.querySelectorAll('.drag-over').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            
+            draggedIndex = null;
+            draggedElement = null;
+        }
+
+        // Selection Mode Functions
+        function toggleSelectionMode() {
+            isSelectionMode = !isSelectionMode;
+            selectedVideos.clear();
+            
+            const container = document.getElementById('currentPlaylistVideos');
+            const button = document.getElementById('playlistSelectButton');
+            const controls = document.getElementById('selectionControls');
+            
+            if (isSelectionMode) {
+                container.classList.add('selection-mode');
+                button.textContent = 'Done';
+                button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                button.classList.add('bg-red-600', 'hover:bg-red-700');
+                controls.classList.remove('hidden');
+            } else {
+                container.classList.remove('selection-mode');
+                button.textContent = 'Select';
+                button.classList.remove('bg-red-600', 'hover:bg-red-700');
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                controls.classList.add('hidden');
+            }
+            
+            renderCurrentPlaylist();
+            updateSelectedCount();
+        }
+
+        function toggleVideoSelection(index) {
+            if (!isSelectionMode) return;
+            
+            const checkbox = document.querySelector(`input[data-index="${index}"]`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                updateSelectedCount();
+            }
+        }
+
+        function updateSelectedCount() {
+            if (!isSelectionMode) return;
+            
+            const checkboxes = document.querySelectorAll('.video-checkbox:checked');
+            selectedVideos = new Set(Array.from(checkboxes).map(cb => parseInt(cb.dataset.index)));
+            
+            const countElement = document.getElementById('selectedCount');
+            if (countElement) {
+                countElement.textContent = selectedVideos.size;
+            }
+        }
+
+        function selectAllVideos() {
+            const checkboxes = document.querySelectorAll('.video-checkbox');
+            checkboxes.forEach(cb => cb.checked = true);
+            updateSelectedCount();
+        }
+
+        function deselectAllVideos() {
+            const checkboxes = document.querySelectorAll('.video-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            updateSelectedCount();
+        }
+
+        // Bulk Operations
+        function moveSelectedVideos() {
+            if (selectedVideos.size === 0) {
+                alert('Please select videos to move');
+                return;
+            }
+            
+            const playlistNames = Object.keys(playlists).filter(name => name !== currentPlaylist);
+            
+            if (playlistNames.length === 0) {
+                alert('No other playlists available');
+                return;
+            }
+            
+            const targetPlaylist = prompt(`Move ${selectedVideos.size} videos to which playlist?\n\nAvailable playlists:\n${playlistNames.join('\n')}`);
+            
+            if (!targetPlaylist || !playlists[targetPlaylist]) {
+                return;
+            }
+            
+            const currentVideos = playlists[currentPlaylist].videos;
+            const selectedIndices = Array.from(selectedVideos).sort((a, b) => b - a); // Sort descending
+            const videosToMove = [];
+            
+            // Remove selected videos (in reverse order to maintain indices)
+            selectedIndices.forEach(index => {
+                videosToMove.push(currentVideos[index]);
+                currentVideos.splice(index, 1);
+            });
+            
+            // Add to target playlist
+            playlists[targetPlaylist].videos.push(...videosToMove.reverse());
+            
+            // Adjust current video index
+            let adjustment = 0;
+            selectedIndices.forEach(index => {
+                if (index <= currentVideoIndex) {
+                    adjustment++;
+                }
+            });
+            currentVideoIndex = Math.max(0, currentVideoIndex - adjustment);
+            
+            saveSettings();
+            renderPlaylists();
+            renderCurrentPlaylist();
+            selectedVideos.clear();
+            updateSelectedCount();
+            
+            alert(`Moved ${videosToMove.length} videos to "${targetPlaylist}"`);
+        }
+
+        function copySelectedVideos() {
+            if (selectedVideos.size === 0) {
+                alert('Please select videos to copy');
+                return;
+            }
+            
+            const playlistNames = Object.keys(playlists).filter(name => name !== currentPlaylist);
+            
+            if (playlistNames.length === 0) {
+                alert('No other playlists available');
+                return;
+            }
+            
+            const targetPlaylist = prompt(`Copy ${selectedVideos.size} videos to which playlist?\n\nAvailable playlists:\n${playlistNames.join('\n')}`);
+            
+            if (!targetPlaylist || !playlists[targetPlaylist]) {
+                return;
+            }
+            
+            const currentVideos = playlists[currentPlaylist].videos;
+            const videosToCopy = Array.from(selectedVideos).map(index => ({ ...currentVideos[index] }));
+            
+            // Add to target playlist (filter duplicates)
+            const existingIds = new Set(playlists[targetPlaylist].videos.map(v => v.id));
+            const newVideos = videosToCopy.filter(video => !existingIds.has(video.id));
+            
+            playlists[targetPlaylist].videos.push(...newVideos);
+            
+            saveSettings();
+            renderPlaylists();
+            selectedVideos.clear();
+            updateSelectedCount();
+            
+            if (newVideos.length < videosToCopy.length) {
+                alert(`Copied ${newVideos.length} videos to "${targetPlaylist}" (${videosToCopy.length - newVideos.length} duplicates skipped)`);
+            } else {
+                alert(`Copied ${newVideos.length} videos to "${targetPlaylist}"`);
+            }
+        }
+
+        function deleteSelectedVideos() {
+            if (selectedVideos.size === 0) {
+                alert('Please select videos to delete');
+                return;
+            }
+            
+            if (!confirm(`Delete ${selectedVideos.size} selected videos?`)) {
+                return;
+            }
+            
+            const currentVideos = playlists[currentPlaylist].videos;
+            const selectedIndices = Array.from(selectedVideos).sort((a, b) => b - a); // Sort descending
+            
+            // Remove selected videos (in reverse order to maintain indices)
+            selectedIndices.forEach(index => {
+                currentVideos.splice(index, 1);
+            });
+            
+            // Adjust current video index
+            let adjustment = 0;
+            selectedIndices.forEach(index => {
+                if (index <= currentVideoIndex) {
+                    adjustment++;
+                }
+            });
+            currentVideoIndex = Math.max(0, currentVideoIndex - adjustment);
+            
+            saveSettings();
+            renderPlaylists();
+            renderCurrentPlaylist();
+            selectedVideos.clear();
+            updateSelectedCount();
         }
 
         // Format date helper
