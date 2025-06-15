@@ -2541,8 +2541,8 @@
 
         // Touch Support for Context Menu
         function handlePlaylistTouchStart(event, playlistName) {
-            // Prevent text selection during touch
-            event.preventDefault();
+            // Store the playlist name for potential use in touchend
+            event.target.closest('.playlist-item').dataset.playlistName = playlistName;
             
             touchStartTime = Date.now();
             touchStartPosition = {
@@ -2556,6 +2556,9 @@
             
             contextMenuTimeout = setTimeout(() => {
                 longPressTriggered = true;
+                
+                // Prevent default behavior for long press only
+                event.preventDefault();
                 
                 // Simulate right click for touch devices
                 const touchEvent = {
@@ -2574,8 +2577,11 @@
         }
 
         function handlePlaylistTouchEnd(event) {
+            const playlistItem = event.target.closest('.playlist-item');
+            const playlistName = playlistItem?.dataset.playlistName;
+            
             // Remove touch feedback
-            event.target.closest('.playlist-item')?.classList.remove('touch-active');
+            playlistItem?.classList.remove('touch-active');
             
             if (contextMenuTimeout) {
                 clearTimeout(contextMenuTimeout);
@@ -2586,9 +2592,10 @@
             const touchEndTime = Date.now();
             const touchDuration = touchEndTime - touchStartTime;
             
-            if (!longPressTriggered && touchDuration < 500) {
-                // This was a quick tap, allow normal click behavior
-                // The onclick will handle it
+            if (!longPressTriggered && touchDuration < 500 && playlistName) {
+                // This was a quick tap - manually trigger playlist loading
+                event.preventDefault(); // Prevent double-triggering with click event
+                loadPlaylist(playlistName);
             }
         }
 
