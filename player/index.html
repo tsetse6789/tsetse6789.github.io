@@ -2830,9 +2830,135 @@
         function showPlaylistInfo(playlistName) {
             const playlist = playlists[playlistName];
             const createdDate = new Date(playlist.created).toLocaleDateString();
-            const totalDuration = 'Unknown'; // Would need video durations from API
+            const remarks = playlist.remarks || '';
             
-            alert(`Playlist Info:\n\nName: ${playlistName}\nVideos: ${playlist.videos.length}\nCreated: ${createdDate}\n${playlist.imported ? 'Imported from YouTube' : 'Created locally'}`);
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'playlistInfoOverlay';
+            
+            const form = document.createElement('div');
+            form.className = 'rename-form';
+            form.style.minWidth = '400px';
+            form.style.maxWidth = '500px';
+            
+            form.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📊 Playlist Info</h3>
+                
+                <div class="space-y-3 mb-4">
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-700 dark:text-gray-300">Name:</span>
+                        <span class="text-gray-900 dark:text-white">${playlistName}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-700 dark:text-gray-300">Videos:</span>
+                        <span class="text-gray-900 dark:text-white">${playlist.videos.length}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-700 dark:text-gray-300">Created:</span>
+                        <span class="text-gray-900 dark:text-white">${createdDate}</span>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-700 dark:text-gray-300">Source:</span>
+                        <span class="text-gray-900 dark:text-white">${playlist.imported ? 'Imported from YouTube' : 'Created locally'}</span>
+                    </div>
+                    
+                    ${playlist.duplicatedFrom ? `
+                        <div class="flex justify-between">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Duplicated from:</span>
+                            <span class="text-gray-900 dark:text-white">${playlist.duplicatedFrom}</span>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        📝 Remarks / Notes:
+                    </label>
+                    <textarea 
+                        id="playlistRemarks" 
+                        placeholder="Add your notes about this playlist..."
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-vertical"
+                        rows="4"
+                        style="min-height: 80px; max-height: 200px;"
+                    >${remarks}</textarea>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Use this space to add personal notes, descriptions, or reminders about this playlist.
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hidePlaylistInfo()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="savePlaylistRemarks('${escapeHtml(playlistName)}')" 
+                        class="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors"
+                    >
+                        💾 Save
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            
+            // Focus the textarea
+            const textarea = document.getElementById('playlistRemarks');
+            textarea.focus();
+            textarea.setSelectionRange(textarea.value.length, textarea.value.length); // Move cursor to end
+            
+            // Handle keyboard shortcuts
+            textarea.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    hidePlaylistInfo();
+                } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    // Ctrl+Enter or Cmd+Enter to save
+                    savePlaylistRemarks(playlistName);
+                }
+            });
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hidePlaylistInfo();
+                }
+            });
+        }
+
+        function hidePlaylistInfo() {
+            const overlay = document.getElementById('playlistInfoOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function savePlaylistRemarks(playlistName) {
+            const textarea = document.getElementById('playlistRemarks');
+            const remarks = textarea.value.trim();
+            
+            // Save remarks to playlist
+            playlists[playlistName].remarks = remarks;
+            
+            saveSettings();
+            hidePlaylistInfo();
+            
+            // Show brief success feedback
+            const feedback = document.createElement('div');
+            feedback.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity';
+            feedback.textContent = '✅ Remarks saved!';
+            document.body.appendChild(feedback);
+            
+            // Auto-remove feedback after 2 seconds
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                setTimeout(() => feedback.remove(), 300);
+            }, 2000);
         }
 
         // Drag and Drop Functions
