@@ -1342,14 +1342,17 @@
                      ondragstart="handleDragStart(event, ${index})"
                      ondragover="handleDragOver(event)"
                      ondrop="handleDrop(event, ${index})"
-                     ondragend="handleDragEnd(event)"
-                     ontouchstart="handleVideoTouchStart(event, ${index})"
-                     ontouchmove="handleVideoTouchMove(event, ${index})"
-                     ontouchend="handleVideoTouchEnd(event, ${index})">
+                     ondragend="handleDragEnd(event)">
                     ${isSelectionMode ? `
                         <input type="checkbox" class="video-checkbox" data-index="${index}" onchange="updateSelectedCount()">
                     ` : ''}
-                    <img src="${video.thumbnail}" alt="${video.title}" class="w-16 h-12 object-cover rounded">
+                    <img src="${video.thumbnail}" alt="${video.title}" class="w-16 h-12 object-cover rounded ${!isSelectionMode ? 'cursor-grab' : ''}"
+                         ${!isSelectionMode ? `
+                         ontouchstart="handleVideoTouchStart(event, ${index})"
+                         ontouchmove="handleVideoTouchMove(event, ${index})"
+                         ontouchend="handleVideoTouchEnd(event, ${index})"
+                         onclick="event.stopPropagation(); playVideoFromPlaylist(${index})"
+                         ` : ''}>
                     <div class="flex-1 min-w-0">
                         <div class="font-medium text-sm line-clamp-2">${video.title}</div>
                         <div class="text-xs text-gray-600 dark:text-gray-400">${video.channel}</div>
