@@ -153,48 +153,58 @@
             display: block;
         }
 
-        /* Context Menu Styles */
-        .context-menu {
-            position: fixed;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            padding: 0.5rem 0;
-            z-index: 9999;
-            min-width: 150px;
+        /* Playlist Action Buttons */
+        .playlist-actions {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
         }
 
-        .dark .context-menu {
-            background: #374151;
-            border-color: #4b5563;
-        }
-
-        .context-menu-item {
-            padding: 0.5rem 1rem;
+        .playlist-action-btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+            border: none;
             cursor: pointer;
-            font-size: 0.875rem;
-            transition: background-color 0.15s;
+            transition: all 0.2s ease;
+            color: white;
         }
 
-        .context-menu-item:hover {
-            background: #f3f4f6;
+        .playlist-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .dark .context-menu-item:hover {
+        .btn-rename {
+            background: #3b82f6;
+        }
+
+        .btn-rename:hover {
+            background: #2563eb;
+        }
+
+        .btn-duplicate {
+            background: #10b981;
+        }
+
+        .btn-duplicate:hover {
+            background: #059669;
+        }
+
+        .btn-merge {
+            background: #f59e0b;
+        }
+
+        .btn-merge:hover {
+            background: #d97706;
+        }
+
+        .btn-info {
+            background: #6b7280;
+        }
+
+        .btn-info:hover {
             background: #4b5563;
-        }
-
-        .context-menu-item.danger {
-            color: #dc2626;
-        }
-
-        .context-menu-item.danger:hover {
-            background: #fef2f2;
-        }
-
-        .dark .context-menu-item.danger:hover {
-            background: #7f1d1d;
         }
 
         /* Drag and Drop Styles */
@@ -1283,21 +1293,49 @@
             }
             
             container.innerHTML = playlistNames.map(name => `
-                <div class="playlist-item flex justify-between items-center p-3 bg-white dark:bg-gray-700 rounded-lg" 
-                     oncontextmenu="showPlaylistContextMenu(event, '${escapeHtml(name)}')"
-                     ontouchstart="handlePlaylistTouchStart(event, '${escapeHtml(name)}')"
-                     ontouchmove="handlePlaylistTouchMove(event)"
-                     ontouchend="handlePlaylistTouchEnd(event)">
-                    <div class="flex-1 cursor-pointer" onclick="loadPlaylist('${name}')">
-                        <div class="font-medium">${name}</div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length} videos</div>
+                <div class="playlist-item p-3 bg-white dark:bg-gray-700 rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex-1 cursor-pointer" onclick="loadPlaylist('${name}')">
+                            <div class="font-medium">${name}</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length} videos</div>
+                        </div>
+                        <button 
+                            onclick="deletePlaylist('${name}')" 
+                            class="text-red-500 hover:text-red-700 transition-colors ml-2"
+                        >
+                            🗑️
+                        </button>
                     </div>
-                    <button 
-                        onclick="deletePlaylist('${name}')" 
-                        class="text-red-500 hover:text-red-700 transition-colors ml-2"
-                    >
-                        🗑️
-                    </button>
+                    <div class="playlist-actions">
+                        <button 
+                            onclick="showRenameForm('${escapeHtml(name)}')" 
+                            class="playlist-action-btn btn-rename"
+                            title="Rename playlist"
+                        >
+                            📝 Rename
+                        </button>
+                        <button 
+                            onclick="duplicatePlaylist('${escapeHtml(name)}')" 
+                            class="playlist-action-btn btn-duplicate"
+                            title="Duplicate playlist"
+                        >
+                            📋 Copy
+                        </button>
+                        <button 
+                            onclick="showMergeDialog('${escapeHtml(name)}')" 
+                            class="playlist-action-btn btn-merge"
+                            title="Merge with other playlists"
+                        >
+                            🔀 Merge
+                        </button>
+                        <button 
+                            onclick="showPlaylistInfo('${escapeHtml(name)}')" 
+                            class="playlist-action-btn btn-info"
+                            title="Show playlist info"
+                        >
+                            📊 Info
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -2472,10 +2510,6 @@
 
         // Enhanced Playlist Management Features
 
-        // Context Menu Variables
-        let contextMenuTimeout = null;
-        let currentContextPlaylist = null;
-
         // Drag and Drop Variables
         let draggedIndex = null;
         let draggedElement = null;
@@ -2483,146 +2517,6 @@
         // Selection Mode Variables
         let isSelectionMode = false;
         let selectedVideos = new Set();
-
-        // Context Menu Functions
-        function showPlaylistContextMenu(event, playlistName) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            // Remove any existing context menu
-            hideContextMenu();
-            
-            currentContextPlaylist = playlistName;
-            
-            const contextMenu = document.createElement('div');
-            contextMenu.className = 'context-menu';
-            contextMenu.id = 'playlistContextMenu';
-            
-            const menuItems = [
-                { text: '📝 Rename', action: () => showRenameForm(playlistName) },
-                { text: '🔀 Merge Playlists', action: () => showMergeDialog(playlistName) },
-                { text: '📋 Duplicate', action: () => duplicatePlaylist(playlistName) },
-                { text: '📊 Playlist Info', action: () => showPlaylistInfo(playlistName) },
-                { text: '🗑️ Delete', action: () => deletePlaylist(playlistName), danger: true }
-            ];
-            
-            menuItems.forEach(item => {
-                const menuItem = document.createElement('div');
-                menuItem.className = `context-menu-item ${item.danger ? 'danger' : ''}`;
-                menuItem.textContent = item.text;
-                menuItem.onclick = () => {
-                    item.action();
-                    hideContextMenu();
-                };
-                contextMenu.appendChild(menuItem);
-            });
-            
-            // Position the context menu
-            contextMenu.style.left = event.pageX + 'px';
-            contextMenu.style.top = event.pageY + 'px';
-            
-            document.body.appendChild(contextMenu);
-            
-            // Close menu when clicking outside
-            setTimeout(() => {
-                document.addEventListener('click', hideContextMenu, { once: true });
-            }, 10);
-        }
-
-        function hideContextMenu() {
-            const menu = document.getElementById('playlistContextMenu');
-            if (menu) {
-                menu.remove();
-            }
-            currentContextPlaylist = null;
-        }
-
-        // Enhanced Touch Support for Mobile
-        let touchStartTime = 0;
-        let touchStartPosition = { x: 0, y: 0 };
-        let longPressTriggered = false;
-
-        // Touch Support for Context Menu
-        function handlePlaylistTouchStart(event, playlistName) {
-            // Store the playlist name for potential use in touchend
-            event.target.closest('.playlist-item').dataset.playlistName = playlistName;
-            
-            touchStartTime = Date.now();
-            touchStartPosition = {
-                x: event.touches[0].clientX,
-                y: event.touches[0].clientY
-            };
-            longPressTriggered = false;
-            
-            // Add touch feedback
-            event.target.closest('.playlist-item')?.classList.add('touch-active');
-            
-            contextMenuTimeout = setTimeout(() => {
-                longPressTriggered = true;
-                
-                // Prevent default behavior for long press only
-                event.preventDefault();
-                
-                // Simulate right click for touch devices
-                const touchEvent = {
-                    preventDefault: () => {},
-                    stopPropagation: () => {},
-                    pageX: event.touches[0].pageX,
-                    pageY: event.touches[0].pageY
-                };
-                showPlaylistContextMenu(touchEvent, playlistName);
-                
-                // Add haptic feedback if available
-                if (navigator.vibrate) {
-                    navigator.vibrate([50, 30, 50]);
-                }
-            }, 500); // 500ms long press
-        }
-
-        function handlePlaylistTouchEnd(event) {
-            const playlistItem = event.target.closest('.playlist-item');
-            const playlistName = playlistItem?.dataset.playlistName;
-            
-            // Remove touch feedback
-            playlistItem?.classList.remove('touch-active');
-            
-            if (contextMenuTimeout) {
-                clearTimeout(contextMenuTimeout);
-                contextMenuTimeout = null;
-            }
-            
-            // Check if it was a quick tap (not long press)
-            const touchEndTime = Date.now();
-            const touchDuration = touchEndTime - touchStartTime;
-            
-            if (!longPressTriggered && touchDuration < 500 && playlistName) {
-                // This was a quick tap - manually trigger playlist loading
-                event.preventDefault(); // Prevent double-triggering with click event
-                loadPlaylist(playlistName);
-            }
-        }
-
-        function handlePlaylistTouchMove(event) {
-            // Cancel long press if finger moves too much
-            if (contextMenuTimeout && event.touches[0]) {
-                const currentPos = {
-                    x: event.touches[0].clientX,
-                    y: event.touches[0].clientY
-                };
-                
-                const distance = Math.sqrt(
-                    Math.pow(currentPos.x - touchStartPosition.x, 2) +
-                    Math.pow(currentPos.y - touchStartPosition.y, 2)
-                );
-                
-                // Cancel if moved more than 10 pixels
-                if (distance > 10) {
-                    clearTimeout(contextMenuTimeout);
-                    contextMenuTimeout = null;
-                    event.target.closest('.playlist-item')?.classList.remove('touch-active');
-                }
-            }
-        }
 
         // Rename Playlist Functions
         function showRenameForm(oldName) {
