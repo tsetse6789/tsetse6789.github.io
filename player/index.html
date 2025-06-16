@@ -644,6 +644,8 @@
         let isPageVisible = true;
         let backgroundPlaybackEnabled = true;
         let wakeLock = null;
+        let userPausedManually = false;
+        let lastKnownPlaybackState = null;
 
         // YouTube Player API callback
         function onYouTubeIframeAPIReady() {
@@ -653,6 +655,26 @@
 
         // Player state change event handler
         function onPlayerStateChange(event) {
+            console.log('Player state changed:', event.data);
+            
+            // Track manual pause/play actions
+            if (event.data === YT.PlayerState.PAUSED) {
+                // If user manually paused (not due to browser behavior)
+                if (isPageVisible) {
+                    userPausedManually = true;
+                    console.log('User manually paused');
+                } else {
+                    console.log('Browser auto-paused (background)');
+                }
+            } else if (event.data === YT.PlayerState.PLAYING) {
+                // Reset manual pause flag when playing
+                userPausedManually = false;
+                console.log('Video playing');
+            }
+            
+            // Store the current playback state
+            lastKnownPlaybackState = event.data;
+            
             // Update media session playback state
             updateMediaSessionPlaybackState(event.data);
             
@@ -1546,11 +1568,17 @@
                 });
                 
                 navigator.mediaSession.setActionHandler('previoustrack', () => {
-                    playPrevious();
+                    console.log('Media session: previous track requested');
+                    if (currentPlaylist && playlists[currentPlaylist] && playlists[currentPlaylist].videos.length > 0) {
+                        playPrevious();
+                    }
                 });
                 
                 navigator.mediaSession.setActionHandler('nexttrack', () => {
-                    playNext();
+                    console.log('Media session: next track requested');
+                    if (currentPlaylist && playlists[currentPlaylist] && playlists[currentPlaylist].videos.length > 0) {
+                        playNext();
+                    }
                 });
                 
                 navigator.mediaSession.setActionHandler('stop', () => {
@@ -1635,15 +1663,25 @@
                     const duration = player.getDuration();
                     const playbackRate = player.getPlaybackRate && player.getPlaybackRate() || 1;
                     
-                    if (currentTime >= 0 && duration > 0 && !isAdPlaying) {
+                    // Only update if we have valid data and aren't playing ads
+                    if (currentTime >= 0 && currentTime <= duration && duration > 0 && duration < 86400 && !isAdPlaying) {
+                        // Ensure position doesn't exceed duration
+                        const safePosition = Math.min(currentTime, duration - 1);
+                        
                         navigator.mediaSession.setPositionState({
                             duration: duration,
                             playbackRate: playbackRate,
-                            position: currentTime
+                            position: safePosition
                         });
                     }
                 } catch (error) {
                     console.log('Error updating media session position:', error);
+                    // Clear position state on error to prevent stuck progress bars
+                    try {
+                        navigator.mediaSession.setPositionState({});
+                    } catch (clearError) {
+                        console.log('Error clearing position state:', clearError);
+                    }
                 }
             }
         }
@@ -2333,21 +2371,28 @@
         
         function handlePageBlur() {
             // Page became hidden/lost focus
-            if (player && backgroundPlaybackEnabled) {
+            if (player && backgroundPlaybackEnabled && !userPausedManually) {
                 try {
                     const state = player.getPlayerState();
                     
-                    // Maintain audio context
-                    if (audioContext && audioContext.state !== 'running') {
-                        audioContext.resume().catch(console.error);
+                    // Only try to maintain playback if user didn't manually pause
+                    if (state === YT.PlayerState.PLAYING || lastKnownPlaybackState === YT.PlayerState.PLAYING) {
+                        console.log('Maintaining background playback...');
+                        
+                        // Maintain audio context
+                        if (audioContext && audioContext.state !== 'running') {
+                            audioContext.resume().catch(console.error);
+                        }
+                        
+                        // Apply background playback strategies
+                        maintainBackgroundPlayback();
                     }
-                    
-                    // Apply background playback strategies
-                    maintainBackgroundPlayback();
                     
                 } catch (error) {
                     console.log('Error in background playback handling:', error);
                 }
+            } else if (userPausedManually) {
+                console.log('User manually paused - not attempting background playback');
             }
         }
         
@@ -2377,16 +2422,25 @@
                 
                 // Strategy 3: Prevent player from being paused by mobile browser
                 const checkPlaybackState = () => {
-                    if (!isPageVisible && player) {
+                    if (!isPageVisible && player && !userPausedManually) {
                         try {
                             const state = player.getPlayerState();
                             if (state === YT.PlayerState.PAUSED && backgroundPlaybackEnabled) {
-                                // Try to resume playback
-                                setTimeout(() => {
-                                    if (player && player.playVideo) {
+                                console.log('Attempting to resume background playback...');
+                                // Try to resume playback multiple times
+                                let attemptCount = 0;
+                                const resumeAttempt = () => {
+                                    if (player && player.playVideo && attemptCount < 3) {
                                         player.playVideo();
+                                        attemptCount++;
+                                        setTimeout(() => {
+                                            if (player.getPlayerState() === YT.PlayerState.PAUSED && !userPausedManually) {
+                                                resumeAttempt();
+                                            }
+                                        }, 200);
                                     }
-                                }, 100);
+                                };
+                                resumeAttempt();
                             }
                         } catch (error) {
                             console.log('Error checking playback state:', error);
@@ -2394,14 +2448,14 @@
                     }
                 };
                 
-                // Check every 2 seconds when page is hidden
+                // Check every 1 second when page is hidden for faster response
                 const backgroundCheck = setInterval(() => {
                     if (isPageVisible) {
                         clearInterval(backgroundCheck);
                         return;
                     }
                     checkPlaybackState();
-                }, 2000);
+                }, 1000);
                 
                 // Strategy 4: Use Web Locks API to maintain active state
                 if ('locks' in navigator) {
