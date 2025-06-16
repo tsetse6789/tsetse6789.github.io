@@ -1556,12 +1556,16 @@
                 
                 // Set up action handlers
                 navigator.mediaSession.setActionHandler('play', () => {
+                    console.log('Media session: play requested');
+                    userPausedManually = false; // Reset manual pause flag
                     if (player && player.playVideo) {
                         player.playVideo();
                     }
                 });
                 
                 navigator.mediaSession.setActionHandler('pause', () => {
+                    console.log('Media session: pause requested');
+                    userPausedManually = true; // Mark as manual pause
                     if (player && player.pauseVideo) {
                         player.pauseVideo();
                     }
@@ -1569,19 +1573,27 @@
                 
                 navigator.mediaSession.setActionHandler('previoustrack', () => {
                     console.log('Media session: previous track requested');
-                    if (currentPlaylist && playlists[currentPlaylist] && playlists[currentPlaylist].videos.length > 0) {
+                    // Check if we have a current playlist with videos
+                    if (currentPlaylist && playlists[currentPlaylist] && playlists[currentPlaylist].videos.length > 1) {
                         playPrevious();
+                    } else {
+                        console.log('No playlist or insufficient videos for previous track');
                     }
                 });
                 
                 navigator.mediaSession.setActionHandler('nexttrack', () => {
                     console.log('Media session: next track requested');
-                    if (currentPlaylist && playlists[currentPlaylist] && playlists[currentPlaylist].videos.length > 0) {
+                    // Check if we have a current playlist with videos
+                    if (currentPlaylist && playlists[currentPlaylist] && playlists[currentPlaylist].videos.length > 1) {
                         playNext();
+                    } else {
+                        console.log('No playlist or insufficient videos for next track');
                     }
                 });
                 
                 navigator.mediaSession.setActionHandler('stop', () => {
+                    console.log('Media session: stop requested');
+                    userPausedManually = true; // Mark as manual stop
                     clearVideo();
                 });
                 
@@ -2422,22 +2434,37 @@
                 
                 // Strategy 3: Prevent player from being paused by mobile browser
                 const checkPlaybackState = () => {
-                    if (!isPageVisible && player && !userPausedManually) {
+                    if (!isPageVisible && player && !userPausedManually && backgroundPlaybackEnabled) {
                         try {
                             const state = player.getPlayerState();
-                            if (state === YT.PlayerState.PAUSED && backgroundPlaybackEnabled) {
+                            const mediaSessionState = navigator.mediaSession?.playbackState;
+                            
+                            // Only resume if:
+                            // 1. Player is paused
+                            // 2. User didn't manually pause 
+                            // 3. Media session shows we should be playing
+                            // 4. Background playback is enabled
+                            if (state === YT.PlayerState.PAUSED && 
+                                mediaSessionState === 'playing' && 
+                                !userPausedManually) {
+                                
                                 console.log('Attempting to resume background playback...');
-                                // Try to resume playback multiple times
+                                
+                                // Try to resume playback (with limited attempts)
                                 let attemptCount = 0;
                                 const resumeAttempt = () => {
-                                    if (player && player.playVideo && attemptCount < 3) {
+                                    if (player && player.playVideo && attemptCount < 2 && !userPausedManually) {
                                         player.playVideo();
                                         attemptCount++;
+                                        
                                         setTimeout(() => {
-                                            if (player.getPlayerState() === YT.PlayerState.PAUSED && !userPausedManually) {
+                                            // Check again after a short delay
+                                            if (player.getPlayerState() === YT.PlayerState.PAUSED && 
+                                                !userPausedManually && 
+                                                navigator.mediaSession?.playbackState === 'playing') {
                                                 resumeAttempt();
                                             }
-                                        }, 200);
+                                        }, 500);
                                     }
                                 };
                                 resumeAttempt();
