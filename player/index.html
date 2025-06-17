@@ -533,12 +533,21 @@
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold">Playlists</h3>
-                        <button 
-                            onclick="showCreatePlaylistForm()" 
-                            class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
-                        >
-                            ➕ New
-                        </button>
+                        <div class="flex gap-2">
+                            <button 
+                                onclick="showImportPlaylistDialog()" 
+                                class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+                                title="Import playlist from file"
+                            >
+                                📥 Import
+                            </button>
+                            <button 
+                                onclick="showCreatePlaylistForm()" 
+                                class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
+                            >
+                                ➕ New
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Create Playlist Form -->
@@ -1357,6 +1366,13 @@
                             title="Show playlist info"
                         >
                             📊 Info
+                        </button>
+                        <button 
+                            onclick="exportPlaylist('${escapeHtml(name)}')" 
+                            class="playlist-action-btn bg-purple-600 hover:bg-purple-700"
+                            title="Export playlist to file"
+                        >
+                            📤 Export
                         </button>
                     </div>
                 </div>
@@ -3528,6 +3544,318 @@
             if (diffDays < 30) return `${diffDays} days ago`;
             if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
             return `${Math.floor(diffDays / 365)} years ago`;
+        }
+
+        // Export/Import Playlist Functions
+        function exportPlaylist(playlistName) {
+            if (!playlists[playlistName]) {
+                alert('Playlist not found!');
+                return;
+            }
+
+            const playlist = playlists[playlistName];
+            
+            // Create export data with metadata
+            const exportData = {
+                name: playlist.name,
+                videos: playlist.videos,
+                created: playlist.created,
+                exported: new Date().toISOString(),
+                version: "1.0",
+                source: "YouTube Player by Nut",
+                remarks: playlist.remarks || '',
+                imported: playlist.imported || false,
+                duplicatedFrom: playlist.duplicatedFrom || null,
+                totalVideos: playlist.videos.length,
+                metadata: {
+                    exportedBy: "YouTube Player",
+                    format: "JSON",
+                    compatible: ["YouTube Player v1.0+"]
+                }
+            };
+
+            // Convert to JSON string
+            const jsonString = JSON.stringify(exportData, null, 2);
+            
+            // Create blob and download
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${playlistName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_playlist.json`;
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up blob URL
+            URL.revokeObjectURL(url);
+            
+            // Show success message
+            showSuccessMessage(`✅ Playlist "${playlistName}" exported successfully!`);
+        }
+
+        function showImportPlaylistDialog() {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'importPlaylistOverlay';
+            
+            const form = document.createElement('div');
+            form.className = 'rename-form';
+            form.style.minWidth = '400px';
+            form.style.maxWidth = '500px';
+            
+            form.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📥 Import Playlist</h3>
+                
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        Select a playlist file (JSON format) to import:
+                    </p>
+                    <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+                        <input 
+                            type="file" 
+                            id="playlistFileInput" 
+                            accept=".json"
+                            class="hidden"
+                            onchange="handlePlaylistFileSelect(event)"
+                        >
+                        <label 
+                            for="playlistFileInput" 
+                            class="cursor-pointer flex flex-col items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
+                        >
+                            <div class="text-4xl">📁</div>
+                            <div class="font-medium">Click to select file</div>
+                            <div class="text-xs">or drag and drop here</div>
+                        </label>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        Supported formats: JSON files exported from YouTube Player
+                    </div>
+                </div>
+                
+                <div id="importPreview" class="hidden mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded border">
+                    <h4 class="font-medium mb-2 text-gray-900 dark:text-white">Preview:</h4>
+                    <div id="importDetails" class="text-sm text-gray-600 dark:text-gray-400"></div>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideImportPlaylistDialog()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        id="confirmImportBtn"
+                        onclick="confirmImportPlaylist()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        disabled
+                    >
+                        📥 Import Playlist
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            
+            // Set up drag and drop
+            const dropZone = form.querySelector('label[for="playlistFileInput"]').parentElement;
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-primary', 'bg-blue-50', 'dark:bg-blue-900');
+            });
+            
+            dropZone.addEventListener('dragleave', (e) => {
+                if (!dropZone.contains(e.relatedTarget)) {
+                    dropZone.classList.remove('border-primary', 'bg-blue-50', 'dark:bg-blue-900');
+                }
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-primary', 'bg-blue-50', 'dark:bg-blue-900');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handlePlaylistFile(files[0]);
+                }
+            });
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideImportPlaylistDialog();
+                }
+            });
+        }
+
+        function hideImportPlaylistDialog() {
+            const overlay = document.getElementById('importPlaylistOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+            // Clear the stored import data
+            window.importPlaylistData = null;
+        }
+
+        function handlePlaylistFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handlePlaylistFile(file);
+            }
+        }
+
+        function handlePlaylistFile(file) {
+            if (!file) return;
+            
+            // Check file type
+            if (!file.name.toLowerCase().endsWith('.json')) {
+                alert('Please select a JSON file.');
+                return;
+            }
+            
+            // Check file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File too large. Maximum size is 10MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const importData = JSON.parse(e.target.result);
+                    validateAndPreviewPlaylist(importData);
+                } catch (error) {
+                    console.error('Error parsing playlist file:', error);
+                    alert('Invalid JSON file. Please check the file format.');
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('Error reading file. Please try again.');
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function validateAndPreviewPlaylist(data) {
+            // Validate required fields
+            if (!data.name || !Array.isArray(data.videos)) {
+                alert('Invalid playlist format. Missing required fields (name, videos).');
+                return;
+            }
+            
+            // Validate videos structure
+            const validVideos = data.videos.filter(video => 
+                video && 
+                typeof video === 'object' && 
+                video.id && 
+                video.title && 
+                video.channel
+            );
+            
+            if (validVideos.length === 0) {
+                alert('No valid videos found in the playlist.');
+                return;
+            }
+            
+            // Store the validated data
+            window.importPlaylistData = {
+                ...data,
+                videos: validVideos
+            };
+            
+            // Show preview
+            const preview = document.getElementById('importPreview');
+            const details = document.getElementById('importDetails');
+            
+            const created = data.created ? new Date(data.created).toLocaleDateString() : 'Unknown';
+            const exported = data.exported ? new Date(data.exported).toLocaleDateString() : 'Unknown';
+            const source = data.source || 'Unknown';
+            
+            details.innerHTML = `
+                <div class="space-y-1">
+                    <div><strong>Name:</strong> ${data.name}</div>
+                    <div><strong>Videos:</strong> ${validVideos.length} ${data.totalVideos && data.totalVideos !== validVideos.length ? `(${data.totalVideos - validVideos.length} invalid videos filtered)` : ''}</div>
+                    <div><strong>Created:</strong> ${created}</div>
+                    <div><strong>Exported:</strong> ${exported}</div>
+                    <div><strong>Source:</strong> ${source}</div>
+                    ${data.remarks ? `<div><strong>Notes:</strong> ${data.remarks}</div>` : ''}
+                </div>
+            `;
+            
+            preview.classList.remove('hidden');
+            
+            // Enable import button
+            document.getElementById('confirmImportBtn').disabled = false;
+        }
+
+        function confirmImportPlaylist() {
+            if (!window.importPlaylistData) {
+                alert('No playlist data to import.');
+                return;
+            }
+            
+            const data = window.importPlaylistData;
+            let finalName = data.name;
+            
+            // Handle name conflicts
+            if (playlists[finalName]) {
+                const choice = confirm(`A playlist named "${finalName}" already exists. Would you like to:\n\nOK - Overwrite the existing playlist\nCancel - Create with a different name`);
+                
+                if (!choice) {
+                    // Generate a unique name
+                    let counter = 1;
+                    while (playlists[`${finalName} (${counter})`]) {
+                        counter++;
+                    }
+                    finalName = `${finalName} (${counter})`;
+                }
+            }
+            
+            // Create the playlist
+            playlists[finalName] = {
+                name: finalName,
+                videos: data.videos,
+                created: data.created || new Date().toISOString(),
+                imported: true,
+                importedFrom: data.source || 'External source',
+                remarks: data.remarks || '',
+                originalName: data.name !== finalName ? data.name : undefined
+            };
+            
+            // Save and update UI
+            saveSettings();
+            renderPlaylists();
+            hideImportPlaylistDialog();
+            
+            // Show success message
+            showSuccessMessage(`✅ Successfully imported "${finalName}" with ${data.videos.length} videos!`);
+            
+            // Automatically load the imported playlist
+            setTimeout(() => {
+                loadPlaylist(finalName);
+            }, 500);
+        }
+
+        function showSuccessMessage(message) {
+            const feedback = document.createElement('div');
+            feedback.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity max-w-sm';
+            feedback.textContent = message;
+            document.body.appendChild(feedback);
+            
+            // Auto-remove feedback after 3 seconds
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                setTimeout(() => feedback.remove(), 300);
+            }, 3000);
         }
     </script>
 </body>
