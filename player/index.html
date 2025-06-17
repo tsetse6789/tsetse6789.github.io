@@ -1361,18 +1361,11 @@
                             🔀 Merge
                         </button>
                         <button 
-                            onclick="showPlaylistInfo('${escapeHtml(name)}')" 
-                            class="playlist-action-btn btn-info"
-                            title="Show playlist info"
+                            onclick="showOtherMenu('${escapeHtml(name)}', this)" 
+                            class="playlist-action-btn bg-gray-600 hover:bg-gray-700"
+                            title="More options"
                         >
-                            📊 Info
-                        </button>
-                        <button 
-                            onclick="exportPlaylist('${escapeHtml(name)}')" 
-                            class="playlist-action-btn bg-purple-600 hover:bg-purple-700"
-                            title="Export playlist to file"
-                        >
-                            📤 Export
+                            ⋯ Other
                         </button>
                     </div>
                 </div>
@@ -2227,7 +2220,8 @@
                 }
             }
             
-            showLoading();
+            // Show import progress without clearing search results
+            showImportProgress(playlistTitle);
             
             try {
                 // Import ALL videos from playlist (no limits)
@@ -2255,7 +2249,8 @@
                     totalFetched += videos.length;
                     nextPageToken = data.nextPageToken || '';
                     
-                    console.log(`Imported ${totalFetched} videos so far...`);
+                    // Update progress
+                    updateImportProgress(`Importing... ${totalFetched} videos fetched`);
                     
                 } while (nextPageToken);
                 
@@ -2268,13 +2263,15 @@
                 
                 saveSettings();
                 renderPlaylists();
-                hideLoading();
-                alert(`Successfully imported ${allVideos.length} videos from "${playlistTitle}"`);
+                hideImportProgress();
+                
+                // Show success message without affecting search results
+                showImportSuccessMessage(`✅ Successfully imported "${playlistTitle}" with ${allVideos.length} videos!`);
                 
             } catch (error) {
                 console.error('Import playlist error:', error);
-                hideLoading();
-                alert(`Failed to import playlist: ${error.message}`);
+                hideImportProgress();
+                showImportErrorMessage(`❌ Failed to import playlist: ${error.message}`);
             }
         }
 
@@ -3856,6 +3853,150 @@
                 feedback.style.opacity = '0';
                 setTimeout(() => feedback.remove(), 300);
             }, 3000);
+        }
+
+        // Import Progress Functions (for YouTube playlist import without clearing search results)
+        function showImportProgress(playlistTitle) {
+            // Create floating progress indicator
+            const progressIndicator = document.createElement('div');
+            progressIndicator.id = 'importProgressIndicator';
+            progressIndicator.className = 'fixed top-4 left-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3 max-w-sm';
+            progressIndicator.innerHTML = `
+                <div class="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
+                <div>
+                    <div class="font-medium">Importing "${playlistTitle}"</div>
+                    <div class="text-sm opacity-90" id="importProgressText">Starting import...</div>
+                </div>
+            `;
+            document.body.appendChild(progressIndicator);
+        }
+
+        function updateImportProgress(message) {
+            const progressText = document.getElementById('importProgressText');
+            if (progressText) {
+                progressText.textContent = message;
+            }
+        }
+
+        function hideImportProgress() {
+            const progressIndicator = document.getElementById('importProgressIndicator');
+            if (progressIndicator) {
+                progressIndicator.remove();
+            }
+        }
+
+        function showImportSuccessMessage(message) {
+            const feedback = document.createElement('div');
+            feedback.className = 'fixed top-4 left-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity max-w-sm';
+            feedback.textContent = message;
+            document.body.appendChild(feedback);
+            
+            // Auto-remove feedback after 3 seconds
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                setTimeout(() => feedback.remove(), 300);
+            }, 3000);
+        }
+
+        function showImportErrorMessage(message) {
+            const feedback = document.createElement('div');
+            feedback.className = 'fixed top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity max-w-sm';
+            feedback.textContent = message;
+            document.body.appendChild(feedback);
+            
+            // Auto-remove feedback after 5 seconds (longer for errors)
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                setTimeout(() => feedback.remove(), 300);
+            }, 5000);
+        }
+
+        // Other Menu Functions (Info + Export combined)
+        function showOtherMenu(playlistName, buttonElement) {
+            // Remove any existing dropdown
+            const existingDropdown = document.querySelector('.other-dropdown');
+            if (existingDropdown) {
+                existingDropdown.remove();
+            }
+            
+            // Create dropdown menu
+            const dropdown = document.createElement('div');
+            dropdown.className = 'other-dropdown fixed bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl py-2 min-w-40 z-50';
+            
+            // Add menu items
+            dropdown.innerHTML = `
+                <div class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
+                    More Options
+                </div>
+                <div 
+                    onclick="showPlaylistInfo('${escapeHtml(playlistName)}'); hideOtherMenu();" 
+                    class="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors flex items-center gap-2"
+                >
+                    <span>📊</span>
+                    <span>Playlist Info</span>
+                </div>
+                <div 
+                    onclick="exportPlaylist('${escapeHtml(playlistName)}'); hideOtherMenu();" 
+                    class="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors flex items-center gap-2"
+                >
+                    <span>📤</span>
+                    <span>Export Playlist</span>
+                </div>
+            `;
+            
+            // Position dropdown using fixed positioning
+            const buttonRect = buttonElement.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+            
+            // Calculate position
+            let top = buttonRect.bottom + 4;
+            let left = buttonRect.left;
+            
+            // Adjust if dropdown would go off-screen
+            const dropdownHeight = 120; // Estimate height
+            const dropdownWidth = 160; // min-w-40 = 160px
+            
+            // Adjust vertical position if it goes below viewport
+            if (top + dropdownHeight > viewportHeight) {
+                top = buttonRect.top - dropdownHeight - 4;
+            }
+            
+            // Adjust horizontal position if it goes off right edge
+            if (left + dropdownWidth > viewportWidth) {
+                left = viewportWidth - dropdownWidth - 10;
+            }
+            
+            // Ensure it doesn't go off left edge
+            if (left < 10) {
+                left = 10;
+            }
+            
+            dropdown.style.top = top + 'px';
+            dropdown.style.left = left + 'px';
+            
+            // Append to body for better positioning
+            document.body.appendChild(dropdown);
+            
+            // Close dropdown when clicking outside
+            const closeDropdown = (e) => {
+                if (!dropdown.contains(e.target) && e.target !== buttonElement) {
+                    dropdown.remove();
+                    document.removeEventListener('click', closeDropdown);
+                }
+            };
+            
+            // Add event listener after a small delay to prevent immediate closure
+            setTimeout(() => {
+                document.addEventListener('click', closeDropdown);
+            }, 100);
+        }
+
+        function hideOtherMenu() {
+            const dropdown = document.querySelector('.other-dropdown');
+            if (dropdown) {
+                dropdown.remove();
+            }
         }
     </script>
 </body>
