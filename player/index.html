@@ -945,6 +945,9 @@
             loadSettings();
             updatePlaybackUI();
             initializeBackgroundPlayback();
+            
+            // Check for URL parameter to auto-play video
+            checkForAutoPlayURL();
         });
 
         // Load settings from localStorage
@@ -3997,6 +4000,143 @@
             if (dropdown) {
                 dropdown.remove();
             }
+        }
+
+        // URL Parameter Auto-Play Functions
+        function checkForAutoPlayURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const urlParam = urlParams.get('url');
+            
+            if (urlParam) {
+                console.log('URL parameter detected:', urlParam);
+                handleAutoPlayURL(urlParam);
+            }
+        }
+
+        function handleAutoPlayURL(url) {
+            try {
+                const videoId = extractYouTubeVideoId(url);
+                
+                if (videoId) {
+                    console.log('Extracted video ID:', videoId);
+                    
+                    // Wait for YouTube API to be ready before playing
+                    const attemptPlay = () => {
+                        if (playerReady && window.YT) {
+                            // Fetch video details first to get title and channel
+                            fetchVideoDetailsForAutoPlay(videoId);
+                        } else {
+                            // Retry after a short delay
+                            setTimeout(attemptPlay, 500);
+                        }
+                    };
+                    
+                    attemptPlay();
+                } else {
+                    console.error('Could not extract video ID from URL:', url);
+                    showAutoPlayError('Invalid YouTube URL provided');
+                }
+            } catch (error) {
+                console.error('Error processing auto-play URL:', error);
+                showAutoPlayError('Error processing the provided URL');
+            }
+        }
+
+        function extractYouTubeVideoId(url) {
+            // Handle various YouTube URL formats
+            const patterns = [
+                // Standard watch URLs
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+                // URLs with additional parameters
+                /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+                // Short URLs
+                /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+                // Mobile URLs
+                /m\.youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
+                // Gaming URLs
+                /gaming\.youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return match[1];
+                }
+            }
+            
+            return null;
+        }
+
+        async function fetchVideoDetailsForAutoPlay(videoId) {
+            if (!apiKey) {
+                // Play without details if no API key
+                playVideo(videoId, 'Loading...', 'YouTube');
+                showAutoPlaySuccess('Video loaded from URL');
+                return;
+            }
+
+            try {
+                const videoUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${apiKey}`;
+                const response = await fetch(videoUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`API Error (${response.status})`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    const video = data.items[0];
+                    const title = video.snippet.title;
+                    const channel = video.snippet.channelTitle;
+                    
+                    // Play the video with proper details
+                    playVideo(videoId, title, channel);
+                    showAutoPlaySuccess(`Now playing: ${title}`);
+                } else {
+                    // Video not found, but try to play anyway
+                    playVideo(videoId, 'Video from URL', 'YouTube');
+                    showAutoPlaySuccess('Video loaded from URL');
+                }
+                
+            } catch (error) {
+                console.error('Error fetching video details for auto-play:', error);
+                // Play without details if API fails
+                playVideo(videoId, 'Video from URL', 'YouTube');
+                showAutoPlaySuccess('Video loaded from URL');
+            }
+        }
+
+        function showAutoPlaySuccess(message) {
+            const feedback = document.createElement('div');
+            feedback.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-opacity flex items-center gap-2';
+            feedback.innerHTML = `
+                <span>🎬</span>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(feedback);
+            
+            // Auto-remove feedback after 4 seconds
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                setTimeout(() => feedback.remove(), 300);
+            }, 4000);
+        }
+
+        function showAutoPlayError(message) {
+            const feedback = document.createElement('div');
+            feedback.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-opacity flex items-center gap-2';
+            feedback.innerHTML = `
+                <span>❌</span>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(feedback);
+            
+            // Auto-remove feedback after 6 seconds (longer for errors)
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                setTimeout(() => feedback.remove(), 300);
+            }, 6000);
         }
     </script>
 </body>
