@@ -124,10 +124,10 @@
             </h1>
             
             <div class="space-y-4 w-full">
-                <a href="#" onclick="openFunChat()" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
+                <a href="https://tsetse6789.github.io/chat" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
                     Go to Fun Chat
                 </a>
-                <a href="#" onclick="openYouTubePlayer()" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
+                <a href="https://tsetse6789.github.io/player" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
                     Go to YouTube Player
                 </a>
                 <a href="#" onclick="openNutFun()" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
@@ -208,68 +208,73 @@
             }
         });
 
-        // Function to open Fun Chat WebAPK or fallback to web
-        function openFunChat() {
-            const androidIntentUrl = 'intent://org.chromium.webapk.a6428527539a3ccaf_v2#Intent;scheme=android-app;package=org.chromium.webapk.a6428527539a3ccaf_v2;S.browser_fallback_url=https%3A//tsetse6789.github.io/chat;end';
-            
-            const tempLink = document.createElement('a');
-            tempLink.href = androidIntentUrl;
-            tempLink.style.display = 'none';
-            document.body.appendChild(tempLink);
-            
-            try {
-                tempLink.click();
-                setTimeout(() => {
-                    document.body.removeChild(tempLink);
-                }, 100);
-            } catch (error) {
-                document.body.removeChild(tempLink);
-                window.open('https://tsetse6789.github.io/chat', '_blank');
-            }
-        }
-
-        // Function to open YouTube Player WebAPK or fallback to web
-        function openYouTubePlayer() {
-            const androidIntentUrl = 'intent://org.chromium.webapk.a6428527539a3ccaf_v2#Intent;scheme=android-app;package=org.chromium.webapk.a6428527539a3ccaf_v2;S.browser_fallback_url=https%3A//tsetse6789.github.io/player;end';
-            
-            const tempLink = document.createElement('a');
-            tempLink.href = androidIntentUrl;
-            tempLink.style.display = 'none';
-            document.body.appendChild(tempLink);
-            
-            try {
-                tempLink.click();
-                setTimeout(() => {
-                    document.body.removeChild(tempLink);
-                }, 100);
-            } catch (error) {
-                document.body.removeChild(tempLink);
-                window.open('https://tsetse6789.github.io/player', '_blank');
-            }
-        }
-
         // Function to open Nut Fun app or fallback to web
         function openNutFun() {
-            // Try to open the Android app first
-            const androidIntentUrl = 'intent://com.john.nutfun#Intent;scheme=android-app;package=com.john.nutfun;S.browser_fallback_url=https%3A//sites.google.com/view/nut-fun/home;end';
+            // Detect if we're on Android
+            const isAndroid = /Android/i.test(navigator.userAgent);
             
-            // Create a temporary link to trigger the intent
-            const tempLink = document.createElement('a');
-            tempLink.href = androidIntentUrl;
-            tempLink.style.display = 'none';
-            document.body.appendChild(tempLink);
-            
-            try {
-                tempLink.click();
-                // Give it a moment to try opening the app
-                setTimeout(() => {
-                    document.body.removeChild(tempLink);
-                }, 100);
-            } catch (error) {
-                // If intent fails, fallback to web version
-                document.body.removeChild(tempLink);
+            if (isAndroid) {
+                // Try multiple approaches for Android
+                
+                // Method 1: Custom URL scheme (if your app supports nutfun://)
+                const customSchemeUrl = 'nutfun://open';
+                
+                // Method 2: App intent with package name
+                const packageIntentUrl = 'intent://open#Intent;package=com.john.nutfun;S.browser_fallback_url=https%3A//sites.google.com/view/nut-fun/home;end';
+                
+                // Method 3: Market intent as last resort
+                const marketIntentUrl = 'intent://details?id=com.john.nutfun#Intent;scheme=market;action=android.intent.action.VIEW;S.browser_fallback_url=https%3A//sites.google.com/view/nut-fun/home;end';
+                
+                // Try custom scheme first
+                tryOpenApp(customSchemeUrl, () => {
+                    // If custom scheme fails, try package intent
+                    tryOpenApp(packageIntentUrl, () => {
+                        // If all fails, open web version
+                        window.open('https://sites.google.com/view/nut-fun/home', '_blank');
+                    });
+                });
+            } else {
+                // Not Android, go directly to web version
                 window.open('https://sites.google.com/view/nut-fun/home', '_blank');
             }
+        }
+        
+        function tryOpenApp(url, fallback) {
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = url;
+            document.body.appendChild(iframe);
+            
+            // Set a timeout to detect if app didn't open
+            const timeout = setTimeout(() => {
+                document.body.removeChild(iframe);
+                if (fallback) fallback();
+            }, 2000);
+            
+            // Listen for page visibility change (app opened successfully)
+            const handleVisibilityChange = () => {
+                if (document.hidden) {
+                    clearTimeout(timeout);
+                    document.body.removeChild(iframe);
+                    document.removeEventListener('visibilitychange', handleVisibilityChange);
+                }
+            };
+            
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            
+            // Also try with a direct link click
+            setTimeout(() => {
+                const tempLink = document.createElement('a');
+                tempLink.href = url;
+                tempLink.style.display = 'none';
+                document.body.appendChild(tempLink);
+                tempLink.click();
+                setTimeout(() => {
+                    if (document.body.contains(tempLink)) {
+                        document.body.removeChild(tempLink);
+                    }
+                }, 100);
+            }, 100);
         }
     </script>
 </body>
