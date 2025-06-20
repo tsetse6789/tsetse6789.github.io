@@ -330,45 +330,52 @@
                         </div>
                         
                         <!-- Playback Controls -->
-                        <div class="flex flex-wrap gap-3 mb-4">
-                            <button 
-                                onclick="toggleShuffle()" 
-                                id="shuffleBtn"
-                                class="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm flex items-center gap-2"
-                            >
-                                🔀 Shuffle: <span id="shuffleStatus">Off</span>
-                            </button>
-                            <button 
-                                onclick="toggleRepeat()" 
-                                id="repeatBtn"
-                                class="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm flex items-center gap-2"
-                            >
-                                🔁 Repeat: <span id="repeatStatus">Off</span>
-                            </button>
-                            <button 
-                                onclick="playPrevious()" 
-                                class="px-3 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
-                            >
-                                ⏮️
-                            </button>
-                            <button 
-                                onclick="playNext()" 
-                                class="px-3 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
-                            >
-                                ⏭️
-                            </button>
-                            <button 
-                                onclick="addCurrentVideoToPlaylist()" 
-                                class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
-                            >
-                                ➕ Add
-                            </button>
-                            <button 
-                                onclick="shareCurrentVideo()" 
-                                class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
-                            >
-                                📤 Share
-                            </button>
+                        <div class="mb-4">
+                            <!-- First Row: Shuffle and Repeat -->
+                            <div class="flex flex-wrap gap-3 mb-3">
+                                <button 
+                                    onclick="toggleShuffle()" 
+                                    id="shuffleBtn"
+                                    class="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm flex items-center gap-2"
+                                >
+                                    🔀 Shuffle: <span id="shuffleStatus">Off</span>
+                                </button>
+                                <button 
+                                    onclick="toggleRepeat()" 
+                                    id="repeatBtn"
+                                    class="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm flex items-center gap-2"
+                                >
+                                    🔁 Repeat: <span id="repeatStatus">Off</span>
+                                </button>
+                            </div>
+                            
+                            <!-- Second Row: Navigation and Actions -->
+                            <div class="flex flex-wrap gap-3">
+                                <button 
+                                    onclick="playPrevious()" 
+                                    class="px-3 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
+                                >
+                                    ⏮️
+                                </button>
+                                <button 
+                                    onclick="playNext()" 
+                                    class="px-3 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-sm"
+                                >
+                                    ⏭️
+                                </button>
+                                <button 
+                                    onclick="addCurrentVideoToPlaylist()" 
+                                    class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+                                >
+                                    ➕ Add
+                                </button>
+                                <button 
+                                    onclick="shareCurrentVideo()" 
+                                    class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+                                >
+                                    📤 Share
+                                </button>
+                            </div>
                         </div>
 
                         <div class="relative w-full" style="padding-bottom: 56.25%; /* 16:9 aspect ratio */">
