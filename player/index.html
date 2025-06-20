@@ -357,6 +357,18 @@
                             >
                                 Next ⏭️
                             </button>
+                            <button 
+                                onclick="addCurrentVideoToPlaylist()" 
+                                class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
+                            >
+                                ➕ Add to...
+                            </button>
+                            <button 
+                                onclick="shareCurrentVideo()" 
+                                class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
+                            >
+                                📤 Share
+                            </button>
                         </div>
 
                         <div class="relative w-full" style="padding-bottom: 56.25%; /* 16:9 aspect ratio */">
@@ -4137,6 +4149,240 @@
                 feedback.style.opacity = '0';
                 setTimeout(() => feedback.remove(), 300);
             }, 6000);
+        }
+
+        // Add Current Video to Playlist Function
+        function addCurrentVideoToPlaylist() {
+            if (!player) {
+                alert('No video is currently playing');
+                return;
+            }
+            
+            try {
+                // Get current video data
+                const videoData = player.getVideoData();
+                if (!videoData || !videoData.video_id) {
+                    alert('Unable to get current video information');
+                    return;
+                }
+                
+                const videoId = videoData.video_id;
+                const title = videoData.title || document.getElementById('videoTitle').textContent.replace('Now Playing:', '').trim();
+                const channel = document.getElementById('videoChannel').textContent;
+                const thumbnail = `https://img.youtube.com/vi/${videoId}/default.jpg`;
+                
+                // Show add to playlist menu
+                showAddToPlaylistMenuForCurrentVideo(videoId, title, channel, thumbnail);
+                
+            } catch (error) {
+                console.error('Error getting current video data:', error);
+                alert('Unable to get current video information');
+            }
+        }
+
+        function showAddToPlaylistMenuForCurrentVideo(videoId, title, channel, thumbnail) {
+            const playlistNames = Object.keys(playlists);
+            
+            if (playlistNames.length === 0) {
+                alert('Create a playlist first!');
+                return;
+            }
+            
+            // Remove any existing dropdown
+            const existingDropdown = document.querySelector('.current-video-playlist-dropdown');
+            if (existingDropdown) {
+                existingDropdown.remove();
+            }
+            
+            // Create dropdown menu
+            const dropdown = document.createElement('div');
+            dropdown.className = 'current-video-playlist-dropdown fixed bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl py-2 min-w-48 max-h-64 overflow-y-auto';
+            dropdown.style.zIndex = '9999';
+            
+            // Add header
+            const header = document.createElement('div');
+            header.className = 'px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600';
+            header.textContent = 'Add current video to:';
+            dropdown.appendChild(header);
+            
+            // Add playlist options
+            playlistNames.forEach(playlistName => {
+                const option = document.createElement('div');
+                option.className = 'px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors';
+                option.textContent = `${playlistName} (${playlists[playlistName].videos.length} videos)`;
+                option.onclick = () => {
+                    addToPlaylist(playlistName, { id: videoId, title, channel, thumbnail });
+                    dropdown.remove();
+                    
+                    // Show success message
+                    showSuccessMessage(`✅ Added "${title}" to "${playlistName}"`);
+                };
+                dropdown.appendChild(option);
+            });
+            
+            // Position dropdown in center of screen
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+            
+            const dropdownHeight = Math.min(playlistNames.length * 40 + 60, 256);
+            const dropdownWidth = 192;
+            
+            const top = (viewportHeight - dropdownHeight) / 2;
+            const left = (viewportWidth - dropdownWidth) / 2;
+            
+            dropdown.style.top = Math.max(20, top) + 'px';
+            dropdown.style.left = Math.max(20, left) + 'px';
+            
+            // Append to body
+            document.body.appendChild(dropdown);
+            
+            // Close dropdown when clicking outside
+            const closeDropdown = (e) => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.remove();
+                    document.removeEventListener('click', closeDropdown);
+                }
+            };
+            
+            // Add event listener after a small delay to prevent immediate closure
+            setTimeout(() => {
+                document.addEventListener('click', closeDropdown);
+            }, 100);
+        }
+
+        // Share Current Video Function
+        function shareCurrentVideo() {
+            if (!player) {
+                alert('No video is currently playing');
+                return;
+            }
+            
+            try {
+                // Get current video data
+                const videoData = player.getVideoData();
+                if (!videoData || !videoData.video_id) {
+                    alert('Unable to get current video information');
+                    return;
+                }
+                
+                const videoId = videoData.video_id;
+                const shareUrl = `https://tsetse6789.github.io/player?url=https://youtu.be/${videoId}`;
+                
+                // Copy to clipboard
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        showShareSuccessMessage('✅ Share URL copied to clipboard!', shareUrl);
+                    }).catch(error => {
+                        console.error('Failed to copy to clipboard:', error);
+                        showShareFallback(shareUrl);
+                    });
+                } else {
+                    // Fallback for browsers that don't support clipboard API
+                    showShareFallback(shareUrl);
+                }
+                
+            } catch (error) {
+                console.error('Error getting current video data for sharing:', error);
+                alert('Unable to get current video information');
+            }
+        }
+
+        function showShareSuccessMessage(message, url) {
+            const feedback = document.createElement('div');
+            feedback.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 transition-opacity max-w-sm';
+            feedback.innerHTML = `
+                <div class="font-medium mb-1">${message}</div>
+                <div class="text-xs opacity-90 break-all">${url}</div>
+            `;
+            document.body.appendChild(feedback);
+            
+            // Auto-remove feedback after 4 seconds
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                setTimeout(() => feedback.remove(), 300);
+            }, 4000);
+        }
+
+        function showShareFallback(url) {
+            // Create a modal with the URL for manual copying
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'shareUrlOverlay';
+            
+            const modal = document.createElement('div');
+            modal.className = 'rename-form';
+            modal.style.minWidth = '400px';
+            modal.style.maxWidth = '500px';
+            
+            modal.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📤 Share Video</h3>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    Copy this URL to share the current video:
+                </p>
+                
+                <div class="mb-4">
+                    <textarea 
+                        id="shareUrlText" 
+                        readonly
+                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                        rows="3"
+                    >${url}</textarea>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideShareUrlModal()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Close
+                    </button>
+                    <button 
+                        onclick="selectShareUrl()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                        📋 Select All
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // Focus and select the text
+            const textarea = document.getElementById('shareUrlText');
+            textarea.focus();
+            textarea.select();
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideShareUrlModal();
+                }
+            });
+        }
+
+        function selectShareUrl() {
+            const textarea = document.getElementById('shareUrlText');
+            textarea.focus();
+            textarea.select();
+            
+            // Try to copy again
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    hideShareUrlModal();
+                    showShareSuccessMessage('✅ Share URL copied to clipboard!', textarea.value);
+                }).catch(error => {
+                    console.error('Failed to copy to clipboard:', error);
+                });
+            }
+        }
+
+        function hideShareUrlModal() {
+            const overlay = document.getElementById('shareUrlOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
         }
     </script>
 </body>
