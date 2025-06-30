@@ -4034,26 +4034,21 @@
 
         function handleAutoPlayURL(url) {
             try {
-                const videoId = extractYouTubeVideoId(url);
+                // Determine URL type and extract appropriate ID
+                const urlInfo = parseYouTubeURL(url);
                 
-                if (videoId) {
-                    console.log('Extracted video ID:', videoId);
-                    
-                    // Wait for YouTube API to be ready before playing
-                    const attemptPlay = () => {
-                        if (playerReady && window.YT) {
-                            // Fetch video details first to get title and channel
-                            fetchVideoDetailsForAutoPlay(videoId);
-                        } else {
-                            // Retry after a short delay
-                            setTimeout(attemptPlay, 500);
-                        }
-                    };
-                    
-                    attemptPlay();
+                if (urlInfo.type === 'video' && urlInfo.id) {
+                    console.log('Extracted video ID:', urlInfo.id);
+                    handleAutoPlayVideo(urlInfo.id);
+                } else if (urlInfo.type === 'channel' && urlInfo.id) {
+                    console.log('Extracted channel ID:', urlInfo.id);
+                    handleAutoPlayChannel(urlInfo.id, urlInfo.name);
+                } else if (urlInfo.type === 'playlist' && urlInfo.id) {
+                    console.log('Extracted playlist ID:', urlInfo.id);
+                    handleAutoPlayPlaylist(urlInfo.id);
                 } else {
-                    console.error('Could not extract video ID from URL:', url);
-                    showAutoPlayError('Invalid YouTube URL provided');
+                    console.error('Could not extract valid ID from URL:', url);
+                    showAutoPlayError('Invalid or unsupported YouTube URL provided');
                 }
             } catch (error) {
                 console.error('Error processing auto-play URL:', error);
@@ -4061,29 +4056,296 @@
             }
         }
 
-        function extractYouTubeVideoId(url) {
-            // Handle various YouTube URL formats
-            const patterns = [
-                // Standard watch URLs
+        function parseYouTubeURL(url) {
+            // Video patterns
+            const videoPatterns = [
                 /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
-                // URLs with additional parameters
                 /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
-                // Short URLs
                 /youtu\.be\/([a-zA-Z0-9_-]{11})/,
-                // Mobile URLs
                 /m\.youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
-                // Gaming URLs
                 /gaming\.youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/
             ];
             
-            for (const pattern of patterns) {
+            // Channel patterns
+            const channelPatterns = [
+                /youtube\.com\/channel\/([a-zA-Z0-9_-]+)/,
+                /youtube\.com\/c\/([a-zA-Z0-9_-]+)/,
+                /youtube\.com\/user\/([a-zA-Z0-9_-]+)/,
+                /youtube\.com\/@([a-zA-Z0-9_-]+)/,
+                /m\.youtube\.com\/channel\/([a-zA-Z0-9_-]+)/,
+                /m\.youtube\.com\/c\/([a-zA-Z0-9_-]+)/,
+                /m\.youtube\.com\/user\/([a-zA-Z0-9_-]+)/
+            ];
+            
+            // Playlist patterns
+            const playlistPatterns = [
+                /youtube\.com\/playlist\?list=([a-zA-Z0-9_-]+)/,
+                /youtube\.com\/watch\?.*list=([a-zA-Z0-9_-]+)/,
+                /m\.youtube\.com\/playlist\?list=([a-zA-Z0-9_-]+)/,
+                /m\.youtube\.com\/watch\?.*list=([a-zA-Z0-9_-]+)/
+            ];
+            
+            // Check for video URLs first
+            for (const pattern of videoPatterns) {
                 const match = url.match(pattern);
                 if (match && match[1]) {
-                    return match[1];
+                    return { type: 'video', id: match[1] };
                 }
             }
             
-            return null;
+            // Check for playlist URLs
+            for (const pattern of playlistPatterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    return { type: 'playlist', id: match[1] };
+                }
+            }
+            
+            // Check for channel URLs
+            for (const pattern of channelPatterns) {
+                const match = url.match(pattern);
+                if (match && match[1]) {
+                    let channelId = match[1];
+                    let channelType = 'id';
+                    
+                    // Determine channel type based on URL pattern
+                    if (url.includes('/c/')) {
+                        channelType = 'username';
+                    } else if (url.includes('/user/')) {
+                        channelType = 'username';
+                    } else if (url.includes('/@')) {
+                        channelType = 'handle';
+                        channelId = channelId.replace('@', '');
+                    }
+                    
+                    return { 
+                        type: 'channel', 
+                        id: channelId, 
+                        channelType: channelType,
+                        name: channelId 
+                    };
+                }
+            }
+            
+            return { type: 'unknown', id: null };
+        }
+
+        function handleAutoPlayVideo(videoId) {
+            // Wait for YouTube API to be ready before playing
+            const attemptPlay = () => {
+                if (playerReady && window.YT) {
+                    // Fetch video details first to get title and channel
+                    fetchVideoDetailsForAutoPlay(videoId);
+                } else {
+                    // Retry after a short delay
+                    setTimeout(attemptPlay, 500);
+                }
+            };
+            
+            attemptPlay();
+        }
+
+        async function handleAutoPlayChannel(channelIdentifier, channelName) {
+            if (!apiKey) {
+                showAutoPlayError('API key required to load channel content');
+                return;
+            }
+            
+            try {
+                showAutoPlayLoading(`Loading channel: ${channelName}...`);
+                
+                // First, resolve the channel ID if we have a username or handle
+                let channelId = channelIdentifier;
+                let resolvedChannelTitle = channelName;
+                
+                if (!channelIdentifier.startsWith('UC')) {
+                    // Need to resolve username/handle to channel ID
+                    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(channelIdentifier)}&type=channel&maxResults=1&key=${apiKey}`;
+                    const searchResponse = await fetch(searchUrl);
+                    
+                    if (searchResponse.ok) {
+                        const searchData = await searchResponse.json();
+                        if (searchData.items && searchData.items.length > 0) {
+                            channelId = searchData.items[0].id.channelId;
+                            resolvedChannelTitle = searchData.items[0].snippet.title;
+                        } else {
+                            throw new Error('Channel not found');
+                        }
+                    } else {
+                        throw new Error('Failed to resolve channel');
+                    }
+                }
+                
+                // Update search type and navigate to channel videos
+                setSearchType('video');
+                await viewChannelVideos(channelId, resolvedChannelTitle);
+                hideAutoPlayLoading();
+                showAutoPlaySuccess(`Loaded channel: ${resolvedChannelTitle}`);
+                
+            } catch (error) {
+                console.error('Error loading channel:', error);
+                hideAutoPlayLoading();
+                showAutoPlayError(`Failed to load channel: ${error.message}`);
+            }
+        }
+
+        async function handleAutoPlayPlaylist(playlistId) {
+            if (!apiKey) {
+                showAutoPlayError('API key required to load playlist content');
+                return;
+            }
+            
+            try {
+                showAutoPlayLoading('Loading playlist...');
+                
+                // Get playlist info first
+                const playlistInfoUrl = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlistId}&key=${apiKey}`;
+                const playlistResponse = await fetch(playlistInfoUrl);
+                
+                if (!playlistResponse.ok) {
+                    throw new Error(`Playlist API Error (${playlistResponse.status})`);
+                }
+                
+                const playlistData = await playlistResponse.json();
+                
+                if (!playlistData.items || playlistData.items.length === 0) {
+                    throw new Error('Playlist not found or is private');
+                }
+                
+                const playlistInfo = playlistData.items[0];
+                const playlistTitle = playlistInfo.snippet.title;
+                const channelTitle = playlistInfo.snippet.channelTitle;
+                
+                updateAutoPlayLoading(`Loading videos from: ${playlistTitle}...`);
+                
+                // Show playlist import dialog
+                showPlaylistImportDialog(playlistId, playlistTitle, channelTitle);
+                hideAutoPlayLoading();
+                
+            } catch (error) {
+                console.error('Error loading playlist:', error);
+                hideAutoPlayLoading();
+                showAutoPlayError(`Failed to load playlist: ${error.message}`);
+            }
+        }
+
+        function showPlaylistImportDialog(playlistId, playlistTitle, channelTitle) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'autoPlaylistOverlay';
+            
+            const modal = document.createElement('div');
+            modal.className = 'rename-form';
+            modal.style.minWidth = '400px';
+            modal.style.maxWidth = '500px';
+            
+            modal.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📋 YouTube Playlist Detected</h3>
+                
+                <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                    <div class="font-medium text-blue-900 dark:text-blue-100">${playlistTitle}</div>
+                    <div class="text-sm text-blue-700 dark:text-blue-300">by ${channelTitle}</div>
+                </div>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    What would you like to do with this playlist?
+                </p>
+                
+                <div class="space-y-3 mb-6">
+                    <button 
+                        onclick="importAndLoadPlaylist('${playlistId}', '${escapeHtml(playlistTitle)}')" 
+                        class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-left flex items-center gap-3"
+                    >
+                        <span class="text-xl">📥</span>
+                        <div>
+                            <div class="font-medium">Import Playlist</div>
+                            <div class="text-sm opacity-90">Import all videos and start playing</div>
+                        </div>
+                    </button>
+                    
+                    <button 
+                        onclick="viewPlaylistVideosFromURL('${playlistId}', '${escapeHtml(playlistTitle)}')" 
+                        class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-left flex items-center gap-3"
+                    >
+                        <span class="text-xl">👀</span>
+                        <div>
+                            <div class="font-medium">Browse Videos</div>
+                            <div class="text-sm opacity-90">View videos without importing</div>
+                        </div>
+                    </button>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideAutoPlaylistDialog()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideAutoPlaylistDialog();
+                }
+            });
+        }
+
+        function hideAutoPlaylistDialog() {
+            const overlay = document.getElementById('autoPlaylistOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        async function importAndLoadPlaylist(playlistId, playlistTitle) {
+            hideAutoPlaylistDialog();
+            
+            try {
+                // Import the playlist
+                await importYouTubePlaylist(playlistId, playlistTitle);
+                
+                // Load the imported playlist
+                setTimeout(() => {
+                    loadPlaylist(playlistTitle);
+                    
+                    // Auto-play first video if available
+                    if (playlists[playlistTitle] && playlists[playlistTitle].videos.length > 0) {
+                        setTimeout(() => {
+                            playVideoFromPlaylist(0);
+                        }, 1000);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error importing playlist:', error);
+                showAutoPlayError('Failed to import playlist');
+            }
+        }
+
+        async function viewPlaylistVideosFromURL(playlistId, playlistTitle) {
+            hideAutoPlaylistDialog();
+            
+            try {
+                // View playlist videos directly
+                await viewPlaylistVideos(playlistId, playlistTitle);
+                showAutoPlaySuccess(`Viewing playlist: ${playlistTitle}`);
+                
+            } catch (error) {
+                console.error('Error viewing playlist videos:', error);
+                showAutoPlayError('Failed to load playlist videos');
+            }
+        }
+
+        // Legacy function for backward compatibility
+        function extractYouTubeVideoId(url) {
+            const urlInfo = parseYouTubeURL(url);
+            return urlInfo.type === 'video' ? urlInfo.id : null;
         }
 
         async function fetchVideoDetailsForAutoPlay(videoId) {
@@ -4156,6 +4418,32 @@
                 feedback.style.opacity = '0';
                 setTimeout(() => feedback.remove(), 300);
             }, 6000);
+        }
+
+        // Auto-play loading state functions
+        function showAutoPlayLoading(message) {
+            const loading = document.createElement('div');
+            loading.id = 'autoPlayLoading';
+            loading.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3';
+            loading.innerHTML = `
+                <div class="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
+                <span id="autoPlayLoadingText">${message}</span>
+            `;
+            document.body.appendChild(loading);
+        }
+
+        function updateAutoPlayLoading(message) {
+            const loadingText = document.getElementById('autoPlayLoadingText');
+            if (loadingText) {
+                loadingText.textContent = message;
+            }
+        }
+
+        function hideAutoPlayLoading() {
+            const loading = document.getElementById('autoPlayLoading');
+            if (loading) {
+                loading.remove();
+            }
         }
 
         // Add Current Video to Playlist Function
