@@ -3933,7 +3933,7 @@
             }, 5000);
         }
 
-        // Other Menu Functions (Info + Export combined)
+        // Other Menu Functions (Info + Export + Search combined)
         function showOtherMenu(playlistName, buttonElement) {
             // Remove any existing dropdown
             const existingDropdown = document.querySelector('.other-dropdown');
@@ -3949,6 +3949,13 @@
             dropdown.innerHTML = `
                 <div class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
                     More Options
+                </div>
+                <div 
+                    onclick="showVideoSearchDialog('${escapeHtml(playlistName)}'); hideOtherMenu();" 
+                    class="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors flex items-center gap-2"
+                >
+                    <span>🔍</span>
+                    <span>Search Videos</span>
                 </div>
                 <div 
                     onclick="showPlaylistInfo('${escapeHtml(playlistName)}'); hideOtherMenu();" 
@@ -4019,6 +4026,265 @@
             if (dropdown) {
                 dropdown.remove();
             }
+        }
+
+        // Video Search in Playlist Functions
+        function showVideoSearchDialog(playlistName) {
+            if (!playlists[playlistName]) {
+                alert('Playlist not found!');
+                return;
+            }
+            
+            const playlist = playlists[playlistName];
+            if (playlist.videos.length === 0) {
+                alert('This playlist is empty. No videos to search.');
+                return;
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'videoSearchOverlay';
+            
+            const modal = document.createElement('div');
+            modal.className = 'rename-form';
+            modal.style.minWidth = '500px';
+            modal.style.maxWidth = '600px';
+            modal.style.maxHeight = '80vh';
+            modal.style.display = 'flex';
+            modal.style.flexDirection = 'column';
+            
+            modal.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🔍 Search Videos in "${playlistName}"</h3>
+                
+                <div class="mb-4">
+                    <input 
+                        type="text" 
+                        id="videoSearchInput" 
+                        placeholder="Search by video title or channel name..."
+                        class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    >
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Search in ${playlist.videos.length} videos • Type to find videos instantly
+                    </div>
+                </div>
+                
+                <div id="videoSearchResults" class="flex-1 min-h-0 mb-4">
+                    <div id="videoSearchEmptyState" class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <div class="text-4xl mb-2">🎬</div>
+                        <div>Start typing to search through your videos</div>
+                    </div>
+                    
+                    <div id="videoSearchResultsList" class="hidden max-h-96 overflow-y-auto space-y-2">
+                        <!-- Search results will appear here -->
+                    </div>
+                    
+                    <div id="videoSearchNoResults" class="hidden text-center py-8 text-gray-500 dark:text-gray-400">
+                        <div class="text-4xl mb-2">🔍</div>
+                        <div>No videos found matching your search</div>
+                        <div class="text-sm mt-1">Try different keywords or check spelling</div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideVideoSearchDialog()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Close
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // Focus the search input
+            const searchInput = document.getElementById('videoSearchInput');
+            searchInput.focus();
+            
+            // Set up search functionality
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const query = e.target.value.trim();
+                
+                if (query === '') {
+                    showVideoSearchEmptyState();
+                    return;
+                }
+                
+                // Debounce search to avoid excessive filtering
+                searchTimeout = setTimeout(() => {
+                    performVideoSearch(playlistName, query);
+                }, 300);
+            });
+            
+            // Handle keyboard shortcuts
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    hideVideoSearchDialog();
+                } else if (e.key === 'Enter') {
+                    // Focus first result if available
+                    const firstResult = document.querySelector('.video-search-result');
+                    if (firstResult) {
+                        firstResult.click();
+                    }
+                }
+            });
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideVideoSearchDialog();
+                }
+            });
+        }
+
+        function hideVideoSearchDialog() {
+            const overlay = document.getElementById('videoSearchOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function showVideoSearchEmptyState() {
+            document.getElementById('videoSearchEmptyState').classList.remove('hidden');
+            document.getElementById('videoSearchResultsList').classList.add('hidden');
+            document.getElementById('videoSearchNoResults').classList.add('hidden');
+        }
+
+        function showVideoSearchResults() {
+            document.getElementById('videoSearchEmptyState').classList.add('hidden');
+            document.getElementById('videoSearchResultsList').classList.remove('hidden');
+            document.getElementById('videoSearchNoResults').classList.add('hidden');
+        }
+
+        function showVideoSearchNoResults() {
+            document.getElementById('videoSearchEmptyState').classList.add('hidden');
+            document.getElementById('videoSearchResultsList').classList.add('hidden');
+            document.getElementById('videoSearchNoResults').classList.remove('hidden');
+        }
+
+        function performVideoSearch(playlistName, query) {
+            const playlist = playlists[playlistName];
+            if (!playlist) return;
+            
+            const queryLower = query.toLowerCase();
+            const matchingVideos = [];
+            
+            // Search through videos
+            playlist.videos.forEach((video, index) => {
+                const titleMatch = video.title.toLowerCase().includes(queryLower);
+                const channelMatch = video.channel.toLowerCase().includes(queryLower);
+                
+                if (titleMatch || channelMatch) {
+                    matchingVideos.push({
+                        ...video,
+                        index: index,
+                        titleHighlight: highlightSearchTerms(video.title, query),
+                        channelHighlight: highlightSearchTerms(video.channel, query)
+                    });
+                }
+            });
+            
+            if (matchingVideos.length === 0) {
+                showVideoSearchNoResults();
+                return;
+            }
+            
+            // Display results
+            const resultsList = document.getElementById('videoSearchResultsList');
+            resultsList.innerHTML = matchingVideos.map(video => `
+                <div class="video-search-result flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                     onclick="playVideoFromSearchResult('${playlistName}', ${video.index})">
+                    <img src="${video.thumbnail}" alt="${video.title}" class="w-16 h-12 object-cover rounded">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-sm line-clamp-2 mb-1">${video.titleHighlight}</div>
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">${video.channelHighlight}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-500">
+                            Position: ${video.index + 1} of ${playlist.videos.length}
+                            ${video.index === currentVideoIndex ? ' • Currently Playing' : ''}
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <button 
+                            onclick="playVideoFromSearchResult('${playlistName}', ${video.index}); event.stopPropagation();"
+                            class="px-2 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-xs"
+                            title="Play this video"
+                        >
+                            ▶️ Play
+                        </button>
+                        <button 
+                            onclick="jumpToVideoInPlaylist('${playlistName}', ${video.index}); event.stopPropagation();"
+                            class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
+                            title="Show in playlist"
+                        >
+                            📍 Show
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            showVideoSearchResults();
+        }
+
+        function highlightSearchTerms(text, searchQuery) {
+            if (!searchQuery) return text;
+            
+            const queryLower = searchQuery.toLowerCase();
+            const textLower = text.toLowerCase();
+            
+            if (!textLower.includes(queryLower)) return text;
+            
+            // Find the match position
+            const matchIndex = textLower.indexOf(queryLower);
+            const beforeMatch = text.substring(0, matchIndex);
+            const match = text.substring(matchIndex, matchIndex + searchQuery.length);
+            const afterMatch = text.substring(matchIndex + searchQuery.length);
+            
+            return `${beforeMatch}<mark class="bg-yellow-200 dark:bg-yellow-600 px-1 rounded">${match}</mark>${afterMatch}`;
+        }
+
+        function playVideoFromSearchResult(playlistName, videoIndex) {
+            // Close the search dialog
+            hideVideoSearchDialog();
+            
+            // Load the playlist if it's not currently loaded
+            if (currentPlaylist !== playlistName) {
+                loadPlaylist(playlistName);
+            }
+            
+            // Play the video
+            setTimeout(() => {
+                playVideoFromPlaylist(videoIndex);
+            }, 100);
+        }
+
+        function jumpToVideoInPlaylist(playlistName, videoIndex) {
+            // Close the search dialog
+            hideVideoSearchDialog();
+            
+            // Load the playlist if it's not currently loaded
+            if (currentPlaylist !== playlistName) {
+                loadPlaylist(playlistName);
+            }
+            
+            // Scroll to the video in the playlist
+            setTimeout(() => {
+                const videoElement = document.querySelector(`[data-index="${videoIndex}"]`);
+                if (videoElement) {
+                    videoElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                    
+                    // Add a temporary highlight effect
+                    videoElement.style.backgroundColor = 'rgba(93, 92, 222, 0.3)';
+                    setTimeout(() => {
+                        videoElement.style.backgroundColor = '';
+                    }, 2000);
+                }
+            }, 100);
         }
 
         // URL Parameter Auto-Play Functions
