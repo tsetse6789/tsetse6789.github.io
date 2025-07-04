@@ -124,15 +124,15 @@
             </h1>
             
             <div class="space-y-4 w-full">
-                <button onclick="checkAndNavigate('https://tsetse6789.github.io/chat', 'Fun Chat')" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
+                <a href="https://tsetse6789.github.io/chat" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
                     Go to Fun Chat
-                </button>
-                <button onclick="checkAndNavigate('https://tsetse6789.github.io/player', 'YouTube Player')" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
+                </a>
+                <a href="https://tsetse6789.github.io/player" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
                     Go to YouTube Player
-                </button>
-                <button onclick="openNutFun()" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
+                </a>
+                <a href="#" onclick="openNutFun()" class="block w-full py-4 px-6 bg-primary hover:bg-primary/90 text-white font-semibold text-lg rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ease-out">
                     Go to Nut Fun
-                </button>
+                </a>
             </div>
         </div>
         
@@ -159,20 +159,6 @@
         </div>
     </div>
 
-    <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
-            <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-xl font-bold text-red-600 dark:text-red-400">Page Not Found</h2>
-                <button id="closeErrorModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl">
-                    ×
-                </button>
-            </div>
-            <div id="errorContent" class="p-6 text-center">
-                <!-- Error content will be loaded here -->
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         // Dark mode detection and handling
@@ -194,30 +180,12 @@
         const readmeContent = document.getElementById('readmeContent');
 
         readmeBtn.addEventListener('click', () => {
-            // Show loading state
-            readmeContent.innerHTML = '<div class="flex items-center justify-center py-8"><div class="text-lg">Loading README...</div></div>';
-            readmeModal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-            
             fetch('https://tsetse6789.github.io/README.md')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to load README.md (${response.status})`);
-                    }
-                    return response.text();
-                })
+                .then(response => response.text())
                 .then(data => {
                     readmeContent.innerHTML = marked.parse(data);
-                })
-                .catch(error => {
-                    readmeContent.innerHTML = `
-                        <div class="text-center py-8">
-                            <div class="text-6xl mb-4">📄❌</div>
-                            <h3 class="text-xl font-bold mb-2 text-red-600 dark:text-red-400">README Not Found</h3>
-                            <p class="text-gray-600 dark:text-gray-400 mb-4">Sorry, the README.md file could not be loaded.</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-500">Error: ${error.message}</p>
-                        </div>
-                    `;
+                    readmeModal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
                 });
         });
 
@@ -238,90 +206,7 @@
                 readmeModal.classList.add('hidden');
                 document.body.style.overflow = 'auto';
             }
-            if (e.key === 'Escape' && !errorModal.classList.contains('hidden')) {
-                errorModal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
-            }
         });
-
-        // Error Modal functionality
-        const errorModal = document.getElementById('errorModal');
-        const closeErrorModal = document.getElementById('closeErrorModal');
-        const errorContent = document.getElementById('errorContent');
-
-        closeErrorModal.addEventListener('click', () => {
-            errorModal.classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        });
-
-        errorModal.addEventListener('click', (e) => {
-            if (e.target === errorModal) {
-                errorModal.classList.add('hidden');
-                document.body.style.overflow = 'auto';
-            }
-        });
-
-        // Function to show error modal
-        function showError(title, message, statusCode = null) {
-            const statusText = statusCode ? ` (${statusCode})` : '';
-            errorContent.innerHTML = `
-                <div class="text-6xl mb-4">🚫</div>
-                <h3 class="text-xl font-bold mb-2">${title}</h3>
-                <p class="text-gray-600 dark:text-gray-400 mb-4">${message}</p>
-                ${statusCode ? `<p class="text-sm text-gray-500 dark:text-gray-500">HTTP Status: ${statusCode}</p>` : ''}
-                <button onclick="errorModal.classList.add('hidden'); document.body.style.overflow = 'auto';" 
-                        class="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                    Close
-                </button>
-            `;
-            errorModal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
-        // Function to check if page exists and navigate
-        async function checkAndNavigate(url, pageName) {
-            try {
-                // Show loading state on button
-                const buttons = document.querySelectorAll('button');
-                const clickedButton = Array.from(buttons).find(btn => btn.textContent.includes(pageName));
-                const originalText = clickedButton.textContent;
-                clickedButton.textContent = 'Checking...';
-                clickedButton.disabled = true;
-
-                // Use HEAD request to check if page exists
-                const response = await fetch(url, { method: 'HEAD' });
-                
-                // Restore button state
-                clickedButton.textContent = originalText;
-                clickedButton.disabled = false;
-
-                if (response.ok) {
-                    // Page exists, navigate to it
-                    window.open(url, '_blank');
-                } else {
-                    // Page doesn't exist, show error
-                    showError(
-                        `${pageName} Not Found`,
-                        `The ${pageName} page could not be found. It may have been moved or temporarily unavailable.`,
-                        response.status
-                    );
-                }
-            } catch (error) {
-                // Restore button state on error
-                const buttons = document.querySelectorAll('button');
-                const clickedButton = Array.from(buttons).find(btn => btn.textContent.includes('Checking'));
-                if (clickedButton) {
-                    clickedButton.textContent = `Go to ${pageName}`;
-                    clickedButton.disabled = false;
-                }
-
-                // Network error or other issues
-                showError(
-                    'Connection Error',
-                    `Unable to reach ${pageName}. Please check your internet connection and try again.`
-                );
-            }
-        }
 
         // Function to open Nut Fun app or fallback to web
         function openNutFun() {
