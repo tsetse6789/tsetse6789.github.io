@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Console</title>
+    <link rel="icon" href="https://tsetse6789.github.io/Logo_v2.png">
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <!-- Firebase Compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        'primary-dark': '#4B4BC8'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #5D5CDE;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tab-active {
+            border-left: 3px solid #5D5CDE;
+            background: rgba(93, 92, 222, 0.1);
+        }
+        .focus-visible:focus {
+            outline: 2px solid #5D5CDE;
+            outline-offset: 2px;
+        }
+        /* Scrollbar styling */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #6b7280;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
+    <!-- Loading Screen -->
+    <div id="loading" class="fixed inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-400">Loading Account Console...</p>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 fade-in">
+                <h1 class="text-3xl font-bold text-center mb-8">Account Console</h1>
+                <form id="login-form" class="space-y-6">
+                    <input type="email" id="login-email" placeholder="Email" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 focus-visible" required>
+                    <input type="password" id="login-password" placeholder="Password" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 focus-visible" required>
+                    <button type="submit" id="login-submit" class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3 px-4 rounded-lg transition duration-200 focus-visible">
+                        Sign In
+                    </button>
+                </form>
+                <div id="login-error" class="hidden mt-4 p-3 bg-red-100 dark:bg-red-900 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg text-sm" role="alert"></div>
+                <div class="mt-6 text-center">
+                    <a href="#" id="forgot-password-link" class="text-primary hover:text-primary-dark text-sm">Forgot your password?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="hidden min-h-screen flex">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white dark:bg-gray-800 shadow-lg flex flex-col">
+            <!-- User Info Header -->
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center">
+                    <div id="user-avatar" class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-lg mr-3">
+                        U
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h2 id="user-name" class="font-semibold truncate">Loading...</h2>
+                        <p id="user-email" class="text-sm text-gray-500 dark:text-gray-400 truncate">Loading...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <button id="tab-overview" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible tab-active">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Overview
+                    </div>
+                </button>
+                <button id="tab-profile" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        Profile
+                    </div>
+                </button>
+                <button id="tab-friends" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        Friends
+                    </div>
+                </button>
+                <button id="tab-rooms" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        Rooms & Messages
+                    </div>
+                </button>
+                <button id="tab-security" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                        Security
+                    </div>
+                </button>
+                <button id="tab-data" class="tab-btn w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Data Export
+                    </div>
+                </button>
+            </nav>
+
+            <!-- Theme Toggle & Logout -->
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">Dark Mode</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="theme-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/40 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+                <button id="logout-btn" class="w-full px-4 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus-visible">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Logout
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col">
+            <!-- Header -->
+            <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                <h1 id="page-title" class="text-2xl font-bold">Account Overview</h1>
+                <p id="page-description" class="text-gray-600 dark:text-gray-400 mt-1">Manage your account information and settings</p>
+            </header>
+
+            <!-- Content Area -->
+            <main class="flex-1 p-6 overflow-y-auto custom-scrollbar">
+                <!-- Overview Tab -->
+                <div id="content-overview" class="tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+                        <!-- Account Stats Cards -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Friends</p>
+                                    <p id="stat-friends" class="text-2xl font-bold">0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
+                                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Rooms</p>
+                                    <p id="stat-rooms" class="text-2xl font-bold">0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+                                    <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Messages Sent</p>
+                                    <p id="stat-messages" class="text-2xl font-bold">0</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Days Active</p>
+                                    <p id="stat-days-active" class="text-2xl font-bold">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Account Information -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-6">Account Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Account Created</label>
+                                <p id="account-created" class="text-gray-900 dark:text-white">Loading...</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Login</label>
+                                <p id="last-login" class="text-gray-900 dark:text-white">Loading...</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                                <p id="account-email" class="text-gray-900 dark:text-white">Loading...</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">User ID</label>
+                                <p id="account-uid" class="text-gray-900 dark:text-white font-mono text-sm">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Tab -->
+                <div id="content-profile" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+                        <h3 class="text-lg font-semibold mb-6">Edit Profile</h3>
+                        <form id="profile-form" class="space-y-6">
+                            <div class="flex items-center space-x-6">
+                                <div class="relative">
+                                    <div id="profile-avatar-preview" class="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white font-bold text-2xl">
+                                        U
+                                    </div>
+                                    <img id="profile-image-preview" class="hidden w-20 h-20 rounded-full object-cover" alt="Profile">
+                                </div>
+                                <div class="flex-1">
+                                    <label for="profile-pic-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Picture URL</label>
+                                    <input type="url" id="profile-pic-url" placeholder="https://example.com/image.jpg" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 focus-visible">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Enter a valid image URL</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="profile-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
+                                <input type="text" id="profile-username" maxlength="49" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 focus-visible">
+                            </div>
+
+                            <button type="submit" id="save-profile-btn" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-dark transition-colors focus-visible">
+                                Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Friends Tab -->
+                <div id="content-friends" class="tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Friends List -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Friends</h3>
+                            <div id="friends-list" class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                                <!-- Friends will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Friend Requests -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Friend Requests</h3>
+                            <div id="friend-requests-list" class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+                                <!-- Friend requests will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rooms Tab -->
+                <div id="content-rooms" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-6">Your Rooms & Messages</h3>
+                        <div id="rooms-list" class="space-y-4">
+                            <!-- Rooms will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Tab -->
+                <div id="content-security" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Password Reset -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Password Reset</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">Send a password reset email to your registered email address.</p>
+                            <button id="reset-password-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors focus-visible">
+                                Send Password Reset Email
+                            </button>
+                        </div>
+
+                        <!-- Delete Account -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border-l-4 border-red-500">
+                            <h3 class="text-lg font-semibold mb-4 text-red-600 dark:text-red-400">Danger Zone</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                                Permanently delete your account and all associated data. This action cannot be undone.
+                            </p>
+                            <button id="delete-account-btn" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors focus-visible">
+                                Delete Account & Data Permanently
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Export Tab -->
+                <div id="content-data" class="tab-content hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                        <h3 class="text-lg font-semibold mb-6">Export Your Data</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">
+                            Download a copy of all your data from Fun Chat including profile information, friends, rooms, and messages.
+                        </p>
+                        <div class="space-y-4">
+                            <button id="export-profile-btn" class="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors focus-visible mr-4">
+                                Export Profile Data
+                            </button>
+                            <button id="export-messages-btn" class="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors focus-visible mr-4">
+                                Export Messages Data
+                            </button>
+                            <button id="export-all-btn" class="w-full sm:w-auto bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors focus-visible">
+                                Export All Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Password Verification Modal -->
+    <div id="password-verify-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" role="dialog">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-sm p-6 slide-up">
+            <h3 class="text-lg font-bold mb-4 text-red-600 dark:text-red-400">Verify Your Password</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">Please enter your current password to delete your account. This action cannot be undone.</p>
+            
+            <div class="space-y-4">
+                <input type="password" id="verify-password" placeholder="Enter your password..." class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-red-500 focus:border-transparent focus-visible" required>
+                
+                <div id="password-error" class="hidden text-red-600 dark:text-red-400 text-sm" role="alert"></div>
+                
+                <div class="flex space-x-3">
+                    <button id="password-verify-cancel" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus-visible">Cancel</button>
+                    <button id="password-verify-ok" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors focus-visible">Delete Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection and theme toggle
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Firebase configuration (same as your chat app)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDr12y9qAWiTFaHPVYaCKKU1fgYCXyK_ao",
+            authDomain: "real-time-chat-a665b.firebaseapp.com",
+            databaseURL: "https://real-time-chat-a665b-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "real-time-chat-a665b",
+            storageBucket: "real-time-chat-a665b.firebasestorage.app",
+            messagingSenderId: "203807829995",
+            appId: "1:203807829995:web:b68313623c9764847833ae",
+            measurementId: "G-EFF5SJNKPV"
+        };
+
+        // Global variables
+        let app, auth, database;
+        let currentUser = null;
+        let userData = null;
+
+        // Initialize Firebase
+        function waitForFirebase(callback) {
+            if (typeof firebase !== 'undefined') {
+                callback();
+            } else {
+                setTimeout(() => waitForFirebase(callback), 100);
+            }
+        }
+        
+        function initializeFirebase() {
+            try {
+                app = firebase.initializeApp(firebaseConfig);
+                auth = firebase.auth();
+                database = firebase.database();
+                init();
+            } catch (error) {
+                console.error('Failed to initialize Firebase:', error);
+                showError('Failed to initialize Firebase: ' + error.message);
+            }
+        }
+        
+        function startApp() {
+            waitForFirebase(initializeFirebase);
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startApp);
+        } else {
+            startApp();
+        }
+
+        function init() {
+            setupEventListeners();
+            initializeThemeToggle();
+            
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    loadUserData().then(() => {
+                        showMainApp();
+                        loadOverviewData();
+                    });
+                } else {
+                    showLoginScreen();
+                }
+                document.getElementById('loading').classList.add('hidden');
+            });
+        }
+
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('forgot-password-link').addEventListener('click', handleForgotPassword);
+
+            // Tab navigation
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.id.replace('tab-', '')));
+            });
+
+            // Profile form
+            document.getElementById('profile-form').addEventListener('submit', handleProfileUpdate);
+            document.getElementById('profile-pic-url').addEventListener('input', previewProfileImage);
+
+            // Security actions
+            document.getElementById('reset-password-btn').addEventListener('click', handlePasswordReset);
+            document.getElementById('delete-account-btn').addEventListener('click', showDeleteAccountModal);
+
+            // Password verification modal
+            document.getElementById('password-verify-cancel').addEventListener('click', hideDeleteAccountModal);
+            document.getElementById('password-verify-ok').addEventListener('click', handleDeleteAccount);
+            document.getElementById('verify-password').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleDeleteAccount();
+            });
+
+            // Data export
+            document.getElementById('export-profile-btn').addEventListener('click', () => exportData('profile'));
+            document.getElementById('export-messages-btn').addEventListener('click', () => exportData('messages'));
+            document.getElementById('export-all-btn').addEventListener('click', () => exportData('all'));
+
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+        }
+
+        function initializeThemeToggle() {
+            const toggle = document.getElementById('theme-toggle');
+            
+            // Set initial state
+            if (document.documentElement.classList.contains('dark')) {
+                toggle.checked = true;
+            }
+
+            toggle.addEventListener('change', () => {
+                if (toggle.checked) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            });
+        }
+
+        function showLoginScreen() {
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            const submitBtn = document.getElementById('login-submit');
+            
+            try {
+                setButtonLoading(submitBtn, true);
+                hideError();
+                await auth.signInWithEmailAndPassword(email, password);
+            } catch (error) {
+                showError(getFirebaseErrorMessage(error));
+            } finally {
+                setButtonLoading(submitBtn, false);
+            }
+        }
+
+        async function handleForgotPassword(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            
+            if (!email) {
+                showError('Please enter your email address first');
+                return;
+            }
+            
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showAlert('Password reset email sent! Check your inbox.', 'success');
+            } catch (error) {
+                showError(getFirebaseErrorMessage(error));
+            }
+        }
+
+        async function loadUserData() {
+            try {
+                const snapshot = await database.ref(`users/${currentUser.uid}`).once('value');
+                if (snapshot.exists()) {
+                    userData = snapshot.val();
+                    updateUserDisplay();
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        function updateUserDisplay() {
+            if (!userData) return;
+            
+            // Update sidebar user info
+            document.getElementById('user-name').textContent = userData.username || 'Unknown';
+            document.getElementById('user-email').textContent = currentUser.email;
+            
+            // Update avatar
+            const avatarEl = document.getElementById('user-avatar');
+            if (userData.profilePic) {
+                avatarEl.innerHTML = `<img src="${userData.profilePic}" class="w-12 h-12 rounded-full object-cover" alt="Profile" onerror="this.style.display='none'; this.parentElement.textContent='${(userData.username || 'U').charAt(0).toUpperCase()}';">`;
+            } else {
+                avatarEl.textContent = (userData.username || 'U').charAt(0).toUpperCase();
+            }
+            
+            // Update profile form
+            document.getElementById('profile-username').value = userData.username || '';
+            document.getElementById('profile-pic-url').value = userData.profilePic || '';
+            previewProfileImage();
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('tab-active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            
+            // Update header
+            updatePageHeader(tabName);
+            
+            // Load tab-specific data
+            loadTabData(tabName);
+        }
+
+        function updatePageHeader(tabName) {
+            const headers = {
+                overview: { title: 'Account Overview', description: 'View your account statistics and information' },
+                profile: { title: 'Profile Settings', description: 'Update your profile information and avatar' },
+                friends: { title: 'Friends Management', description: 'Manage your friends and friend requests' },
+                rooms: { title: 'Rooms & Messages', description: 'View your chat rooms and message history' },
+                security: { title: 'Security Settings', description: 'Manage your account security and password' },
+                data: { title: 'Data Export', description: 'Download your data from Fun Chat' }
+            };
+            
+            const header = headers[tabName] || headers.overview;
+            document.getElementById('page-title').textContent = header.title;
+            document.getElementById('page-description').textContent = header.description;
+        }
+
+        async function loadTabData(tabName) {
+            switch (tabName) {
+                case 'overview':
+                    await loadOverviewData();
+                    break;
+                case 'friends':
+                    await loadFriendsData();
+                    break;
+                case 'rooms':
+                    await loadRoomsData();
+                    break;
+            }
+        }
+
+        async function loadOverviewData() {
+            try {
+                // Load stats
+                const [friendsSnapshot, roomsSnapshot] = await Promise.all([
+                    database.ref(`users/${currentUser.uid}/friends`).once('value'),
+                    database.ref('rooms').orderByChild(`users/${currentUser.uid}`).once('value')
+                ]);
+                
+                // Count friends
+                const friends = friendsSnapshot.val() || {};
+                const friendsCount = Object.values(friends).filter(status => status === 'accepted').length;
+                document.getElementById('stat-friends').textContent = friendsCount;
+                
+                // Count rooms
+                let roomsCount = 0;
+                let messagesCount = 0;
+                
+                if (roomsSnapshot.exists()) {
+                    const rooms = roomsSnapshot.val();
+                    for (const [roomId, roomData] of Object.entries(rooms)) {
+                        if (roomData.users && roomData.users[currentUser.uid]) {
+                            roomsCount++;
+                            
+                            // Count user's messages in this room
+                            try {
+                                const messagesSnapshot = await database.ref(`rooms/${roomId}/messages`).orderByChild('senderId').equalTo(currentUser.uid).once('value');
+                                if (messagesSnapshot.exists()) {
+                                    messagesCount += Object.keys(messagesSnapshot.val()).length;
+                                }
+                            } catch (error) {
+                                console.error('Error counting messages:', error);
+                            }
+                        }
+                    }
+                }
+                
+                document.getElementById('stat-rooms').textContent = roomsCount;
+                document.getElementById('stat-messages').textContent = messagesCount;
+                
+                // Calculate days active
+                const createdAt = userData?.createdAt || Date.now();
+                const daysActive = Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24));
+                document.getElementById('stat-days-active').textContent = Math.max(1, daysActive);
+                
+                // Update account info
+                document.getElementById('account-created').textContent = new Date(createdAt).toLocaleDateString();
+                document.getElementById('last-login').textContent = new Date().toLocaleDateString();
+                document.getElementById('account-email').textContent = currentUser.email;
+                document.getElementById('account-uid').textContent = currentUser.uid;
+                
+            } catch (error) {
+                console.error('Error loading overview data:', error);
+            }
+        }
+
+        async function loadFriendsData() {
+            try {
+                // Load friends
+                const friendsSnapshot = await database.ref(`users/${currentUser.uid}/friends`).once('value');
+                const friends = friendsSnapshot.val() || {};
+                
+                const friendsList = document.getElementById('friends-list');
+                friendsList.innerHTML = '';
+                
+                const acceptedFriends = Object.entries(friends).filter(([_, status]) => status === 'accepted');
+                
+                if (acceptedFriends.length > 0) {
+                    for (const [friendId, _] of acceptedFriends) {
+                        try {
+                            const friendSnapshot = await database.ref(`users/${friendId}`).once('value');
+                            if (friendSnapshot.exists()) {
+                                const friendData = friendSnapshot.val();
+                                const friendElement = createFriendElement(friendId, friendData);
+                                friendsList.appendChild(friendElement);
+                            }
+                        } catch (error) {
+                            console.error('Error loading friend:', error);
+                        }
+                    }
+                } else {
+                    friendsList.innerHTML = '<p class="text-gray-500 text-center py-8">No friends yet</p>';
+                }
+                
+                // Load friend requests
+                const requestsSnapshot = await database.ref(`users/${currentUser.uid}/friendRequests/received`).once('value');
+                const requests = requestsSnapshot.val() || {};
+                
+                const requestsList = document.getElementById('friend-requests-list');
+                requestsList.innerHTML = '';
+                
+                const pendingRequests = Object.entries(requests).filter(([_, status]) => status === 'pending');
+                
+                if (pendingRequests.length > 0) {
+                    for (const [requesterId, _] of pendingRequests) {
+                        try {
+                            const requesterSnapshot = await database.ref(`users/${requesterId}`).once('value');
+                            if (requesterSnapshot.exists()) {
+                                const requesterData = requesterSnapshot.val();
+                                const requestElement = createFriendRequestElement(requesterId, requesterData);
+                                requestsList.appendChild(requestElement);
+                            }
+                        } catch (error) {
+                            console.error('Error loading friend request:', error);
+                        }
+                    }
+                } else {
+                    requestsList.innerHTML = '<p class="text-gray-500 text-center py-8">No pending requests</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading friends data:', error);
+            }
+        }
+
+        async function loadRoomsData() {
+            try {
+                const roomsSnapshot = await database.ref('rooms').once('value');
+                const roomsList = document.getElementById('rooms-list');
+                roomsList.innerHTML = '';
+                
+                if (!roomsSnapshot.exists()) {
+                    roomsList.innerHTML = '<p class="text-gray-500 text-center py-8">No rooms found</p>';
+                    return;
+                }
+                
+                const rooms = roomsSnapshot.val();
+                const userRooms = [];
+                
+                for (const [roomId, roomData] of Object.entries(rooms)) {
+                    if (roomData.users && roomData.users[currentUser.uid]) {
+                        userRooms.push({ id: roomId, data: roomData });
+                    }
+                }
+                
+                if (userRooms.length === 0) {
+                    roomsList.innerHTML = '<p class="text-gray-500 text-center py-8">You are not a member of any rooms</p>';
+                    return;
+                }
+                
+                for (const room of userRooms) {
+                    const roomElement = await createRoomElement(room.id, room.data);
+                    roomsList.appendChild(roomElement);
+                }
+                
+            } catch (error) {
+                console.error('Error loading rooms data:', error);
+            }
+        }
+
+        function createFriendElement(friendId, friendData) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg';
+            
+            div.innerHTML = `
+                <div class="flex items-center">
+                    ${friendData.profilePic ? 
+                        `<img src="${friendData.profilePic}" class="w-10 h-10 rounded-full mr-3" alt="Profile" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full mr-3 flex items-center justify-center" style="display:none;">
+                            <span class="text-lg font-semibold">${friendData.username.charAt(0).toUpperCase()}</span>
+                        </div>` :
+                        `<div class="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full mr-3 flex items-center justify-center">
+                            <span class="text-lg font-semibold">${friendData.username.charAt(0).toUpperCase()}</span>
+                        </div>`
+                    }
+                    <div>
+                        <p class="font-medium">${friendData.username}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Friend since ${new Date(friendData.createdAt || Date.now()).toLocaleDateString()}</p>
+                    </div>
+                </div>
+                <button onclick="removeFriend('${friendId}')" class="text-red-500 hover:text-red-700 p-2 rounded focus-visible" title="Remove friend">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            `;
+            
+            return div;
+        }
+
+        function createFriendRequestElement(requesterId, requesterData) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg';
+            
+            div.innerHTML = `
+                <div class="flex items-center">
+                    ${requesterData.profilePic ? 
+                        `<img src="${requesterData.profilePic}" class="w-10 h-10 rounded-full mr-3" alt="Profile" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full mr-3 flex items-center justify-center" style="display:none;">
+                            <span class="text-lg font-semibold">${requesterData.username.charAt(0).toUpperCase()}</span>
+                        </div>` :
+                        `<div class="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full mr-3 flex items-center justify-center">
+                            <span class="text-lg font-semibold">${requesterData.username.charAt(0).toUpperCase()}</span>
+                        </div>`
+                    }
+                    <div>
+                        <p class="font-medium">${requesterData.username}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Wants to be friends</p>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="acceptFriendRequest('${requesterId}')" class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors focus-visible">Accept</button>
+                    <button onclick="declineFriendRequest('${requesterId}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600 transition-colors focus-visible">Decline</button>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        async function createRoomElement(roomId, roomData) {
+            const div = document.createElement('div');
+            div.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4';
+            
+            // Get user's message count in this room
+            let messageCount = 0;
+            try {
+                const messagesSnapshot = await database.ref(`rooms/${roomId}/messages`).orderByChild('senderId').equalTo(currentUser.uid).once('value');
+                if (messagesSnapshot.exists()) {
+                    messageCount = Object.keys(messagesSnapshot.val()).length;
+                }
+            } catch (error) {
+                console.error('Error counting messages:', error);
+            }
+            
+            const userRole = roomData.users[currentUser.uid]?.role || 'member';
+            const joinedDate = roomData.users[currentUser.uid]?.joinedAt ? new Date(roomData.users[currentUser.uid].joinedAt).toLocaleDateString() : 'Unknown';
+            
+            div.innerHTML = `
+                <div class="flex items-start justify-between mb-3">
+                    <div>
+                        <h4 class="font-semibold text-lg">${roomData.name}</h4>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            ${userRole.charAt(0).toUpperCase() + userRole.slice(1)} • Joined ${joinedDate}
+                        </p>
+                    </div>
+                    <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm">
+                        ${messageCount} messages sent
+                    </span>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="font-medium">Created:</span> ${new Date(roomData.createdAt).toLocaleDateString()}
+                    </div>
+                    <div>
+                        <span class="font-medium">Members:</span> ${Object.keys(roomData.users || {}).length}
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        window.removeFriend = async function(friendId) {
+            if (confirm('Are you sure you want to remove this friend?')) {
+                try {
+                    const updates = {};
+                    updates[`users/${currentUser.uid}/friends/${friendId}`] = null;
+                    updates[`users/${friendId}/friends/${currentUser.uid}`] = null;
+                    
+                    await database.ref().update(updates);
+                    loadFriendsData();
+                    showAlert('Friend removed', 'info');
+                } catch (error) {
+                    showAlert('Error removing friend: ' + error.message, 'error');
+                }
+            }
+        };
+
+        window.acceptFriendRequest = async function(requesterId) {
+            try {
+                const updates = {};
+                updates[`users/${currentUser.uid}/friends/${requesterId}`] = 'accepted';
+                updates[`users/${requesterId}/friends/${currentUser.uid}`] = 'accepted';
+                updates[`users/${currentUser.uid}/friendRequests/received/${requesterId}`] = 'accepted';
+                updates[`users/${requesterId}/friendRequests/sent/${currentUser.uid}`] = 'accepted';
+                
+                await database.ref().update(updates);
+                loadFriendsData();
+                showAlert('Friend request accepted!', 'success');
+            } catch (error) {
+                showAlert('Error accepting friend request: ' + error.message, 'error');
+            }
+        };
+
+        window.declineFriendRequest = async function(requesterId) {
+            try {
+                const updates = {};
+                updates[`users/${currentUser.uid}/friendRequests/received/${requesterId}`] = 'declined';
+                updates[`users/${requesterId}/friendRequests/sent/${currentUser.uid}`] = 'declined';
+                
+                await database.ref().update(updates);
+                loadFriendsData();
+                showAlert('Friend request declined', 'info');
+            } catch (error) {
+                showAlert('Error declining friend request: ' + error.message, 'error');
+            }
+        };
+
+        function previewProfileImage() {
+            const url = document.getElementById('profile-pic-url').value.trim();
+            const preview = document.getElementById('profile-image-preview');
+            const avatar = document.getElementById('profile-avatar-preview');
+            
+            if (url) {
+                preview.src = url;
+                preview.classList.remove('hidden');
+                avatar.classList.add('hidden');
+                
+                preview.onerror = function() {
+                    preview.classList.add('hidden');
+                    avatar.classList.remove('hidden');
+                };
+            } else {
+                preview.classList.add('hidden');
+                avatar.classList.remove('hidden');
+            }
+        }
+
+        async function handleProfileUpdate(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('save-profile-btn');
+            const username = document.getElementById('profile-username').value.trim();
+            const profilePic = document.getElementById('profile-pic-url').value.trim();
+            
+            if (!username || username.length > 49) {
+                showAlert('Username must be between 1 and 49 characters', 'error');
+                return;
+            }
+            
+            try {
+                setButtonLoading(submitBtn, true);
+                
+                // Check if username is taken by another user
+                if (username !== userData.username) {
+                    const usernameCheck = await database.ref('users').orderByChild('username').equalTo(username).once('value');
+                    if (usernameCheck.exists()) {
+                        const existingUserId = Object.keys(usernameCheck.val())[0];
+                        if (existingUserId !== currentUser.uid) {
+                            showAlert('Username already taken', 'error');
+                            return;
+                        }
+                    }
+                }
+                
+                await database.ref(`users/${currentUser.uid}`).update({
+                    username,
+                    profilePic,
+                    updatedAt: Date.now()
+                });
+                
+                userData.username = username;
+                userData.profilePic = profilePic;
+                updateUserDisplay();
+                showAlert('Profile updated successfully!', 'success');
+                
+            } catch (error) {
+                showAlert('Error updating profile: ' + error.message, 'error');
+            } finally {
+                setButtonLoading(submitBtn, false);
+            }
+        }
+
+        async function handlePasswordReset() {
+            const btn = document.getElementById('reset-password-btn');
+            
+            try {
+                setButtonLoading(btn, true);
+                await auth.sendPasswordResetEmail(currentUser.email);
+                showAlert('Password reset email sent! Check your inbox.', 'success');
+            } catch (error) {
+                showAlert('Error sending password reset email: ' + getFirebaseErrorMessage(error), 'error');
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+
+        function showDeleteAccountModal() {
+            document.getElementById('password-verify-modal').classList.remove('hidden');
+            document.getElementById('verify-password').focus();
+        }
+
+        function hideDeleteAccountModal() {
+            document.getElementById('password-verify-modal').classList.add('hidden');
+            document.getElementById('password-error').classList.add('hidden');
+            document.getElementById('verify-password').value = '';
+        }
+
+        async function handleDeleteAccount() {
+            const passwordInput = document.getElementById('verify-password');
+            const verifyButton = document.getElementById('password-verify-ok');
+            const errorDiv = document.getElementById('password-error');
+            
+            const password = passwordInput.value;
+            
+            if (!password) {
+                errorDiv.textContent = 'Please enter your password';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                setButtonLoading(verifyButton, true);
+                errorDiv.classList.add('hidden');
+                
+                // Re-authenticate user
+                const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, password);
+                await currentUser.reauthenticateWithCredential(credential);
+                
+                // Delete user data from database
+                await database.ref(`users/${currentUser.uid}`).remove();
+                
+                // Remove user from all rooms
+                const roomsSnapshot = await database.ref('rooms').once('value');
+                if (roomsSnapshot.exists()) {
+                    const rooms = roomsSnapshot.val();
+                    const updates = {};
+                    
+                    for (const [roomId, roomData] of Object.entries(rooms)) {
+                        if (roomData.users && roomData.users[currentUser.uid]) {
+                            updates[`rooms/${roomId}/users/${currentUser.uid}`] = null;
+                        }
+                    }
+                    
+                    if (Object.keys(updates).length > 0) {
+                        await database.ref().update(updates);
+                    }
+                }
+                
+                // Delete the user account
+                await currentUser.delete();
+                
+                hideDeleteAccountModal();
+                showAlert('Account deleted successfully', 'info');
+                
+            } catch (error) {
+                if (error.code === 'auth/wrong-password') {
+                    errorDiv.textContent = 'Incorrect password';
+                } else {
+                    errorDiv.textContent = 'Error: ' + getFirebaseErrorMessage(error);
+                }
+                errorDiv.classList.remove('hidden');
+            } finally {
+                setButtonLoading(verifyButton, false);
+            }
+        }
+
+        async function exportData(type) {
+            try {
+                let data = {};
+                let filename = '';
+                
+                switch (type) {
+                    case 'profile':
+                        data = {
+                            profile: userData,
+                            user: {
+                                uid: currentUser.uid,
+                                email: currentUser.email,
+                                createdAt: currentUser.metadata.creationTime,
+                                lastLogin: currentUser.metadata.lastSignInTime
+                            }
+                        };
+                        filename = 'profile-data.json';
+                        break;
+                        
+                    case 'messages':
+                        // Get user's messages from all rooms
+                        const roomsSnapshot = await database.ref('rooms').once('value');
+                        const messages = {};
+                        
+                        if (roomsSnapshot.exists()) {
+                            const rooms = roomsSnapshot.val();
+                            for (const [roomId, roomData] of Object.entries(rooms)) {
+                                if (roomData.users && roomData.users[currentUser.uid]) {
+                                    const messagesSnapshot = await database.ref(`rooms/${roomId}/messages`).orderByChild('senderId').equalTo(currentUser.uid).once('value');
+                                    if (messagesSnapshot.exists()) {
+                                        messages[roomData.name] = Object.values(messagesSnapshot.val());
+                                    }
+                                }
+                            }
+                        }
+                        
+                        data = { messages };
+                        filename = 'messages-data.json';
+                        break;
+                        
+                    case 'all':
+                        // Combine all data
+                        const allRoomsSnapshot = await database.ref('rooms').once('value');
+                        const allFriendsSnapshot = await database.ref(`users/${currentUser.uid}/friends`).once('value');
+                        const allRequestsSnapshot = await database.ref(`users/${currentUser.uid}/friendRequests`).once('value');
+                        
+                        const allMessages = {};
+                        const rooms = [];
+                        
+                        if (allRoomsSnapshot.exists()) {
+                            const roomsData = allRoomsSnapshot.val();
+                            for (const [roomId, roomData] of Object.entries(roomsData)) {
+                                if (roomData.users && roomData.users[currentUser.uid]) {
+                                    rooms.push({
+                                        id: roomId,
+                                        name: roomData.name,
+                                        role: roomData.users[currentUser.uid].role,
+                                        joinedAt: roomData.users[currentUser.uid].joinedAt
+                                    });
+                                    
+                                    const messagesSnapshot = await database.ref(`rooms/${roomId}/messages`).orderByChild('senderId').equalTo(currentUser.uid).once('value');
+                                    if (messagesSnapshot.exists()) {
+                                        allMessages[roomData.name] = Object.values(messagesSnapshot.val());
+                                    }
+                                }
+                            }
+                        }
+                        
+                        data = {
+                            profile: userData,
+                            user: {
+                                uid: currentUser.uid,
+                                email: currentUser.email,
+                                createdAt: currentUser.metadata.creationTime,
+                                lastLogin: currentUser.metadata.lastSignInTime
+                            },
+                            friends: allFriendsSnapshot.val() || {},
+                            friendRequests: allRequestsSnapshot.val() || {},
+                            rooms: rooms,
+                            messages: allMessages,
+                            exportedAt: new Date().toISOString()
+                        };
+                        filename = 'complete-data.json';
+                        break;
+                }
+                
+                // Create and download file
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showAlert('Data exported successfully!', 'success');
+                
+            } catch (error) {
+                showAlert('Error exporting data: ' + error.message, 'error');
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await auth.signOut();
+            } catch (error) {
+                showAlert('Error logging out: ' + error.message, 'error');
+            }
+        }
+
+        // Utility functions
+        function setButtonLoading(button, loading = true) {
+            if (loading) {
+                button.disabled = true;
+                const originalText = button.textContent;
+                button.dataset.originalText = originalText;
+                button.innerHTML = `<div class="loading-spinner inline-block mr-2"></div>${originalText}`;
+            } else {
+                button.disabled = false;
+                button.textContent = button.dataset.originalText || button.textContent;
+            }
+        }
+
+        function getFirebaseErrorMessage(error) {
+            switch (error.code) {
+                case 'auth/user-not-found':
+                    return 'No account found with this email address.';
+                case 'auth/wrong-password':
+                    return 'Incorrect password.';
+                case 'auth/invalid-email':
+                    return 'Invalid email address.';
+                case 'auth/too-many-requests':
+                    return 'Too many failed attempts. Please try again later.';
+                default:
+                    return error.message;
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('login-error');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('login-error').classList.add('hidden');
+        }
+
+        function showAlert(message, type = 'error') {
+            const alertDiv = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : type === 'info' ? 'bg-blue-500' : 'bg-red-500';
+            alertDiv.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in`;
+            alertDiv.textContent = message;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 4000);
+            
+            alertDiv.addEventListener('click', () => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
