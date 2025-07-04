@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div class="min-h-screen flex items-center justify-center px-4">
+        <div class="max-w-md w-full text-center">
+            <!-- 404 Animation -->
+            <div class="mb-8">
+                <div class="animate-float">
+                    <div class="text-8xl md:text-9xl font-bold text-primary mb-4">
+                        404
+                    </div>
+                </div>
+                <div class="w-24 h-1 bg-primary mx-auto rounded-full animate-pulse-slow"></div>
+            </div>
+
+            <!-- Error Message -->
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+                Oops! Page Not Found
+            </h1>
+            <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                The page you're looking for seems to have wandered off into the digital void. 
+                Don't worry, it happens to the best of us!
+            </p>
+
+            <!-- Navigation Options -->
+            <div class="space-y-4">
+                <button 
+                    onclick="goHome()" 
+                    class="w-full bg-primary hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+                >
+                    📋 Go to Menu
+                </button>
+                
+                <button 
+                    onclick="goBack()" 
+                    class="w-full border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-primary hover:text-primary dark:hover:text-primary font-semibold py-3 px-6 rounded-lg transition-all duration-200"
+                >
+                    ← Go Back
+                </button>
+            </div>
+
+            <!-- Fun Elements -->
+            <div class="mt-12 text-gray-500 dark:text-gray-400">
+                <p class="text-sm">
+                    Error code: <span class="font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">404</span>
+                </p>
+                <div class="mt-4 flex justify-center space-x-2">
+                    <div class="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0.1s;"></div>
+                    <div class="w-2 h-2 bg-primary rounded-full animate-bounce" style="animation-delay: 0.2s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Navigation functions
+        function goHome() {
+            // For GitHub Pages, this will go to the root of your site
+            window.location.href = '/';
+        }
+
+        function goBack() {
+            // Go back to previous page if possible
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                goHome();
+            }
+        }
+
+        // Add some interactive effects
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.createElement('div');
+            cursor.className = 'fixed w-2 h-2 bg-primary rounded-full pointer-events-none opacity-30 animate-ping';
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            cursor.style.zIndex = '9999';
+            document.body.appendChild(cursor);
+            
+            setTimeout(() => {
+                cursor.remove();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
