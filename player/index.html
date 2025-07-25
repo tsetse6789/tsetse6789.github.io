@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Player</title>
-    <link rel="icon" href="https://tsetse6789.github.io/Logo_v2.png">
+    <link rel="icon" href="https://tsetse6789.github.io/player/ic_launcher-playstore.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -841,6 +841,9 @@
                     playerMutedForAd = true;
                 }
             }
+            
+            // Maintain media session during ads with special metadata
+            maintainMediaSessionDuringAds();
         }
 
         // Hide ad overlay and restore sound
@@ -853,6 +856,68 @@
             if (player && player.unMute && playerMutedForAd) {
                 player.unMute();
                 playerMutedForAd = false;
+            }
+            
+            // Restore normal media session metadata
+            restoreMediaSessionAfterAds();
+        }
+
+        // Maintain media session during ads to prevent browser from closing the player
+        function maintainMediaSessionDuringAds() {
+            if ('mediaSession' in navigator) {
+                console.log('Maintaining media session during ads');
+                
+                // Set special ad metadata to keep session active
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: 'Ads',
+                    artist: 'Skipping',
+                    album: 'YouTube Player',
+                    artwork: [
+                        { src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjNUQ1Q0RFIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCI+QWRzPC90ZXh0Pgo8L3N2Zz4K', sizes: '96x96', type: 'image/svg+xml' },
+                        { src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjNUQ1Q0RFIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCI+QWRzPC90ZXh0Pgo8L3N2Zz4K', sizes: '128x128', type: 'image/svg+xml' },
+                        { src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjNUQ1Q0RFIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCI+QWRzPC90ZXh0Pgo8L3N2Zz4K', sizes: '192x192', type: 'image/svg+xml' },
+                        { src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjNUQ1Q0RFIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCI+QWRzPC90ZXh0Pgo8L3N2Zz4K', sizes: '256x256', type: 'image/svg+xml' },
+                        { src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjNUQ1Q0RFIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCI+QWRzPC90ZXh0Pgo8L3N2Zz4K', sizes: '384x384', type: 'image/svg+xml' },
+                        { src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiBmaWxsPSIjNUQ1Q0RFIi8+Cjx0ZXh0IHg9IjI1NiIgeT0iMjgwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCI+QWRzPC90ZXh0Pgo8L3N2Zz4K', sizes: '512x512', type: 'image/svg+xml' }
+                    ]
+                });
+                
+                // Keep playback state as playing to prevent browser from stopping
+                navigator.mediaSession.playbackState = 'playing';
+                
+                // Clear position state during ads to hide progress bar
+                try {
+                    navigator.mediaSession.setPositionState({});
+                } catch (error) {
+                    console.log('Error clearing position state during ads:', error);
+                }
+            }
+        }
+
+        // Restore normal media session after ads
+        function restoreMediaSessionAfterAds() {
+            if ('mediaSession' in navigator && currentVideoInfo.title) {
+                console.log('Restoring media session after ads');
+                
+                // Restore the original video metadata
+                updateMediaSessionMetadata(currentVideoInfo.title, currentVideoInfo.artist, currentVideoInfo.artwork);
+                
+                // Update playback state based on current player state
+                if (player) {
+                    try {
+                        const state = player.getPlayerState();
+                        updateMediaSessionPlaybackState(state);
+                        
+                        // Restore position state if video is playing
+                        if (state === YT.PlayerState.PLAYING) {
+                            setTimeout(() => {
+                                updateMediaSessionPosition();
+                            }, 1000); // Wait a bit for player to stabilize
+                        }
+                    } catch (error) {
+                        console.log('Error restoring media session after ads:', error);
+                    }
+                }
             }
         }
 
@@ -1783,7 +1848,9 @@
                         iv_load_policy: 3, // Hide video annotations
                         cc_load_policy: 0, // Hide closed captions by default
                         fs: 1,           // Allow fullscreen
-                        disablekb: 0     // Enable keyboard controls
+                        disablekb: 0,    // Enable keyboard controls
+                        playsinline: 1,  // Enable inline playback on mobile
+                        mediaPlaybackRequiresUserGesture: 0 // Allow background playback without user gesture
                     },
                     events: {
                         onStateChange: onPlayerStateChange,
