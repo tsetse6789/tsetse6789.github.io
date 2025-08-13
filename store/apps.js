@@ -1,66 +1,55 @@
 window.apps = [
     {
-        id: "unique-app-id-1",
-        name: "Your App Name",
-        developer: "Developer Name",
-        category: "Productivity",
+        id: "com.john.nutfun-for-android",
+        name: "Nut Fun(Android)",
+        developer: "Nut",
+        category: "Lifestyle",
         platforms: [
             {
-                os: "Windows",
-                version: "10+",
-                deviceType: "Desktop"
-            },
-            {
-                os: "macOS",
-                version: "11.0+",
-                deviceType: "Desktop"
-            },
-            {
                 os: "Android",
-                version: "8.0+",
-                deviceType: "Mobile"
+                version: "5+",
+                deviceType: "Phone, Tablet, PC"
             }
         ],
-        icon: "https://example.com/path/to/app-icon.png",
+        icon: "https://tsetse6789.github.io/Logo_v2.png",
         gallery: [
-            "https://example.com/path/to/screenshot1.png",
-            "https://example.com/path/to/screenshot2.png",
-            "https://example.com/path/to/screenshot3.png"
+            "https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H1.png",
+            "https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H2.png",
+            "https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H3.png",
+            "https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H4.png",
+            "https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H5.png",
+            "https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H6.png",
+            "https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H7.png"
         ],
-        intro: "Brief description of what your app does and its main features.",
+        intro: "Enjoy a smoother experience than web version with more function.",
         details: `
-# Detailed Description
-
-This is a more comprehensive description of your app.
-
-## Features
-- Feature 1
-- Feature 2
-- Feature 3
-
-## Requirements
-- Requirement 1
-- Requirement 2
-
-You can use **bold text**, *italic text*, and even links: [Website](https://example.com)
+**Detailed Description**
+  
+This is the app version of Nut Fun, gives you a brand new user experience than the web version. The app gives more functions such as offline browsing, games, tools etc.  
+Hope you enjoy the app!
+  
+## *Features*
+- · Main page
+- · Cookie settings
+- · Offline browsing
+- · Tools
+- · Games
+- · Others...
+  
+## *Requirements*
+- · Android 5 or later
+- · Wi-Fi
         `,
         downloads: [
             {
-                type: "Direct Download",     // Download type: "Direct Download", "App Store", "Google Play", "Steam", etc.
-                url: "https://example.com/download/app.exe",
-                version: "1.0.0",          // App version (optional)
-                size: "25.4 MB"            // File size (optional)
+                type: "Google Drive(APK)",
+                url: "https://drive.google.com/file/d/1kosJnOGkXJoSHlidom4BeSYR0uePAHMM/view?usp=share_link",
+                version: "1.3.2",
+                size: "10.6 MB"
             },
             {
-                type: "Microsoft Store",
-                url: "https://www.microsoft.com/store/apps/...",
-                version: "1.0.0"
-            },
-            {
-                type: "APK Download",
-                url: "https://example.com/download/app.apk",
-                version: "1.0.0",
-                size: "12.8 MB"
+                type: "Elder Versions",
+                url: "https://sites.google.com/view/nut-fun/apps"
             }
         ]
     },
