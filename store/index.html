@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        'primary-dark': '#4C4BC0'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .app-card {
+            transition: all 0.3s ease;
+        }
+        .app-card:hover {
+            transform: translateY(-4px);
+        }
+        .gallery-image {
+            transition: transform 0.3s ease;
+        }
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-mobile-alt text-2xl text-primary mr-3"></i>
+                    <h1 class="text-2xl font-bold">App Store</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search apps..." 
+                               class="w-64 pl-10 pr-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filters -->
+    <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm font-medium">Category:</label>
+                    <select id="categoryFilter" class="text-base border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm font-medium">Developer:</label>
+                    <select id="developerFilter" class="text-base border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">All Developers</option>
+                    </select>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <label class="text-sm font-medium">Platform:</label>
+                    <select id="platformFilter" class="text-base border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">All Platforms</option>
+                    </select>
+                </div>
+                <button id="clearFilters" class="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-md transition-colors">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+            <i class="fas fa-spinner fa-spin text-4xl text-primary mb-4"></i>
+            <p class="text-lg">Loading apps...</p>
+        </div>
+
+        <!-- Apps Grid -->
+        <div id="appsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
+        </div>
+
+        <!-- No Results -->
+        <div id="noResults" class="text-center py-12 hidden">
+            <i class="fas fa-search text-4xl text-gray-400 mb-4"></i>
+            <p class="text-lg text-gray-500">No apps found matching your criteria</p>
+        </div>
+    </main>
+
+    <!-- App Detail Modal -->
+    <div id="appModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <!-- Modal Header -->
+                <div class="flex items-start justify-between mb-6">
+                    <div class="flex items-center space-x-4">
+                        <img id="modalIcon" src="" alt="" class="w-16 h-16 rounded-lg object-cover">
+                        <div>
+                            <h2 id="modalTitle" class="text-2xl font-bold"></h2>
+                            <p id="modalDeveloper" class="text-gray-600 dark:text-gray-400"></p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="shareApp" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg transition-colors" title="Share App">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        <button id="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- App Details -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column -->
+                    <div>
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-2">Description</h3>
+                            <p id="modalIntro" class="text-gray-700 dark:text-gray-300 mb-4"></p>
+                            <div id="modalDetails" class="text-gray-600 dark:text-gray-400"></div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-2">Compatibility</h3>
+                            <div id="modalPlatforms" class="space-y-2"></div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-2">Download</h3>
+                            <div id="modalDownload" class="space-y-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Gallery -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-2">Screenshots</h3>
+                        <div id="modalGallery" class="grid grid-cols-2 gap-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <div id="imageViewer" class="fixed inset-0 bg-black bg-opacity-90 z-60 hidden flex items-center justify-center p-4">
+        <div class="relative max-w-screen-lg max-h-screen-lg">
+            <img id="viewerImage" src="" alt="" class="max-w-full max-h-full object-contain">
+            <button id="closeViewer" class="absolute top-4 right-4 text-white hover:text-gray-300">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-4 right-4 z-70 transform translate-x-full transition-transform duration-300 ease-in-out">
+        <div class="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+            <i class="fas fa-check-circle"></i>
+            <span id="toastMessage">Link copied to clipboard!</span>
+        </div>
+    </div>
+
+    <script src="https://tsetse6789.github.io/store/apps.js"></script>
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        let allApps = [];
+        let filteredApps = [];
+        let currentAppId = null;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if apps data is loaded
+            if (typeof window.apps !== 'undefined') {
+                allApps = window.apps;
+                initializeApp();
+            } else {
+                // Fallback data if external script fails
+                console.warn('External apps.js not loaded, using fallback data');
+                allApps = getFallbackData();
+                initializeApp();
+            }
+        });
+
+        function initializeApp() {
+            filteredApps = [...allApps];
+            populateFilters();
+            renderApps();
+            setupEventListeners();
+            
+            // Check for app parameter in URL
+            checkUrlParameter();
+            
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('appsGrid').classList.remove('hidden');
+        }
+
+        function checkUrlParameter() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const appId = urlParams.get('app');
+            if (appId && allApps.find(app => app.id === appId)) {
+                openAppModal(appId);
+            }
+        }
+
+        function populateFilters() {
+            // Categories
+            const categories = [...new Set(allApps.map(app => app.category))].sort();
+            const categoryFilter = document.getElementById('categoryFilter');
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categoryFilter.appendChild(option);
+            });
+
+            // Developers
+            const developers = [...new Set(allApps.map(app => app.developer))].sort();
+            const developerFilter = document.getElementById('developerFilter');
+            developers.forEach(developer => {
+                const option = document.createElement('option');
+                option.value = developer;
+                option.textContent = developer;
+                developerFilter.appendChild(option);
+            });
+
+            // Platforms
+            const platforms = [...new Set(allApps.flatMap(app => app.platforms.map(p => p.os)))].sort();
+            const platformFilter = document.getElementById('platformFilter');
+            platforms.forEach(platform => {
+                const option = document.createElement('option');
+                option.value = platform;
+                option.textContent = platform;
+                platformFilter.appendChild(option);
+            });
+        }
+
+        function setupEventListeners() {
+            // Search
+            document.getElementById('searchInput').addEventListener('input', filterApps);
+            
+            // Filters
+            document.getElementById('categoryFilter').addEventListener('change', filterApps);
+            document.getElementById('developerFilter').addEventListener('change', filterApps);
+            document.getElementById('platformFilter').addEventListener('change', filterApps);
+            
+            // Clear filters
+            document.getElementById('clearFilters').addEventListener('click', clearFilters);
+            
+            // Modal
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('shareApp').addEventListener('click', shareApp);
+            document.getElementById('appModal').addEventListener('click', function(e) {
+                if (e.target === this) closeModal();
+            });
+            
+            // Image viewer
+            document.getElementById('closeViewer').addEventListener('click', closeImageViewer);
+            document.getElementById('imageViewer').addEventListener('click', function(e) {
+                if (e.target === this) closeImageViewer();
+            });
+        }
+
+        function filterApps() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            const developer = document.getElementById('developerFilter').value;
+            const platform = document.getElementById('platformFilter').value;
+
+            filteredApps = allApps.filter(app => {
+                const matchesSearch = !searchTerm || 
+                    app.name.toLowerCase().includes(searchTerm) ||
+                    app.developer.toLowerCase().includes(searchTerm) ||
+                    app.intro.toLowerCase().includes(searchTerm);
+                
+                const matchesCategory = !category || app.category === category;
+                const matchesDeveloper = !developer || app.developer === developer;
+                const matchesPlatform = !platform || app.platforms.some(p => p.os === platform);
+
+                return matchesSearch && matchesCategory && matchesDeveloper && matchesPlatform;
+            });
+
+            renderApps();
+        }
+
+        function clearFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
+            document.getElementById('developerFilter').value = '';
+            document.getElementById('platformFilter').value = '';
+            filteredApps = [...allApps];
+            renderApps();
+        }
+
+        function renderApps() {
+            const grid = document.getElementById('appsGrid');
+            const noResults = document.getElementById('noResults');
+            
+            if (filteredApps.length === 0) {
+                grid.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                return;
+            }
+            
+            grid.classList.remove('hidden');
+            noResults.classList.add('hidden');
+            
+            grid.innerHTML = filteredApps.map(app => `
+                <div class="app-card bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-700 p-4 cursor-pointer" onclick="openAppModal('${app.id}')">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <img src="${app.icon}" alt="${app.name}" class="w-12 h-12 rounded-lg object-cover">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-semibold text-lg truncate">${app.name}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 truncate">${app.developer}</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">${app.intro}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">${app.category}</span>
+                        <div class="flex space-x-1">
+                            ${app.platforms.slice(0, 3).map(platform => `
+                                <span class="text-xs bg-primary text-white px-2 py-1 rounded">${platform.os}</span>
+                            `).join('')}
+                            ${app.platforms.length > 3 ? '<span class="text-xs text-gray-500">+' + (app.platforms.length - 3) + '</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openAppModal(appId) {
+            const app = allApps.find(a => a.id === appId);
+            if (!app) return;
+
+            currentAppId = appId;
+            
+            document.getElementById('modalIcon').src = app.icon;
+            document.getElementById('modalTitle').textContent = app.name;
+            document.getElementById('modalDeveloper').textContent = app.developer;
+            document.getElementById('modalIntro').textContent = app.intro;
+            document.getElementById('modalDetails').innerHTML = marked.parse(app.details);
+
+            // Platforms
+            const platformsDiv = document.getElementById('modalPlatforms');
+            platformsDiv.innerHTML = app.platforms.map(platform => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div>
+                        <span class="font-medium">${platform.os}</span>
+                        ${platform.version ? `<span class="text-sm text-gray-600 dark:text-gray-400 ml-2">${platform.version}</span>` : ''}
+                        ${platform.deviceType ? `<span class="text-sm text-gray-600 dark:text-gray-400 ml-2">(${platform.deviceType})</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Download
+            const downloadDiv = document.getElementById('modalDownload');
+            downloadDiv.innerHTML = app.downloads.map(download => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div>
+                        <span class="font-medium">${download.type}</span>
+                        ${download.version ? `<span class="text-sm text-gray-600 dark:text-gray-400 ml-2">v${download.version}</span>` : ''}
+                        ${download.size ? `<span class="text-sm text-gray-600 dark:text-gray-400 ml-2">(${download.size})</span>` : ''}
+                    </div>
+                    <a href="${download.url}" class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg transition-colors" target="_blank">
+                        <i class="fas fa-download mr-2"></i>Download
+                    </a>
+                </div>
+            `).join('');
+
+            // Gallery
+            const galleryDiv = document.getElementById('modalGallery');
+            galleryDiv.innerHTML = app.gallery.map(image => `
+                <img src="${image}" alt="Screenshot" class="gallery-image w-full h-32 object-cover rounded-lg cursor-pointer" onclick="openImageViewer('${image}')">
+            `).join('');
+
+            document.getElementById('appModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('appModal').classList.add('hidden');
+        }
+
+        function openImageViewer(imageSrc) {
+            document.getElementById('viewerImage').src = imageSrc;
+            document.getElementById('imageViewer').classList.remove('hidden');
+        }
+
+        function closeImageViewer() {
+            document.getElementById('imageViewer').classList.add('hidden');
+        }
+
+        async function shareApp() {
+            if (!currentAppId) return;
+            
+            const shareUrl = `https://tsetse6789.github.io/store?app=${currentAppId}`;
+            
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                showToast('Link copied to clipboard!', 'success');
+            } catch (err) {
+                // Fallback for browsers that don't support clipboard API
+                const textArea = document.createElement('textarea');
+                textArea.value = shareUrl;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    document.execCommand('copy');
+                    showToast('Link copied to clipboard!', 'success');
+                } catch (err) {
+                    console.error('Failed to copy link:', err);
+                    showToast('Failed to copy link', 'error');
+                }
+                
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastContainer = toast.querySelector('div');
+            
+            // Update message
+            toastMessage.textContent = message;
+            
+            // Update color based on type
+            toastContainer.className = type === 'success' 
+                ? 'bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2'
+                : 'bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2';
+            
+            // Show toast
+            toast.classList.remove('translate-x-full');
+            
+            // Hide toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3000);
+        }
+
+        // Fallback data in case external script fails
+        function getFallbackData() {
+            return [
+                {
+                    id: "sample-app-1",
+                    name: "Sample App",
+                    developer: "Sample Developer",
+                    category: "Productivity",
+                    platforms: [
+                        {
+                            os: "Windows",
+                            version: "10+",
+                            deviceType: "Desktop"
+                        },
+                        {
+                            os: "macOS",
+                            version: "11.0+",
+                            deviceType: "Desktop"
+                        }
+                    ],
+                    icon: "https://via.placeholder.com/64x64/5D5CDE/ffffff?text=APP",
+                    gallery: [
+                        "https://via.placeholder.com/400x300/f3f4f6/6b7280?text=Screenshot+1",
+                        "https://via.placeholder.com/400x300/f3f4f6/6b7280?text=Screenshot+2"
+                    ],
+                    intro: "A sample application for demonstration purposes.",
+                    details: "This is a detailed description of the sample application with **markdown** formatting support.",
+                    downloads: [
+                        {
+                            type: "Direct Download",
+                            url: "#",
+                            version: "1.0.0",
+                            size: "5.2 MB"
+                        }
+                    ]
+                }
+            ];
+        }
+    </script>
+</body>
+</html>
