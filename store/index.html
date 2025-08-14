@@ -39,6 +39,18 @@
             transform: scale(1.05);
         }
         
+        /* Fixed header styles */
+        .header-fixed {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+        
+        /* Main content padding to account for fixed header */
+        .main-content {
+            padding-top: 1rem;
+        }
+        
         /* Comprehensive Markdown Styling */
         .markdown-content {
             line-height: 1.7;
@@ -290,8 +302,8 @@
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
-    <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <!-- Header - Now with fixed positioning -->
+    <header class="header-fixed bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-14 sm:h-16">
                 <div class="flex items-center min-w-0">
@@ -327,8 +339,8 @@
         </div>
     </header>
 
-    <!-- Filters -->
-    <div id="filtersSection" class="hidden bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out">
+    <!-- Filters - Also positioned relative to fixed header -->
+    <div id="filtersSection" class="hidden bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out header-fixed" style="top: 56px;">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <div class="flex flex-col space-y-1">
@@ -358,8 +370,8 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Main Content - Now with proper padding for fixed header -->
+    <main class="main-content max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Loading State -->
         <div id="loadingState" class="text-center py-12">
             <i class="fas fa-spinner fa-spin text-4xl text-primary mb-4"></i>
@@ -493,6 +505,9 @@
         });
 
         function initializeApp() {
+            // Sort apps by name alphabetically
+            allApps.sort((a, b) => a.name.localeCompare(b.name));
+            
             filteredApps = [...allApps];
             populateFilters();
             renderApps();
@@ -601,6 +616,8 @@
                 filtersSection.classList.remove('hidden');
                 filterIcon.className = 'fas fa-filter text-primary';
                 filterToggle.title = 'Hide Filters';
+                // Adjust filter section position
+                filtersSection.style.top = '56px'; // Height of main header
             } else {
                 // Hide filters
                 filtersSection.classList.add('hidden');
@@ -627,6 +644,9 @@
 
                 return matchesSearch && matchesCategory && matchesDeveloper && matchesPlatform;
             });
+
+            // Sort filtered apps by name as well
+            filteredApps.sort((a, b) => a.name.localeCompare(b.name));
 
             renderApps();
         }
@@ -827,8 +847,6 @@
                 toast.classList.add('opacity-0', 'invisible');
             }, 3000);
         }
-
-
 
         // Fallback data in case external script fails
         function getFallbackData() {
