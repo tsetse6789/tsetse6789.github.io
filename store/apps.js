@@ -96,7 +96,7 @@ Hope you enjoy the app!
         downloads: [
             {
                 type: "Unavailable",
-                url: "https://tsetse6789.github.io/store?id=com.john.Nut-Fun-for-ios",
+                url: "https://tsetse6789.github.io/store?app=com.john.Nut-Fun-for-ios",
                 version: "--"
             }
         ]
