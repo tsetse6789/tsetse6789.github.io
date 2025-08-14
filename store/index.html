@@ -38,6 +38,255 @@
         .gallery-image:hover {
             transform: scale(1.05);
         }
+        
+        /* Comprehensive Markdown Styling */
+        .markdown-content {
+            line-height: 1.7;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+        
+        /* Headings with different fonts and sizes */
+        .markdown-content h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            color: #111827;
+        }
+        .dark .markdown-content h1 {
+            color: #f9fafb;
+            border-bottom-color: #374151;
+        }
+        
+        .markdown-content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 1.25rem 0 0.75rem 0;
+            color: #1f2937;
+        }
+        .dark .markdown-content h2 {
+            color: #f3f4f6;
+        }
+        
+        .markdown-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 1rem 0 0.5rem 0;
+            color: #374151;
+        }
+        .dark .markdown-content h3 {
+            color: #e5e7eb;
+        }
+        
+        .markdown-content h4 {
+            font-size: 1.125rem;
+            font-weight: 500;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0.875rem 0 0.5rem 0;
+            color: #4b5563;
+        }
+        .dark .markdown-content h4 {
+            color: #d1d5db;
+        }
+        
+        .markdown-content h5, .markdown-content h6 {
+            font-size: 1rem;
+            font-weight: 500;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0.75rem 0 0.5rem 0;
+            color: #6b7280;
+        }
+        .dark .markdown-content h5,
+        .dark .markdown-content h6 {
+            color: #9ca3af;
+        }
+        
+        /* Paragraphs with proper spacing */
+        .markdown-content p {
+            margin: 1rem 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            font-size: 0.95rem;
+            color: #374151;
+        }
+        .dark .markdown-content p {
+            color: #d1d5db;
+        }
+        
+        /* Lists */
+        .markdown-content ul, .markdown-content ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            color: #374151;
+        }
+        .dark .markdown-content ul,
+        .dark .markdown-content ol {
+            color: #d1d5db;
+        }
+        
+        .markdown-content ul {
+            list-style-type: disc;
+        }
+        
+        .markdown-content ol {
+            list-style-type: decimal;
+        }
+        
+        .markdown-content li {
+            margin: 0.5rem 0;
+            line-height: 1.6;
+        }
+        
+        .markdown-content ul ul, .markdown-content ol ol {
+            margin: 0.25rem 0;
+        }
+        
+        .markdown-content ul ul {
+            list-style-type: circle;
+        }
+        
+        .markdown-content ul ul ul {
+            list-style-type: square;
+        }
+        
+        /* Code blocks and inline code */
+        .markdown-content code {
+            background-color: #f3f4f6;
+            color: #dc2626;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .dark .markdown-content code {
+            background-color: #374151;
+            color: #fca5a5;
+        }
+        
+        .markdown-content pre {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid #374151;
+        }
+        .dark .markdown-content pre {
+            background-color: #111827;
+            border-color: #1f2937;
+        }
+        
+        .markdown-content pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        /* Blockquotes */
+        .markdown-content blockquote {
+            border-left: 4px solid #5d5cde;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #6b7280;
+            background-color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.25rem;
+        }
+        .dark .markdown-content blockquote {
+            color: #9ca3af;
+            background-color: #1f2937;
+            border-left-color: #5d5cde;
+        }
+        
+        /* Tables */
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .markdown-content th, .markdown-content td {
+            border: 1px solid #d1d5db;
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+        }
+        .dark .markdown-content th,
+        .dark .markdown-content td {
+            border-color: #374151;
+        }
+        
+        .markdown-content th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+        }
+        .dark .markdown-content th {
+            background-color: #374151;
+        }
+        
+        /* Links */
+        .markdown-content a {
+            color: #5d5cde;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
+        }
+        .markdown-content a:hover {
+            color: #4c4bc0;
+            text-decoration-thickness: 2px;
+        }
+        
+        /* Horizontal rules */
+        .markdown-content hr {
+            border: none;
+            height: 1px;
+            background-color: #d1d5db;
+            margin: 2rem 0;
+        }
+        .dark .markdown-content hr {
+            background-color: #374151;
+        }
+        
+        /* Images */
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.375rem;
+            margin: 1rem 0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Strong and emphasis */
+        .markdown-content strong {
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .dark .markdown-content strong {
+            color: #f3f4f6;
+        }
+        
+        .markdown-content em {
+            font-style: italic;
+        }
+        
+        /* Remove default margins for first and last elements */
+        .markdown-content > *:first-child {
+            margin-top: 0;
+        }
+        .markdown-content > *:last-child {
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
@@ -158,7 +407,17 @@
                         <div>
                             <h3 class="text-base sm:text-lg font-semibold mb-2">Description</h3>
                             <p id="modalIntro" class="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3 sm:mb-4"></p>
-                            <div id="modalDetails" class="text-sm sm:text-base text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none"></div>
+                            
+                            <!-- Details Drawer Toggle -->
+                            <button id="detailsToggle" class="flex items-center justify-between w-full p-3 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors mb-3 group">
+                                <span class="font-medium text-gray-700 dark:text-gray-300">Detailed Information</span>
+                                <i id="detailsChevron" class="fas fa-chevron-down text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-transform duration-200"></i>
+                            </button>
+                            
+                            <!-- Details Drawer Content -->
+                            <div id="detailsDrawer" class="hidden overflow-hidden">
+                                <div id="modalDetails" class="markdown-content bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600"></div>
+                            </div>
                         </div>
 
                         <div>
@@ -321,6 +580,9 @@
             document.getElementById('appModal').addEventListener('click', function(e) {
                 if (e.target === this) closeModal();
             });
+            
+            // Details drawer toggle
+            document.getElementById('detailsToggle').addEventListener('click', toggleDetailsDrawer);
             
             // Image viewer
             document.getElementById('closeViewer').addEventListener('click', closeImageViewer);
@@ -494,6 +756,21 @@
 
         function closeImageViewer() {
             document.getElementById('imageViewer').classList.add('hidden');
+        }
+
+        function toggleDetailsDrawer() {
+            const drawer = document.getElementById('detailsDrawer');
+            const chevron = document.getElementById('detailsChevron');
+            
+            if (drawer.classList.contains('hidden')) {
+                // Show drawer
+                drawer.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+            } else {
+                // Hide drawer
+                drawer.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
         }
 
         async function shareApp() {
