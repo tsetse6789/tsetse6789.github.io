@@ -187,17 +187,29 @@ Hope you enjoy the app!
         intro: "Versatile Efficiency Integrated Toolbox",
         details: `
 ## About
+
 With a user-centric approach, we've crafted WoodBox to be an incredibly compact, elegant, yet powerful integrated toolbox! It's time to declutter your phone!
+
 ---
+
 ### 📦Efficient Integration
+
 WoodBox provides over 120 powerful tools, satisfying virtually all your digital life needs. This eliminates the need to install rarely-used apps, saving device space and keeping your system clean.
+
 ---
+
 ### 🚀Ultimate Simplicity
+
 Lightweight size, clean interface, no background processes, push notifications or wake-ups, and no unnecessary distractions—staying true to our core values in a complex world. The unique favorites system helps you navigate the numerous tools without feeling overwhelmed.
+
 ---
+
 ### 🖌️Beautiful Design
+
 In designing WoodBox's interface and interactions, we adhere to a pure and clear utilitarian aesthetic that follows Material Design principles, with attention to pixel-perfect details. We firmly believe that thoughtful design shows care for humanity and helps users fall in love at first sight.
+
 ---
+
 ## What's New
 - Added "Oil Price Query" to check gasoline and diesel prices across provinces in mainland China
 - Fixed the issue where "Nine Grid Image Cutting" failed to save
