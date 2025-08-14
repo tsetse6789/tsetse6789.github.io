@@ -414,7 +414,7 @@
             `).join('');
         }
 
-        function openAppModal(appId) {
+        async function openAppModal(appId) {
             const app = allApps.find(a => a.id === appId);
             if (!app) return;
 
@@ -424,7 +424,28 @@
             document.getElementById('modalTitle').textContent = app.name;
             document.getElementById('modalDeveloper').textContent = app.developer;
             document.getElementById('modalIntro').textContent = app.intro;
-            document.getElementById('modalDetails').innerHTML = marked.parse(app.details);
+            
+            // Handle details - check if it's a URL or direct markdown content
+            const detailsDiv = document.getElementById('modalDetails');
+            if (app.details && (app.details.startsWith('http://') || app.details.startsWith('https://'))) {
+                // Show loading state
+                detailsDiv.innerHTML = '<div class="flex items-center space-x-2 text-gray-500"><i class="fas fa-spinner fa-spin"></i><span>Loading details...</span></div>';
+                
+                try {
+                    const response = await fetch(app.details);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const markdownContent = await response.text();
+                    detailsDiv.innerHTML = marked.parse(markdownContent);
+                } catch (error) {
+                    console.error('Failed to fetch app details:', error);
+                    detailsDiv.innerHTML = '<div class="text-red-500 dark:text-red-400"><i class="fas fa-exclamation-triangle mr-2"></i>Failed to load details. Please try again later.</div>';
+                }
+            } else {
+                // Direct markdown content
+                detailsDiv.innerHTML = marked.parse(app.details || 'No details available.');
+            }
 
             // Platforms
             const platformsDiv = document.getElementById('modalPlatforms');
