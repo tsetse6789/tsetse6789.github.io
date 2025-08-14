@@ -38,17 +38,29 @@
 <body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
     <!-- Header -->
     <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <i class="fas fa-mobile-alt text-2xl text-primary mr-3"></i>
-                    <h1 class="text-2xl font-bold">App Market</h1>
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14 sm:h-16">
+                <div class="flex items-center min-w-0">
+                    <i class="fas fa-mobile-alt text-xl sm:text-2xl text-primary mr-2 sm:mr-3"></i>
+                    <h1 class="text-lg sm:text-2xl font-bold truncate">App Market</h1>
                 </div>
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2 sm:space-x-4">
                     <div class="relative">
-                        <input type="text" id="searchInput" placeholder="Search apps..." 
-                               class="w-64 pl-10 pr-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        <!-- Search Button -->
+                        <button id="searchButton" class="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-h-[44px]">
+                            <i class="fas fa-search text-gray-400"></i>
+                            <span class="hidden sm:inline">Search</span>
+                        </button>
+                        
+                        <!-- Search Input (Hidden by default) -->
+                        <div id="searchContainer" class="hidden">
+                            <input type="text" id="searchInput" placeholder="Search apps..." 
+                                   class="w-48 sm:w-64 pl-10 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-h-[44px]">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            <button id="closeSearch" class="absolute right-3 top-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 w-6 h-6 flex items-center justify-center">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -57,29 +69,31 @@
 
     <!-- Filters -->
     <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-wrap gap-4">
-                <div class="flex items-center space-x-2">
-                    <label class="text-sm font-medium">Category:</label>
-                    <select id="categoryFilter" class="text-base border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div class="flex flex-col space-y-1">
+                    <label class="text-xs sm:text-sm font-medium">Category</label>
+                    <select id="categoryFilter" class="text-base border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px]">
                         <option value="">All Categories</option>
                     </select>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <label class="text-sm font-medium">Developer:</label>
-                    <select id="developerFilter" class="text-base border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                <div class="flex flex-col space-y-1">
+                    <label class="text-xs sm:text-sm font-medium">Developer</label>
+                    <select id="developerFilter" class="text-base border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px]">
                         <option value="">All Developers</option>
                     </select>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <label class="text-sm font-medium">Platform:</label>
-                    <select id="platformFilter" class="text-base border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+                <div class="flex flex-col space-y-1">
+                    <label class="text-xs sm:text-sm font-medium">Platform</label>
+                    <select id="platformFilter" class="text-base border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px]">
                         <option value="">All Platforms</option>
                     </select>
                 </div>
-                <button id="clearFilters" class="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-md transition-colors">
-                    Clear Filters
-                </button>
+                <div class="flex flex-col justify-end">
+                    <button id="clearFilters" class="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-md transition-colors min-h-[44px]">
+                        Clear Filters
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -104,53 +118,53 @@
     </main>
 
     <!-- App Detail Modal -->
-    <div id="appModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
-            <div class="p-6">
+    <div id="appModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-start sm:items-center justify-center p-3 sm:p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto my-4 sm:my-0">
+            <div class="p-4 sm:p-6">
                 <!-- Modal Header -->
-                <div class="flex items-start justify-between mb-6">
-                    <div class="flex items-center space-x-4">
-                        <img id="modalIcon" src="" alt="" class="w-16 h-16 rounded-lg object-cover">
-                        <div>
-                            <h2 id="modalTitle" class="text-2xl font-bold"></h2>
-                            <p id="modalDeveloper" class="text-gray-600 dark:text-gray-400"></p>
+                <div class="flex items-start justify-between mb-4 sm:mb-6">
+                    <div class="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1 mr-4">
+                        <img id="modalIcon" src="" alt="" class="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover flex-shrink-0">
+                        <div class="min-w-0 flex-1">
+                            <h2 id="modalTitle" class="text-lg sm:text-2xl font-bold truncate"></h2>
+                            <p id="modalDeveloper" class="text-sm sm:text-base text-gray-600 dark:text-gray-400 truncate"></p>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <button id="shareApp" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg transition-colors" title="Share App">
+                    <div class="flex items-center space-x-2 flex-shrink-0">
+                        <button id="shareApp" class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 p-2 sm:px-3 sm:py-2 rounded-lg transition-colors min-h-[44px] min-w-[44px]" title="Share App">
                             <i class="fas fa-share-alt"></i>
                         </button>
-                        <button id="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                            <i class="fas fa-times text-2xl"></i>
+                        <button id="closeModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                            <i class="fas fa-times text-xl sm:text-2xl"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- App Details -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-1 lg:grid-cols-2 sm:gap-6">
                     <!-- Left Column -->
-                    <div>
-                        <div class="mb-6">
-                            <h3 class="text-lg font-semibold mb-2">Description</h3>
-                            <p id="modalIntro" class="text-gray-700 dark:text-gray-300 mb-4"></p>
-                            <div id="modalDetails" class="text-gray-600 dark:text-gray-400"></div>
+                    <div class="space-y-4 sm:space-y-6">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-semibold mb-2">Description</h3>
+                            <p id="modalIntro" class="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3 sm:mb-4"></p>
+                            <div id="modalDetails" class="text-sm sm:text-base text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none"></div>
                         </div>
 
-                        <div class="mb-6">
-                            <h3 class="text-lg font-semibold mb-2">Compatibility</h3>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-semibold mb-2">Compatibility</h3>
                             <div id="modalPlatforms" class="space-y-2"></div>
                         </div>
 
-                        <div class="mb-6">
-                            <h3 class="text-lg font-semibold mb-2">Download</h3>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-semibold mb-2">Download</h3>
                             <div id="modalDownload" class="space-y-2"></div>
                         </div>
                     </div>
 
                     <!-- Right Column - Gallery -->
                     <div>
-                        <h3 class="text-lg font-semibold mb-2">Screenshots</h3>
-                        <div id="modalGallery" class="grid grid-cols-2 gap-2">
+                        <h3 class="text-base sm:text-lg font-semibold mb-2">Screenshots</h3>
+                        <div id="modalGallery" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         </div>
                     </div>
                 </div>
@@ -159,7 +173,7 @@
     </div>
 
     <!-- Image Viewer Modal -->
-    <div id="imageViewer" class="fixed inset-0 bg-black bg-opacity-90 z-60 hidden flex items-center justify-center p-4">
+    <div id="imageViewer" class="fixed inset-0 bg-black bg-opacity-90 z-[100] hidden flex items-center justify-center p-4">
         <div class="relative max-w-screen-lg max-h-screen-lg">
             <img id="viewerImage" src="" alt="" class="max-w-full max-h-full object-contain">
             <button id="closeViewer" class="absolute top-4 right-4 text-white hover:text-gray-300">
@@ -169,7 +183,7 @@
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-4 right-4 z-70 transform translate-x-full transition-transform duration-300 ease-in-out">
+    <div id="toast" class="fixed top-4 right-4 z-[110] opacity-0 invisible transition-all duration-300 ease-in-out">
         <div class="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2">
             <i class="fas fa-check-circle"></i>
             <span id="toastMessage">Link copied to clipboard!</span>
@@ -262,6 +276,20 @@
         }
 
         function setupEventListeners() {
+            // Search button functionality
+            document.getElementById('searchButton').addEventListener('click', function() {
+                document.getElementById('searchButton').classList.add('hidden');
+                document.getElementById('searchContainer').classList.remove('hidden');
+                document.getElementById('searchInput').focus();
+            });
+            
+            document.getElementById('closeSearch').addEventListener('click', function() {
+                document.getElementById('searchButton').classList.remove('hidden');
+                document.getElementById('searchContainer').classList.add('hidden');
+                document.getElementById('searchInput').value = '';
+                filterApps(); // Re-filter with empty search
+            });
+            
             // Search
             document.getElementById('searchInput').addEventListener('input', filterApps);
             
@@ -285,6 +313,8 @@
             document.getElementById('imageViewer').addEventListener('click', function(e) {
                 if (e.target === this) closeImageViewer();
             });
+            
+
         }
 
         function filterApps() {
@@ -460,13 +490,17 @@
                 : 'bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2';
             
             // Show toast
-            toast.classList.remove('translate-x-full');
+            toast.classList.remove('opacity-0', 'invisible');
+            toast.classList.add('opacity-100');
             
             // Hide toast after 3 seconds
             setTimeout(() => {
-                toast.classList.add('translate-x-full');
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'invisible');
             }, 3000);
         }
+
+
 
         // Fallback data in case external script fails
         function getFallbackData() {
