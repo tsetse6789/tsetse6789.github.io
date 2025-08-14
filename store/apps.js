@@ -97,7 +97,6 @@ Hope you enjoy the app!
             {
                 type: "Unavailable",
                 url: "https://tsetse6789.github.io/store?app=com.john.Nut-Fun-for-ios",
-                version: "--"
             }
         ]
     },
@@ -141,6 +140,98 @@ Hope you enjoy the app!
                 type: "App Store(iOS)",
                 url: "https://apps.apple.com/app/bible/id282935706",
                 version: "11.6.0"
+            }
+        ]
+    },
+    {
+        id: "com.One.WoodenLetter",
+        name: "WoodBox 一个木函",
+        developer: "上海花筏科技有限公司",
+        category: "Tools",
+        platforms: [
+            {
+                os: "Android",
+                version: "6.0+",
+                deviceType: "Phone, Tablet, PC"
+            },
+            {
+                os: "iOS",
+                version: "13.0+",
+                deviceType: "iPhone, iPad, Mac(Designed for iPad), Apple Vision(Designed for iPad)"
+            },
+            {
+                os: "HarmonyOS",
+                version: "5.0(Next)+",
+                deviceType: "Phone, Tablet"
+            },
+            {
+                os: "Windows",
+                version: "10(19041.0)+",
+                deviceType: "PC, HoloLens"
+            },
+            {
+                os: "WebApp",
+                version: "HTML5",
+                deviceType: "Any(Support Browser)"
+            }
+        ],
+        icon: "https://woobx.cn/images/icons/icon_logo_192x192.png",
+        gallery: [
+            "https://woobx.cn/images/screenshots/cover.webp",
+            "https://woobx.cn/images/screenshots/sc-color-picker.webp",
+            "https://woobx.cn/images/screenshots/sc-ocr.webp",
+            "https://woobx.cn/images/screenshots/sc-currency.webp",
+            "https://woobx.cn/images/screenshots/sc-danmaku.webp",
+            "https://woobx.cn/images/screenshots/sc-qrkit.webp"
+        ],
+        intro: "Versatile Efficiency Integrated Toolbox",
+        details: `
+## About
+With a user-centric approach, we've crafted WoodBox to be an incredibly compact, elegant, yet powerful integrated toolbox! It's time to declutter your phone!
+---
+### 📦Efficient Integration
+WoodBox provides over 120 powerful tools, satisfying virtually all your digital life needs. This eliminates the need to install rarely-used apps, saving device space and keeping your system clean.
+---
+### 🚀Ultimate Simplicity
+Lightweight size, clean interface, no background processes, push notifications or wake-ups, and no unnecessary distractions—staying true to our core values in a complex world. The unique favorites system helps you navigate the numerous tools without feeling overwhelmed.
+---
+### 🖌️Beautiful Design
+In designing WoodBox's interface and interactions, we adhere to a pure and clear utilitarian aesthetic that follows Material Design principles, with attention to pixel-perfect details. We firmly believe that thoughtful design shows care for humanity and helps users fall in love at first sight.
+---
+## What's New
+- Added "Oil Price Query" to check gasoline and diesel prices across provinces in mainland China
+- Fixed the issue where "Nine Grid Image Cutting" failed to save
+- Fixed the issue where "Subtitle Splicing" failed in "Image Stitching"
+- Fixed the issue where "Taobao Coupons" failed to redirect to the coupon claim page
+
+For further inquiries, please join the official group via "Settings -> About" or send an email to support@woobx.cn
+        `,
+        downloads: [
+            {
+                type: "Official Website(Android)",
+                url: "https://cdn.woobx.cn/apps/woodbox/woodbox_7.17.18-normal.apk",
+                version: "7.17.18-normal",
+                size: "16.3 MB"
+            },
+            {
+                type: "App Store(iOS)",
+                url: "https://apps.apple.com/cn/app/id1544927356",
+                version: "1.91.8",
+                size: "77.6 MB"
+            },
+            {
+                type: "AppGallery(HarmonyOS)",
+                url: "https://appgallery.huawei.com/app/detail?id=C5765880207854270593",
+                version: "1.0.30"
+            },
+            {
+                type: "Microsoft Store(Windows)",
+                url: "https://apps.microsoft.com/detail/9pbgjz2fnx9d",
+                size: "0.9 MB"
+            },
+            {
+                type: "WebApp(Any)",
+                url: "https://ol.woobx.cn/"
             }
         ]
     }
