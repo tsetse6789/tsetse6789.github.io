@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE aiml SYSTEM "https://example.com/aiml/1.2/aiml.dtd">
+<aiml>
+  <app>
+    <id>com.john.nutfun-for-android</id>
+    <name>Nut Fun(Android)</name>
+    <developer>Nut</developer>
+    <category>Lifestyle</category>
+    <platforms>
+      <platform>
+        <os>Android</os>
+        <version>5.0+</version>
+        <deviceType>Phone, Tablet, PC</deviceType>
+      </platform>
+    </platforms>
+    <icon>https://tsetse6789.github.io/Logo_v2.png</icon>
+    <gallery>
+      <image>https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H1.png</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H2.png</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H3.png</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H4.png</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H5.png</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H6.png</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H7.png</image>
+    </gallery>
+    <intro>Enjoy a smoother experience than web version with more function.</intro>
+    <details>
+# Detailed Description
+---
+This is the app version of Nut Fun, gives you a brand new user experience than the web version. The app gives more functions such as offline browsing, games, tools etc.  
+Hope you enjoy the app!  
+---
+## *Features*
+- · Main page
+- · Cookie settings
+- · Offline browsing
+- · Tools
+- · Games
+- · Others...  
+---
+## *Requirements*
+- · Android 5 or later
+- · Wi-Fi
+    </details>
+    <downloads>
+      <download>
+        <type>Google Drive(APK)</type>
+        <url>https://drive.google.com/file/d/1kosJnOGkXJoSHlidom4BeSYR0uePAHMM/view?usp=share_link</url>
+        <version>1.3.2</version>
+        <size>10.6 MB</size>
+      </download>
+      <download>
+        <type>Elder Versions</type>
+        <url>https://sites.google.com/view/nut-fun/apps</url>
+        <version></version>
+        <size></size>
+      </download>
+    </downloads>
+  </app>
+
+  <app>
+    <id>com.john.ytplayer-for-android</id>
+    <name>YouTube Player by Nut(Android)</name>
+    <developer>Nut</developer>
+    <category>Tools</category>
+    <platforms>
+      <platform>
+        <os>Android</os>
+        <version>5.0+ (SE)(Developing)</version>
+        <deviceType>Phone, Tablet, PC</deviceType>
+      </platform>
+    </platforms>
+    <icon>https://tsetse6789.github.io/player/ic_launcher-playstore.png</icon>
+    <gallery></gallery>
+    <intro>No ads, unlimited YouTube video playing.</intro>
+    <details src="https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/description.md" format="markdown"></details>
+    <downloads>
+      <download>
+        <type>Google Drive(APK)</type>
+        <url>https://drive.google.com/file/d/1FUH9QBRx5LTG5saAWZAOeAjYCJK-nPyU/view?usp=share_link</url>
+        <version>1.0.0(SE)(Developing)</version>
+        <size></size>
+      </download>
+    </downloads>
+  </app>
+
+  <app>
+    <id>com.john.Nut-Fun-for-ios</id>
+    <name>Nut Fun(iOS)</name>
+    <developer>Nut</developer>
+    <category>Lifestyle</category>
+    <platforms>
+      <platform>
+        <os>iOS</os>
+        <version>15.6+</version>
+        <deviceType>iPhone, iPad, Mac(Designed for iPad), Apple Vision(Designed for iPad)</deviceType>
+      </platform>
+    </platforms>
+    <icon>https://tsetse6789.github.io/store/data/com.john.Nut-Fun-for-ios/Nut26-iOS-Default.png</icon>
+    <gallery></gallery>
+    <intro>Enjoy a smoother experience than web version with more function.</intro>
+    <details></details>
+    <downloads>
+      <download>
+        <type>Unavailable</type>
+        <url>https://tsetse6789.github.io/store?app=com.john.Nut-Fun-for-ios</url>
+        <version></version>
+        <size></size>
+      </download>
+    </downloads>
+  </app>
+</aiml>
