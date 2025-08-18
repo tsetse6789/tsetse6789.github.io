@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE aiml SYSTEM "https://example.com/aiml/1.2/aiml.dtd">
+<!DOCTYPE aiml SYSTEM "https://tsetse6789.github.io/aiml/1.2/aiml.dtd">
 <aiml>
   <app>
     <id>com.john.nutfun-for-android</id>
