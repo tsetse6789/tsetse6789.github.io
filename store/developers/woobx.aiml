@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE aiml SYSTEM "https://tsetse6789.github.io/aiml/1.2/aiml.dtd">
+<aiml>
+  <app>
+    <id>com.One.WoodenLetter</id>
+    <name>WoodBox 一个木函</name>
+    <developer>上海花筏科技有限公司</developer>
+    <category>Tools</category>
+    <platforms>
+      <platform>
+        <os>Android</os>
+        <version>6.0+</version>
+        <deviceType>Phone, Tablet, PC</deviceType>
+      </platform>
+      <platform>
+        <os>iOS</os>
+        <version>13.0+</version>
+        <deviceType>iPhone, iPad, Mac(Designed for iPad), Apple Vision(Designed for iPad)</deviceType>
+      </platform>
+      <platform>
+        <os>HarmonyOS</os>
+        <version>5.0(Next)+</version>
+        <deviceType>Phone, Tablet</deviceType>
+      </platform>
+      <platform>
+        <os>Windows</os>
+        <version>10(19041.0)+</version>
+        <deviceType>PC, HoloLens</deviceType>
+      </platform>
+      <platform>
+        <os>WebApp</os>
+        <version>HTML5</version>
+        <deviceType>Any(Support Browser)</deviceType>
+      </platform>
+    </platforms>
+    <icon>https://woobx.cn/images/icons/icon_logo_192x192.png</icon>
+    <gallery>
+      <image>https://woobx.cn/images/screenshots/cover.webp</image>
+      <image>https://woobx.cn/images/screenshots/sc-color-picker.webp</image>
+      <image>https://woobx.cn/images/screenshots/sc-ocr.webp</image>
+      <image>https://woobx.cn/images/screenshots/sc-currency.webp</image>
+      <image>https://woobx.cn/images/screenshots/sc-danmaku.webp</image>
+      <image>https://woobx.cn/images/screenshots/sc-qrkit.webp</image>
+    </gallery>
+    <intro>Versatile Efficiency Integrated Toolbox</intro>
+    <details>
+## About
+
+With a user-centric approach, we've crafted WoodBox to be an incredibly compact, elegant, yet powerful integrated toolbox! It's time to declutter your phone!
+
+---
+
+### 📦Efficient Integration
+
+WoodBox provides over 120 powerful tools, satisfying virtually all your digital life needs. This eliminates the need to install rarely-used apps, saving device space and keeping your system clean.
+
+---
+
+### 🚀Ultimate Simplicity
+
+Lightweight size, clean interface, no background processes, push notifications or wake-ups, and no unnecessary distractions--staying true to our core values in a complex world. The unique favorites system helps you navigate the numerous tools without feeling overwhelmed.
+
+---
+
+### 🖌️Beautiful Design
+
+In designing WoodBox's interface and interactions, we adhere to a pure and clear utilitarian aesthetic that follows Material Design principles, with attention to pixel-perfect details. We firmly believe that thoughtful design shows care for humanity and helps users fall in love at first sight.
+
+---
+
+## What's New
+- Added "Oil Price Query" to check gasoline and diesel prices across provinces in mainland China
+- Fixed the issue where "Nine Grid Image Cutting" failed to save
+- Fixed the issue where "Subtitle Splicing" failed in "Image Stitching"
+- Fixed the issue where "Taobao Coupons" failed to redirect to the coupon claim page
+
+For further inquiries, please join the official group via "Settings -> About" or send an email to support@woobx.cn
+    </details>
+    <downloads>
+      <download>
+        <type>Official Website(Android)</type>
+        <url>https://cdn.woobx.cn/apps/woodbox/woodbox_7.17.18-normal.apk</url>
+        <version>7.17.18-normal</version>
+        <size>16.3 MB</size>
+      </download>
+      <download>
+        <type>App Store(iOS)</type>
+        <url>https://apps.apple.com/cn/app/id1544927356</url>
+        <version>1.91.8</version>
+        <size>77.6 MB</size>
+      </download>
+      <download>
+        <type>AppGallery(HarmonyOS)</type>
+        <url>https://appgallery.huawei.com/app/detail?id=C5765880207854270593</url>
+        <version>1.0.30</version>
+        <size></size>
+      </download>
+      <download>
+        <type>Microsoft Store(Windows)</type>
+        <url>https://apps.microsoft.com/detail/9pbgjz2fnx9d</url>
+        <version></version>
+        <size>0.9 MB</size>
+      </download>
+      <download>
+        <type>WebApp(Any)</type>
+        <url>https://ol.woobx.cn/</url>
+        <version></version>
+        <size></size>
+      </download>
+    </downloads>
+  </app>
+</aiml>
