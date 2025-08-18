@@ -489,13 +489,14 @@
         let allApps = [];
         let filteredApps = [];
         let currentAppId = null;
+        let developers = [];
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if apps data is loaded
-            if (typeof window.apps !== 'undefined') {
-                allApps = window.apps;
-                initializeApp();
+            // Check if developers data is loaded
+            if (typeof window.developers !== 'undefined') {
+                developers = window.developers;
+                loadAllApps();
             } else {
                 // Fallback data if external script fails
                 console.warn('External apps.js not loaded, using fallback data');
@@ -503,6 +504,167 @@
                 initializeApp();
             }
         });
+
+        // Load all apps from AIML files
+        async function loadAllApps() {
+            try {
+                const loadPromises = developers.map(developer => loadDeveloperApps(developer));
+                const developerApps = await Promise.all(loadPromises);
+                
+                // Flatten all apps into a single array
+                allApps = developerApps.flat().filter(app => app !== null);
+                
+                initializeApp();
+            } catch (error) {
+                console.error('Failed to load apps:', error);
+                // Fall back to sample data
+                allApps = getFallbackData();
+                initializeApp();
+            }
+        }
+
+        // Load apps from a single developer's AIML file
+        async function loadDeveloperApps(developer) {
+            try {
+                const response = await fetch(developer.aimlUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const xmlText = await response.text();
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                
+                // Check for parsing errors
+                const parseError = xmlDoc.querySelector('parsererror');
+                if (parseError) {
+                    throw new Error('XML parsing error: ' + parseError.textContent);
+                }
+                
+                return parseAIMLApps(xmlDoc, developer.name);
+            } catch (error) {
+                console.error(`Failed to load apps for developer ${developer.name}:`, error);
+                return [];
+            }
+        }
+
+        // Parse apps from AIML XML document
+        function parseAIMLApps(xmlDoc, developerName) {
+            const apps = [];
+            const appElements = xmlDoc.querySelectorAll('app');
+            
+            appElements.forEach(appElement => {
+                try {
+                    // Check if app references external source
+                    const srcAttribute = appElement.getAttribute('src');
+                    if (srcAttribute) {
+                        // TODO: Handle external app references if needed
+                        console.warn('External app references not yet supported:', srcAttribute);
+                        return;
+                    }
+                    
+                    const app = {
+                        id: getTextContent(appElement, 'id'),
+                        name: getTextContent(appElement, 'name'),
+                        developer: getTextContent(appElement, 'developer') || developerName,
+                        category: getTextContent(appElement, 'category'),
+                        platforms: parsePlatforms(appElement),
+                        icon: getTextContent(appElement, 'icon'),
+                        gallery: parseGallery(appElement),
+                        intro: getTextContent(appElement, 'intro'),
+                        details: parseDetails(appElement),
+                        downloads: parseDownloads(appElement)
+                    };
+                    
+                    // Validate required fields
+                    if (app.id && app.name && app.developer && app.category) {
+                        apps.push(app);
+                    } else {
+                        console.warn('Skipping incomplete app:', app);
+                    }
+                } catch (error) {
+                    console.error('Error parsing app:', error);
+                }
+            });
+            
+            return apps;
+        }
+
+        // Helper function to get text content from XML element
+        function getTextContent(parentElement, tagName) {
+            const element = parentElement.querySelector(tagName);
+            return element ? element.textContent.trim() : '';
+        }
+
+        // Parse platforms from XML
+        function parsePlatforms(appElement) {
+            const platforms = [];
+            const platformElements = appElement.querySelectorAll('platforms platform');
+            
+            platformElements.forEach(platformElement => {
+                const platform = {
+                    os: getTextContent(platformElement, 'os'),
+                    version: getTextContent(platformElement, 'version'),
+                    deviceType: getTextContent(platformElement, 'deviceType')
+                };
+                
+                if (platform.os) {
+                    platforms.push(platform);
+                }
+            });
+            
+            return platforms;
+        }
+
+        // Parse gallery from XML
+        function parseGallery(appElement) {
+            const gallery = [];
+            const imageElements = appElement.querySelectorAll('gallery image');
+            
+            imageElements.forEach(imageElement => {
+                const imageUrl = imageElement.textContent.trim();
+                if (imageUrl) {
+                    gallery.push(imageUrl);
+                }
+            });
+            
+            return gallery;
+        }
+
+        // Parse details from XML
+        function parseDetails(appElement) {
+            const detailsElement = appElement.querySelector('details');
+            if (!detailsElement) return '';
+            
+            const srcAttribute = detailsElement.getAttribute('src');
+            if (srcAttribute) {
+                // Return URL for external markdown file
+                return srcAttribute;
+            } else {
+                // Return inline markdown content
+                return detailsElement.textContent.trim();
+            }
+        }
+
+        // Parse downloads from XML
+        function parseDownloads(appElement) {
+            const downloads = [];
+            const downloadElements = appElement.querySelectorAll('downloads download');
+            
+            downloadElements.forEach(downloadElement => {
+                const download = {
+                    type: getTextContent(downloadElement, 'type'),
+                    url: getTextContent(downloadElement, 'url'),
+                    version: getTextContent(downloadElement, 'version'),
+                    size: getTextContent(downloadElement, 'size')
+                };
+                
+                if (download.type && download.url) {
+                    downloads.push(download);
+                }
+            });
+            
+            return downloads;
+        }
 
         function initializeApp() {
             // Sort apps by name alphabetically
