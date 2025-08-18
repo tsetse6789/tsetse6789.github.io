@@ -1,0 +1,49 @@
+<!-- AIML DTD v1.2 (DTD-only) -->
+
+<!-- Root element: one or more app entries -->
+<!ELEMENT aiml (app+)>
+
+<!-- app: inline metadata. You may also reference an external app via @src.
+     DTD cannot enforce "src XOR children" or "empty when src present". -->
+<!ELEMENT app (id, name, developer, category, platforms, icon, gallery?, intro, details, downloads)>
+<!ATTLIST app
+  src CDATA #IMPLIED
+>
+
+<!-- Basic app fields -->
+<!ELEMENT id (#PCDATA)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT developer (#PCDATA)>
+<!ELEMENT category (#PCDATA)>
+
+<!-- Platforms -->
+<!ELEMENT platforms (platform+)>
+<!ELEMENT platform (os, version, deviceType)>
+<!ELEMENT os (#PCDATA)>
+<!ELEMENT version (#PCDATA)>
+<!ELEMENT deviceType (#PCDATA)>
+
+<!-- Icon (URI as text) -->
+<!ELEMENT icon (#PCDATA)>
+
+<!-- Gallery -->
+<!ELEMENT gallery (image*)>
+<!ELEMENT image (#PCDATA)>
+
+<!-- Intro text -->
+<!ELEMENT intro (#PCDATA)>
+
+<!-- Details: Markdown text or external Markdown via @src.
+     DTD cannot enforce that content is empty when @src is present. -->
+<!ELEMENT details (#PCDATA)>
+<!ATTLIST details
+  src CDATA #IMPLIED
+  format (markdown|md) "markdown"
+>
+
+<!-- Downloads -->
+<!ELEMENT downloads (download+)>
+<!ELEMENT download (type, url, version, size)>
+<!ELEMENT type (#PCDATA)>
+<!ELEMENT url (#PCDATA)>
+<!ELEMENT size (#PCDATA)>
