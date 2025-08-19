@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIML Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">AIML Editor by Nut</h1>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Manage your App Information Markup Language files instantly</p>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="mt-4 overflow-x-auto">
+            <div class="flex flex-wrap gap-2 min-w-max">
+                <button
+                    id="newFileBtn"
+                    class="flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm transition-colors whitespace-nowrap"
+                >
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    New
+                </button>
+                
+                <input
+                    id="fileInput"
+                    type="file"
+                    accept=".aiml,.xml"
+                    class="hidden"
+                />
+                <button
+                    id="importBtn"
+                    class="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm transition-colors whitespace-nowrap"
+                >
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    Import
+                </button>
+                
+                <button
+                    id="exportBtn"
+                    class="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm transition-colors whitespace-nowrap"
+                >
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    Export
+                </button>
+                
+                <button
+                    id="previewBtn"
+                    class="flex items-center gap-2 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm transition-colors whitespace-nowrap"
+                >
+                    <i data-lucide="eye" class="w-4 h-4"></i>
+                    Preview
+                </button>
+            </div>
+        </div>
+
+        <!-- File Tabs -->
+        <div id="fileTabs" class="flex gap-2 mt-4 overflow-x-auto">
+            <!-- File tabs will be inserted here -->
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-4 max-w-4xl">
+        <div id="mainContent">
+            <!-- Content will be inserted here -->
+        </div>
+    </main>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-full overflow-hidden">
+            <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Source Code Preview</h3>
+                <button
+                    id="closePreviewBtn"
+                    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400"
+                >
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-4 overflow-auto max-h-96">
+                <pre id="previewContent" class="text-sm bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-4 rounded-lg overflow-auto whitespace-pre-wrap"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Modal -->
+    <div id="renameModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Rename File</h3>
+            </div>
+            <div class="p-4">
+                <input
+                    id="newFileNameInput"
+                    type="text"
+                    class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                    placeholder="Enter new filename"
+                />
+            </div>
+            <div class="flex gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                    id="cancelRenameBtn"
+                    class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    id="confirmRenameBtn"
+                    class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                    Rename
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete File</h3>
+            </div>
+            <div class="p-4">
+                <p class="text-gray-700 dark:text-gray-300">Are you sure you want to delete this file? This action cannot be undone.</p>
+            </div>
+            <div class="flex gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                    id="cancelDeleteBtn"
+                    class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    id="confirmDeleteBtn"
+                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Application state
+        let files = [];
+        let currentFileId = null;
+        let fileToDelete = null;
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Get current file
+        function getCurrentFile() {
+            return files.find(f => f.id === currentFileId);
+        }
+
+        // Create new app
+        function createNewApp() {
+            const newApp = {
+                id: Date.now(),
+                appId: '',
+                name: '',
+                developer: '',
+                category: '',
+                platforms: [{
+                    os: '',
+                    version: '',
+                    deviceType: ''
+                }],
+                icon: '',
+                gallery: [''],
+                intro: '',
+                details: {
+                    content: '',
+                    src: '',
+                    format: 'markdown'
+                },
+                downloads: [{
+                    type: '',
+                    url: '',
+                    version: '',
+                    size: ''
+                }],
+                src: ''
+            };
+
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? { ...file, content: { ...file.content, apps: [...file.content.apps, newApp] }}
+                    : file
+            );
+            renderContent();
+        }
+
+        // Update app
+        function updateApp(appIndex, field, value) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex ? { ...app, [field]: value } : app
+                            )
+                        }
+                    }
+                    : file
+            );
+        }
+
+        // Remove app
+        function removeApp(appIndex) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.filter((_, idx) => idx !== appIndex)
+                        }
+                    }
+                    : file
+            );
+            renderContent();
+        }
+
+        // Add platform
+        function addPlatform(appIndex) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex 
+                                    ? { ...app, platforms: [...app.platforms, { os: '', version: '', deviceType: '' }] }
+                                    : app
+                            )
+                        }
+                    }
+                    : file
+            );
+            renderContent();
+        }
+
+        // Update platform
+        function updatePlatform(appIndex, platformIndex, field, value) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex 
+                                    ? {
+                                        ...app,
+                                        platforms: app.platforms.map((platform, pIdx) => 
+                                            pIdx === platformIndex ? { ...platform, [field]: value } : platform
+                                        )
+                                    }
+                                    : app
+                            )
+                        }
+                    }
+                    : file
+            );
+        }
+
+        // Add gallery image
+        function addGalleryImage(appIndex) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex 
+                                    ? { ...app, gallery: [...app.gallery, ''] }
+                                    : app
+                            )
+                        }
+                    }
+                    : file
+            );
+            renderContent();
+        }
+
+        // Update gallery image
+        function updateGalleryImage(appIndex, imageIndex, value) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex 
+                                    ? {
+                                        ...app,
+                                        gallery: app.gallery.map((img, iIdx) => 
+                                            iIdx === imageIndex ? value : img
+                                        )
+                                    }
+                                    : app
+                            )
+                        }
+                    }
+                    : file
+            );
+        }
+
+        // Add download
+        function addDownload(appIndex) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex 
+                                    ? { ...app, downloads: [...app.downloads, { type: '', url: '', version: '', size: '' }] }
+                                    : app
+                            )
+                        }
+                    }
+                    : file
+            );
+            renderContent();
+        }
+
+        // Update download
+        function updateDownload(appIndex, downloadIndex, field, value) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex 
+                                    ? {
+                                        ...app,
+                                        downloads: app.downloads.map((download, dIdx) => 
+                                            dIdx === downloadIndex ? { ...download, [field]: value } : download
+                                        )
+                                    }
+                                    : app
+                            )
+                        }
+                    }
+                    : file
+            );
+        }
+
+        // Generate XML
+        function generateXML(file) {
+            const apps = file.content.apps.map(app => {
+                if (app.src) {
+                    return `  <app src="${app.src}"></app>`;
+                }
+
+                const platforms = app.platforms.map(platform => `      <platform>
+        <os>${platform.os}</os>
+        <version>${platform.version}</version>
+        <deviceType>${platform.deviceType}</deviceType>
+      </platform>`).join('\n');
+
+                const gallery = app.gallery.filter(img => img).length > 0 
+                    ? `    <gallery>
+${app.gallery.filter(img => img).map(img => `      <image>${img}</image>`).join('\n')}
+    </gallery>` 
+                    : '';
+
+                const details = app.details.src 
+                    ? `    <details src="${app.details.src}" format="${app.details.format}"></details>`
+                    : `    <details>${app.details.content}</details>`;
+
+                const downloads = app.downloads.map(download => `      <download>
+        <type>${download.type}</type>
+        <url>${download.url}</url>
+        <version>${download.version}</version>
+        <size>${download.size}</size>
+      </download>`).join('\n');
+
+                return `  <app>
+    <id>${app.appId}</id>
+    <name>${app.name}</name>
+    <developer>${app.developer}</developer>
+    <category>${app.category}</category>
+    <platforms>
+${platforms}
+    </platforms>
+    <icon>${app.icon}</icon>
+${gallery}
+    <intro>${app.intro}</intro>
+${details}
+    <downloads>
+${downloads}
+    </downloads>
+  </app>`;
+            }).join('\n\n');
+
+            return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE aiml SYSTEM "https://tsetse6789.github.io/aiml/1.2/aiml.dtd">
+<aiml>
+${apps}
+</aiml>`;
+        }
+
+        // Export file
+        function exportFile() {
+            const currentFile = getCurrentFile();
+            const xml = generateXML(currentFile);
+            const blob = new Blob([xml], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFile.name;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Parse XML content to JavaScript objects
+        function parseXMLContent(xmlDoc) {
+            const apps = [];
+            const appElements = xmlDoc.getElementsByTagName('app');
+            
+            for (let i = 0; i < appElements.length; i++) {
+                const appElement = appElements[i];
+                
+                // Check if it's an external app reference
+                const srcAttr = appElement.getAttribute('src');
+                if (srcAttr) {
+                    apps.push({
+                        id: Date.now() + i,
+                        appId: '',
+                        name: '',
+                        developer: '',
+                        category: '',
+                        platforms: [{ os: '', version: '', deviceType: '' }],
+                        icon: '',
+                        gallery: [''],
+                        intro: '',
+                        details: { content: '', src: '', format: 'markdown' },
+                        downloads: [{ type: '', url: '', version: '', size: '' }],
+                        src: srcAttr
+                    });
+                    continue;
+                }
+                
+                // Parse internal app structure
+                const app = {
+                    id: Date.now() + i,
+                    appId: getElementText(appElement, 'id'),
+                    name: getElementText(appElement, 'name'),
+                    developer: getElementText(appElement, 'developer'),
+                    category: getElementText(appElement, 'category'),
+                    platforms: [],
+                    icon: getElementText(appElement, 'icon'),
+                    gallery: [],
+                    intro: getElementText(appElement, 'intro'),
+                    details: { content: '', src: '', format: 'markdown' },
+                    downloads: [],
+                    src: ''
+                };
+                
+                // Parse platforms
+                const platformElements = appElement.querySelectorAll('platforms > platform');
+                for (let j = 0; j < platformElements.length; j++) {
+                    const platform = platformElements[j];
+                    app.platforms.push({
+                        os: getElementText(platform, 'os'),
+                        version: getElementText(platform, 'version'),
+                        deviceType: getElementText(platform, 'deviceType')
+                    });
+                }
+                if (app.platforms.length === 0) {
+                    app.platforms.push({ os: '', version: '', deviceType: '' });
+                }
+                
+                // Parse gallery images
+                const imageElements = appElement.querySelectorAll('gallery > image');
+                for (let j = 0; j < imageElements.length; j++) {
+                    const imageText = imageElements[j].textContent.trim();
+                    if (imageText) app.gallery.push(imageText);
+                }
+                if (app.gallery.length === 0) {
+                    app.gallery.push('');
+                }
+                
+                // Parse details
+                const detailsElement = appElement.querySelector('details');
+                if (detailsElement) {
+                    const detailsSrc = detailsElement.getAttribute('src');
+                    const detailsFormat = detailsElement.getAttribute('format') || 'markdown';
+                    if (detailsSrc) {
+                        app.details = { content: '', src: detailsSrc, format: detailsFormat };
+                    } else {
+                        app.details = { content: detailsElement.textContent.trim(), src: '', format: detailsFormat };
+                    }
+                }
+                
+                // Parse downloads
+                const downloadElements = appElement.querySelectorAll('downloads > download');
+                for (let j = 0; j < downloadElements.length; j++) {
+                    const download = downloadElements[j];
+                    app.downloads.push({
+                        type: getElementText(download, 'type'),
+                        url: getElementText(download, 'url'),
+                        version: getElementText(download, 'version'),
+                        size: getElementText(download, 'size')
+                    });
+                }
+                if (app.downloads.length === 0) {
+                    app.downloads.push({ type: '', url: '', version: '', size: '' });
+                }
+                
+                apps.push(app);
+            }
+            
+            return apps;
+        }
+        
+        // Helper function to get text content from XML element
+        function getElementText(parent, tagName) {
+            const element = parent.querySelector(tagName);
+            return element ? element.textContent.trim() : '';
+        }
+
+        // Import file
+        function importFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const content = e.target.result;
+                        // Try to parse XML content
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(content, 'text/xml');
+                        
+                        // Check if parsing was successful
+                        const parseError = xmlDoc.getElementsByTagName('parsererror')[0];
+                        if (parseError) {
+                            throw new Error('Invalid XML format');
+                        }
+
+                        // Parse the XML content into app objects
+                        const parsedApps = parseXMLContent(xmlDoc);
+
+                        const newFile = {
+                            id: Date.now().toString(),
+                            name: file.name,
+                            content: { apps: parsedApps }
+                        };
+                        files = [...files, newFile];
+                        currentFileId = newFile.id;
+                        renderTabs();
+                        renderContent();
+                        
+                        if (parsedApps.length > 0) {
+                            showAlert(`Successfully imported ${parsedApps.length} app(s) from ${file.name}`);
+                        }
+                    } catch (error) {
+                        showAlert('Error importing file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+            // Reset file input
+            event.target.value = '';
+        }
+
+        // Create new file
+        function createNewFile() {
+            const newFile = {
+                id: Date.now().toString(),
+                name: `new-file-${Date.now()}.aiml`,
+                content: { apps: [] }
+            };
+            files = [...files, newFile];
+            currentFileId = newFile.id;
+            renderTabs();
+            renderContent();
+        }
+
+        // Delete file
+        function deleteFile(fileId) {
+            if (files.length === 1) {
+                showAlert('Cannot delete the last file.');
+                return;
+            }
+            
+            fileToDelete = fileId;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        // Confirm delete
+        function confirmDelete() {
+            if (fileToDelete) {
+                files = files.filter(f => f.id !== fileToDelete);
+                if (currentFileId === fileToDelete) {
+                    currentFileId = files[0].id;
+                }
+                fileToDelete = null;
+                document.getElementById('deleteModal').classList.add('hidden');
+                renderTabs();
+                renderContent();
+            }
+        }
+
+        // Show alert (custom implementation)
+        function showAlert(message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'fixed top-4 right-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-200 px-4 py-3 rounded-lg shadow-lg z-50';
+            alertDiv.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-red-500 hover:text-red-700">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(alertDiv);
+            lucide.createIcons();
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Render file tabs
+        function renderTabs() {
+            const tabsContainer = document.getElementById('fileTabs');
+            tabsContainer.innerHTML = files.map(file => `
+                <div class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer whitespace-nowrap transition-colors ${
+                    file.id === currentFileId 
+                        ? 'bg-primary/10 text-primary border border-primary/30' 
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }" onclick="selectFile('${file.id}')">
+                    <span class="text-sm">${file.name}</span>
+                    ${file.id === currentFileId ? `
+                        <button onclick="event.stopPropagation(); startRename()" class="p-1 hover:bg-primary/20 rounded">
+                            <i data-lucide="edit-3" class="w-3 h-3"></i>
+                        </button>
+                    ` : ''}
+                    ${files.length > 1 ? `
+                        <button onclick="event.stopPropagation(); deleteFile('${file.id}')" class="p-1 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 rounded">
+                            <i data-lucide="trash-2" class="w-3 h-3"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // Select file
+        function selectFile(fileId) {
+            currentFileId = fileId;
+            renderTabs();
+            renderContent();
+        }
+
+        // Start rename
+        function startRename() {
+            const currentFile = getCurrentFile();
+            document.getElementById('newFileNameInput').value = currentFile.name;
+            document.getElementById('renameModal').classList.remove('hidden');
+        }
+
+        // Rename file
+        function renameFile() {
+            const newName = document.getElementById('newFileNameInput').value.trim();
+            if (newName) {
+                files = files.map(file => 
+                    file.id === currentFileId 
+                        ? { ...file, name: newName }
+                        : file
+                );
+                document.getElementById('renameModal').classList.add('hidden');
+                renderTabs();
+            }
+        }
+
+        // Remove platform
+        function removePlatform(appIndex, platformIndex) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex 
+                                    ? { ...app, platforms: app.platforms.filter((_, pIdx) => pIdx !== platformIndex) }
+                                    : app
+                            )
+                        }
+                    }
+                    : file
+            );
+            renderContent();
+        }
+
+        // Remove gallery image
+        function removeGalleryImage(appIndex, imageIndex) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex 
+                                    ? { ...app, gallery: app.gallery.filter((_, iIdx) => iIdx !== imageIndex) }
+                                    : app
+                            )
+                        }
+                    }
+                    : file
+            );
+            renderContent();
+        }
+
+        // Remove download
+        function removeDownload(appIndex, downloadIndex) {
+            files = files.map(file => 
+                file.id === currentFileId 
+                    ? {
+                        ...file,
+                        content: {
+                            ...file.content,
+                            apps: file.content.apps.map((app, idx) => 
+                                idx === appIndex 
+                                    ? { ...app, downloads: app.downloads.filter((_, dIdx) => dIdx !== downloadIndex) }
+                                    : app
+                            )
+                        }
+                    }
+                    : file
+            );
+            renderContent();
+        }
+
+        // Render main content
+        function renderContent() {
+            const currentFile = getCurrentFile();
+            const mainContent = document.getElementById('mainContent');
+            
+            // Show welcome interface if no files
+            if (!currentFile) {
+                mainContent.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="mb-6">
+                            <i data-lucide="folder-plus" class="w-20 h-20 mx-auto text-gray-400 dark:text-gray-600 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2">Welcome to AIML Editor</h2>
+                            <p class="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                                Create and manage your AIML app informations with ease. Get started by creating a new file or importing an existing one.
+                            </p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button
+                                onclick="createNewFile()"
+                                class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                            >
+                                <i data-lucide="file-plus" class="w-5 h-5"></i>
+                                Create New File
+                            </button>
+                            <button
+                                onclick="document.getElementById('fileInput').click()"
+                                class="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            >
+                                <i data-lucide="upload" class="w-5 h-5"></i>
+                                Import Existing File
+                            </button>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+            
+            if (currentFile.content.apps.length === 0) {
+                mainContent.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="mb-6">
+                            <i data-lucide="file-text" class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4"></i>
+                            <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No Apps Yet</h2>
+                            <p class="text-gray-500 dark:text-gray-400 mb-6">Start building your AIML file by adding your first app</p>
+                        </div>
+                        <button
+                            onclick="createNewApp()"
+                            class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                        >
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                            Add Your First App
+                        </button>
+                    </div>
+                `;
+            } else {
+                mainContent.innerHTML = `
+                    <div class="space-y-6">
+                        ${currentFile.content.apps.map((app, appIndex) => `
+                            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                                <div class="flex justify-between items-start mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        App ${appIndex + 1}
+                                    </h3>
+                                    <button
+                                        onclick="removeApp(${appIndex})"
+                                        class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    >
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+
+                                <div class="space-y-6">
+                                    <!-- App Source URL -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            External App Source (Optional)
+                                        </label>
+                                        <input
+                                            type="url"
+                                            placeholder="https://example.com/app.aiml"
+                                            value="${app.src}"
+                                            onchange="updateApp(${appIndex}, 'src', this.value)"
+                                            class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                        />
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            If provided, this app will reference external content instead of inline data
+                                        </p>
+                                    </div>
+
+                                    ${!app.src ? `
+                                        <!-- Basic Info -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    App ID *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="com.example.myapp"
+                                                    value="${app.appId}"
+                                                    onchange="updateApp(${appIndex}, 'appId', this.value)"
+                                                    class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    App Name *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="My Awesome App"
+                                                    value="${app.name}"
+                                                    onchange="updateApp(${appIndex}, 'name', this.value)"
+                                                    class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Developer *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Your Company Inc."
+                                                    value="${app.developer}"
+                                                    onchange="updateApp(${appIndex}, 'developer', this.value)"
+                                                    class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Category *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Productivity, Games, Tools..."
+                                                    value="${app.category}"
+                                                    onchange="updateApp(${appIndex}, 'category', this.value)"
+                                                    class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <!-- Icon -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Icon URL *
+                                            </label>
+                                            <input
+                                                type="url"
+                                                placeholder="https://example.com/icon.png"
+                                                value="${app.icon}"
+                                                onchange="updateApp(${appIndex}, 'icon', this.value)"
+                                                class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                            />
+                                        </div>
+
+                                        <!-- Platforms -->
+                                        <div>
+                                            <div class="flex justify-between items-center mb-3">
+                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    Supported Platforms *
+                                                </label>
+                                                <button
+                                                    onclick="addPlatform(${appIndex})"
+                                                    class="flex items-center gap-1 px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+                                                >
+                                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                                    Add Platform
+                                                </button>
+                                            </div>
+                                            <div class="space-y-3">
+                                                ${app.platforms.map((platform, platformIndex) => `
+                                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="iOS, Android, Windows..."
+                                                            value="${platform.os}"
+                                                            onchange="updatePlatform(${appIndex}, ${platformIndex}, 'os', this.value)"
+                                                            class="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="15+, 12+, 10..."
+                                                            value="${platform.version}"
+                                                            onchange="updatePlatform(${appIndex}, ${platformIndex}, 'version', this.value)"
+                                                            class="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="phone, tablet, desktop..."
+                                                            value="${platform.deviceType}"
+                                                            onchange="updatePlatform(${appIndex}, ${platformIndex}, 'deviceType', this.value)"
+                                                            class="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                        />
+                                                        ${app.platforms.length > 1 ? `
+                                                            <button
+                                                                onclick="removePlatform(${appIndex}, ${platformIndex})"
+                                                                class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                                            >
+                                                                <i data-lucide="x" class="w-3 h-3"></i>
+                                                            </button>
+                                                        ` : ''}
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+
+                                        <!-- Gallery -->
+                                        <div>
+                                            <div class="flex justify-between items-center mb-3">
+                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    Gallery Images (Optional)
+                                                </label>
+                                                <button
+                                                    onclick="addGalleryImage(${appIndex})"
+                                                    class="flex items-center gap-1 px-3 py-1 text-sm bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                                                >
+                                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                                    Add Image
+                                                </button>
+                                            </div>
+                                            <div class="space-y-2">
+                                                ${app.gallery.map((image, imageIndex) => `
+                                                    <div class="relative">
+                                                        <input
+                                                            type="url"
+                                                            placeholder="https://example.com/screenshot.png"
+                                                            value="${image}"
+                                                            onchange="updateGalleryImage(${appIndex}, ${imageIndex}, this.value)"
+                                                            class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base pr-12"
+                                                        />
+                                                        ${app.gallery.length > 1 ? `
+                                                            <button
+                                                                onclick="removeGalleryImage(${appIndex}, ${imageIndex})"
+                                                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                                            >
+                                                                <i data-lucide="x" class="w-3 h-3"></i>
+                                                            </button>
+                                                        ` : ''}
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+
+                                        <!-- Intro -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Short Intro *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Brief description of your app..."
+                                                value="${app.intro}"
+                                                onchange="updateApp(${appIndex}, 'intro', this.value)"
+                                                class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                            />
+                                        </div>
+
+                                        <!-- Details -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                Detailed Description *
+                                            </label>
+                                            <div class="mb-3">
+                                                <input
+                                                    type="url"
+                                                    placeholder="External Markdown URL (optional)"
+                                                    value="${app.details.src}"
+                                                    onchange="updateApp(${appIndex}, 'details', { ...getCurrentFile().content.apps[${appIndex}].details, src: this.value })"
+                                                    class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                />
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                    If provided, this will override the content below
+                                                </p>
+                                            </div>
+                                            <textarea
+                                                placeholder="## Features&#10;- Feature 1&#10;- Feature 2&#10;&#10;Visit [website](https://example.com) for more info."
+                                                onchange="updateApp(${appIndex}, 'details', { ...getCurrentFile().content.apps[${appIndex}].details, content: this.value })"
+                                                class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary h-32 text-base"
+                                                ${app.details.src ? 'disabled' : ''}
+                                            >${app.details.content}</textarea>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Supports Markdown formatting
+                                            </p>
+                                        </div>
+
+                                        <!-- Downloads -->
+                                        <div>
+                                            <div class="flex justify-between items-center mb-3">
+                                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    Download Links *
+                                                </label>
+                                                <button
+                                                    onclick="addDownload(${appIndex})"
+                                                    class="flex items-center gap-1 px-3 py-1 text-sm bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
+                                                >
+                                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                                    Add Download
+                                                </button>
+                                            </div>
+                                            <div class="space-y-3">
+                                                ${app.downloads.map((download, downloadIndex) => `
+                                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Google Play, App Store, apk, ipa, exe..."
+                                                            value="${download.type}"
+                                                            onchange="updateDownload(${appIndex}, ${downloadIndex}, 'type', this.value)"
+                                                            class="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                        />
+                                                        <input
+                                                            type="url"
+                                                            placeholder="Download URL"
+                                                            value="${download.url}"
+                                                            onchange="updateDownload(${appIndex}, ${downloadIndex}, 'url', this.value)"
+                                                            class="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="1.0.0"
+                                                            value="${download.version}"
+                                                            onchange="updateDownload(${appIndex}, ${downloadIndex}, 'version', this.value)"
+                                                            class="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            placeholder="45 MB"
+                                                            value="${download.size}"
+                                                            onchange="updateDownload(${appIndex}, ${downloadIndex}, 'size', this.value)"
+                                                            class="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                                                        />
+                                                        ${app.downloads.length > 1 ? `
+                                                            <button
+                                                                onclick="removeDownload(${appIndex}, ${downloadIndex})"
+                                                                class="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                                            >
+                                                                <i data-lucide="x" class="w-3 h-3"></i>
+                                                            </button>
+                                                        ` : ''}
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+
+                        <div class="text-center">
+                            <button
+                                onclick="createNewApp()"
+                                class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                            >
+                                <i data-lucide="plus" class="w-5 h-5"></i>
+                                Add Another App
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        // Show preview
+        function showPreview() {
+            const currentFile = getCurrentFile();
+            const xml = generateXML(currentFile);
+            document.getElementById('previewContent').textContent = xml;
+            document.getElementById('previewModal').classList.remove('hidden');
+        }
+
+        // Event listeners
+        document.getElementById('newFileBtn').addEventListener('click', createNewFile);
+        document.getElementById('importBtn').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+        document.getElementById('fileInput').addEventListener('change', importFile);
+        document.getElementById('exportBtn').addEventListener('click', exportFile);
+        document.getElementById('previewBtn').addEventListener('click', showPreview);
+        document.getElementById('closePreviewBtn').addEventListener('click', () => {
+            document.getElementById('previewModal').classList.add('hidden');
+        });
+        document.getElementById('cancelRenameBtn').addEventListener('click', () => {
+            document.getElementById('renameModal').classList.add('hidden');
+        });
+        document.getElementById('confirmRenameBtn').addEventListener('click', renameFile);
+        document.getElementById('newFileNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') renameFile();
+        });
+        document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+            document.getElementById('deleteModal').classList.add('hidden');
+            fileToDelete = null;
+        });
+        document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+
+        // Close modals on outside click
+        document.getElementById('previewModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                document.getElementById('previewModal').classList.add('hidden');
+            }
+        });
+        document.getElementById('renameModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                document.getElementById('renameModal').classList.add('hidden');
+            }
+        });
+        document.getElementById('deleteModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                document.getElementById('deleteModal').classList.add('hidden');
+                fileToDelete = null;
+            }
+        });
+
+        // Initial render
+        renderTabs();
+        renderContent();
+    </script>
+</body>
+</html>
