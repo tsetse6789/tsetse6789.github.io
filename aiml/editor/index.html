@@ -49,7 +49,15 @@
                     class="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm transition-colors whitespace-nowrap"
                 >
                     <i data-lucide="download" class="w-4 h-4"></i>
-                    Import
+                    Import File
+                </button>
+                
+                <button
+                    id="importUrlBtn"
+                    class="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-colors whitespace-nowrap"
+                >
+                    <i data-lucide="link" class="w-4 h-4"></i>
+                    Import URL
                 </button>
                 
                 <button
@@ -158,6 +166,44 @@
         </div>
     </div>
 
+    <!-- Import URL Modal -->
+    <div id="importUrlModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Import from URL</h3>
+            </div>
+            <div class="p-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    AIML File URL
+                </label>
+                <input
+                    id="importUrlInput"
+                    type="url"
+                    class="w-full p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-base"
+                    placeholder="https://example.com/file.aiml"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Enter the direct URL to an AIML or XML file
+                </p>
+            </div>
+            <div class="flex gap-2 p-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                    id="cancelImportUrlBtn"
+                    class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    id="confirmImportUrlBtn"
+                    class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span id="importUrlBtnText">Import</span>
+                    <i id="importUrlSpinner" class="w-4 h-4 animate-spin hidden ml-2" data-lucide="loader-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Dark mode detection
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -175,6 +221,7 @@
         let files = [];
         let currentFileId = null;
         let fileToDelete = null;
+        let dragCounter = 0;
 
         // Initialize Lucide icons
         lucide.createIcons();
@@ -562,48 +609,156 @@ ${apps}
             return element ? element.textContent.trim() : '';
         }
 
-        // Import file
+        // Import file from File object
+        function processFile(file) {
+            // Check file type
+            if (!file.name.endsWith('.aiml') && !file.name.endsWith('.xml')) {
+                showAlert('Please select a valid AIML or XML file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const content = e.target.result;
+                    // Try to parse XML content
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(content, 'text/xml');
+                    
+                    // Check if parsing was successful
+                    const parseError = xmlDoc.getElementsByTagName('parsererror')[0];
+                    if (parseError) {
+                        throw new Error('Invalid XML format');
+                    }
+
+                    // Parse the XML content into app objects
+                    const parsedApps = parseXMLContent(xmlDoc);
+
+                    const newFile = {
+                        id: Date.now().toString(),
+                        name: file.name,
+                        content: { apps: parsedApps }
+                    };
+                    files = [...files, newFile];
+                    currentFileId = newFile.id;
+                    renderTabs();
+                    renderContent();
+                    
+                    if (parsedApps.length > 0) {
+                        showAlert(`Successfully imported ${parsedApps.length} app(s) from ${file.name}`);
+                    }
+                } catch (error) {
+                    showAlert('Error importing file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Import file from input
         function importFile(event) {
             const file = event.target.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const content = e.target.result;
-                        // Try to parse XML content
-                        const parser = new DOMParser();
-                        const xmlDoc = parser.parseFromString(content, 'text/xml');
-                        
-                        // Check if parsing was successful
-                        const parseError = xmlDoc.getElementsByTagName('parsererror')[0];
-                        if (parseError) {
-                            throw new Error('Invalid XML format');
-                        }
-
-                        // Parse the XML content into app objects
-                        const parsedApps = parseXMLContent(xmlDoc);
-
-                        const newFile = {
-                            id: Date.now().toString(),
-                            name: file.name,
-                            content: { apps: parsedApps }
-                        };
-                        files = [...files, newFile];
-                        currentFileId = newFile.id;
-                        renderTabs();
-                        renderContent();
-                        
-                        if (parsedApps.length > 0) {
-                            showAlert(`Successfully imported ${parsedApps.length} app(s) from ${file.name}`);
-                        }
-                    } catch (error) {
-                        showAlert('Error importing file: ' + error.message);
-                    }
-                };
-                reader.readAsText(file);
+                processFile(file);
             }
             // Reset file input
             event.target.value = '';
+        }
+
+        // Process text content from URL or string
+        function processTextContent(content, filename) {
+            try {
+                // Try to parse XML content
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(content, 'text/xml');
+                
+                // Check if parsing was successful
+                const parseError = xmlDoc.getElementsByTagName('parsererror')[0];
+                if (parseError) {
+                    throw new Error('Invalid XML format');
+                }
+
+                // Parse the XML content into app objects
+                const parsedApps = parseXMLContent(xmlDoc);
+
+                const newFile = {
+                    id: Date.now().toString(),
+                    name: filename,
+                    content: { apps: parsedApps }
+                };
+                files = [...files, newFile];
+                currentFileId = newFile.id;
+                renderTabs();
+                renderContent();
+                
+                if (parsedApps.length > 0) {
+                    showAlert(`Successfully imported ${parsedApps.length} app(s) from ${filename}`);
+                } else {
+                    showAlert(`File imported but no apps found in ${filename}`);
+                }
+            } catch (error) {
+                showAlert('Error importing file: ' + error.message);
+            }
+        }
+
+        // Import file from URL
+        async function importFromUrl(url) {
+            // Show loading state
+            document.getElementById('importUrlBtnText').textContent = 'Importing...';
+            document.getElementById('importUrlSpinner').classList.remove('hidden');
+            document.getElementById('confirmImportUrlBtn').disabled = true;
+
+            try {
+                // Validate URL
+                const urlObj = new URL(url);
+                
+                // Fetch the file
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // Get the content type to validate
+                const contentType = response.headers.get('content-type') || '';
+                if (!contentType.includes('xml') && !contentType.includes('text') && !contentType.includes('application/octet-stream')) {
+                    // Still try to process it, but warn the user
+                    console.warn('Content type might not be XML:', contentType);
+                }
+
+                const content = await response.text();
+                
+                // Generate filename from URL
+                const pathname = urlObj.pathname;
+                let filename = pathname.split('/').pop() || 'imported-file.aiml';
+                if (!filename.endsWith('.aiml') && !filename.endsWith('.xml')) {
+                    filename += '.aiml';
+                }
+
+                // Process the content
+                processTextContent(content, filename);
+                
+                // Close modal
+                document.getElementById('importUrlModal').classList.add('hidden');
+                document.getElementById('importUrlInput').value = '';
+                
+            } catch (error) {
+                let errorMessage = 'Failed to import from URL: ';
+                
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    errorMessage += 'Network error or CORS restriction. The URL might not be accessible or the server might not allow cross-origin requests.';
+                } else if (error.message.includes('Invalid URL')) {
+                    errorMessage += 'Please enter a valid URL.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showAlert(errorMessage);
+            } finally {
+                // Reset loading state
+                document.getElementById('importUrlBtnText').textContent = 'Import';
+                document.getElementById('importUrlSpinner').classList.add('hidden');
+                document.getElementById('confirmImportUrlBtn').disabled = false;
+            }
         }
 
         // Create new file
@@ -1150,12 +1305,86 @@ ${apps}
             document.getElementById('previewModal').classList.remove('hidden');
         }
 
+        // Drag and drop functionality
+        function showDragOverlay() {
+            if (!document.getElementById('dragOverlay')) {
+                const overlay = document.createElement('div');
+                overlay.id = 'dragOverlay';
+                overlay.className = 'fixed inset-0 bg-primary/10 border-4 border-dashed border-primary/50 flex items-center justify-center z-40';
+                overlay.innerHTML = `
+                    <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-primary/30">
+                        <i data-lucide="upload-cloud" class="w-16 h-16 mx-auto text-primary mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">Drop AIML file here</h3>
+                        <p class="text-gray-600 dark:text-gray-400">Release to import the file</p>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                lucide.createIcons();
+            }
+        }
+
+        function hideDragOverlay() {
+            const overlay = document.getElementById('dragOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        // Handle drag enter and leave
+        document.addEventListener('dragenter', (e) => {
+            dragCounter++;
+            if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+                showDragOverlay();
+            }
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            dragCounter--;
+            if (dragCounter === 0) {
+                hideDragOverlay();
+            }
+        });
+
+        // Handle file drop
+        document.addEventListener('drop', (e) => {
+            dragCounter = 0;
+            hideDragOverlay();
+            
+            const files = Array.from(e.dataTransfer.files);
+            const aimlFiles = files.filter(file => 
+                file.name.endsWith('.aiml') || file.name.endsWith('.xml')
+            );
+            
+            if (aimlFiles.length === 0) {
+                showAlert('Please drop valid AIML or XML files.');
+                return;
+            }
+            
+            if (aimlFiles.length > 1) {
+                showAlert('Please drop one file at a time.');
+                return;
+            }
+            
+            processFile(aimlFiles[0]);
+        });
+
         // Event listeners
         document.getElementById('newFileBtn').addEventListener('click', createNewFile);
         document.getElementById('importBtn').addEventListener('click', () => {
             document.getElementById('fileInput').click();
         });
         document.getElementById('fileInput').addEventListener('change', importFile);
+        document.getElementById('importUrlBtn').addEventListener('click', () => {
+            document.getElementById('importUrlModal').classList.remove('hidden');
+        });
         document.getElementById('exportBtn').addEventListener('click', exportFile);
         document.getElementById('previewBtn').addEventListener('click', showPreview);
         document.getElementById('closePreviewBtn').addEventListener('click', () => {
@@ -1189,6 +1418,32 @@ ${apps}
             if (e.target === e.currentTarget) {
                 document.getElementById('deleteModal').classList.add('hidden');
                 fileToDelete = null;
+            }
+        });
+        document.getElementById('importUrlModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                document.getElementById('importUrlModal').classList.add('hidden');
+                document.getElementById('importUrlInput').value = '';
+            }
+        });
+
+        // URL import modal event listeners
+        document.getElementById('cancelImportUrlBtn').addEventListener('click', () => {
+            document.getElementById('importUrlModal').classList.add('hidden');
+            document.getElementById('importUrlInput').value = '';
+        });
+        document.getElementById('confirmImportUrlBtn').addEventListener('click', () => {
+            const url = document.getElementById('importUrlInput').value.trim();
+            if (url) {
+                importFromUrl(url);
+            }
+        });
+        document.getElementById('importUrlInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const url = document.getElementById('importUrlInput').value.trim();
+                if (url) {
+                    importFromUrl(url);
+                }
             }
         });
 
