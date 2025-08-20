@@ -6,6 +6,7 @@
     <title>AIML Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -18,6 +19,155 @@
             }
         }
     </script>
+    <style>
+        .app-card {
+            transition: all 0.3s ease;
+        }
+        .app-card:hover {
+            transform: translateY(-4px);
+        }
+        .gallery-image {
+            transition: transform 0.3s ease;
+        }
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Comprehensive Markdown Styling */
+        .markdown-content {
+            line-height: 1.7;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+        
+        .markdown-content h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            color: #111827;
+        }
+        .dark .markdown-content h1 {
+            color: #f9fafb;
+            border-bottom-color: #374151;
+        }
+        
+        .markdown-content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 1.25rem 0 0.75rem 0;
+            color: #1f2937;
+        }
+        .dark .markdown-content h2 {
+            color: #f3f4f6;
+        }
+        
+        .markdown-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem 0;
+            color: #374151;
+        }
+        .dark .markdown-content h3 {
+            color: #e5e7eb;
+        }
+        
+        .markdown-content p {
+            margin: 1rem 0;
+            font-size: 0.95rem;
+            color: #374151;
+        }
+        .dark .markdown-content p {
+            color: #d1d5db;
+        }
+        
+        .markdown-content ul, .markdown-content ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: #374151;
+        }
+        .dark .markdown-content ul,
+        .dark .markdown-content ol {
+            color: #d1d5db;
+        }
+        
+        .markdown-content ul {
+            list-style-type: disc;
+        }
+        
+        .markdown-content ol {
+            list-style-type: decimal;
+        }
+        
+        .markdown-content li {
+            margin: 0.5rem 0;
+            line-height: 1.6;
+        }
+        
+        .markdown-content code {
+            background-color: #f3f4f6;
+            color: #dc2626;
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+        }
+        .dark .markdown-content code {
+            background-color: #374151;
+            color: #fca5a5;
+        }
+        
+        .markdown-content pre {
+            background-color: #1f2937;
+            color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid #374151;
+        }
+        .dark .markdown-content pre {
+            background-color: #111827;
+            border-color: #1f2937;
+        }
+        
+        .markdown-content pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+        }
+        
+        .markdown-content a {
+            color: #5d5cde;
+            text-decoration: underline;
+        }
+        .markdown-content a:hover {
+            color: #4c4bc0;
+        }
+        
+        .markdown-content blockquote {
+            border-left: 4px solid #5d5cde;
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #6b7280;
+            background-color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.25rem;
+        }
+        .dark .markdown-content blockquote {
+            color: #9ca3af;
+            background-color: #1f2937;
+        }
+        
+        .markdown-content > *:first-child {
+            margin-top: 0;
+        }
+        .markdown-content > *:last-child {
+            margin-bottom: 0;
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
     <!-- Header -->
@@ -93,9 +243,31 @@
 
     <!-- Preview Modal -->
     <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-full overflow-hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-6xl w-full max-h-full overflow-hidden">
+            <!-- Modal Header -->
             <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Source Code Preview</h3>
+                <div class="flex items-center space-x-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Preview</h3>
+                    
+                    <!-- View Toggle -->
+                    <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                        <button
+                            id="sourceCodeTab"
+                            class="flex items-center gap-2 px-3 py-1 text-sm rounded-md transition-colors bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                        >
+                            <i data-lucide="code" class="w-4 h-4"></i>
+                            Source Code
+                        </button>
+                        <button
+                            id="renderedTab"
+                            class="flex items-center gap-2 px-3 py-1 text-sm rounded-md transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                        >
+                            <i data-lucide="smartphone" class="w-4 h-4"></i>
+                            Rendered Preview
+                        </button>
+                    </div>
+                </div>
+                
                 <button
                     id="closePreviewBtn"
                     class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400"
@@ -103,9 +275,101 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-            <div class="p-4 overflow-auto max-h-96">
-                <pre id="previewContent" class="text-sm bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-4 rounded-lg overflow-auto whitespace-pre-wrap"></pre>
+            
+            <!-- Modal Content -->
+            <div class="overflow-auto" style="max-height: calc(100vh - 8rem);">
+                <!-- Source Code View -->
+                <div id="sourceCodeView" class="p-4">
+                    <pre id="previewContent" class="text-sm bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 p-4 rounded-lg overflow-auto whitespace-pre-wrap"></pre>
+                </div>
+                
+                <!-- Rendered Preview View -->
+                <div id="renderedView" class="hidden">
+                    <!-- Apps Grid for Rendered View -->
+                    <div class="p-4">
+                        <div id="renderedAppsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Rendered apps will be inserted here -->
+                        </div>
+                        
+                        <!-- No Apps Message -->
+                        <div id="noAppsMessage" class="text-center py-12 hidden">
+                            <i data-lucide="package" class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4"></i>
+                            <p class="text-lg text-gray-500 dark:text-gray-400">No apps to preview</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">Add some apps to see the rendered preview</p>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+
+    <!-- App Detail Modal (for rendered preview) -->
+    <div id="appDetailModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <div class="p-4 sm:p-6">
+                <!-- Modal Header -->
+                <div class="flex items-start justify-between mb-4 sm:mb-6">
+                    <div class="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1 mr-4">
+                        <img id="detailModalIcon" src="" alt="" class="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover flex-shrink-0">
+                        <div class="min-w-0 flex-1">
+                            <h2 id="detailModalTitle" class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate"></h2>
+                            <p id="detailModalDeveloper" class="text-sm sm:text-base text-gray-600 dark:text-gray-400 truncate"></p>
+                        </div>
+                    </div>
+                    <button id="closeDetailModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- App Details -->
+                <div class="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-1 lg:grid-cols-2 sm:gap-6">
+                    <!-- Left Column -->
+                    <div class="space-y-4 sm:space-y-6">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Description</h3>
+                            <p id="detailModalIntro" class="text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3 sm:mb-4"></p>
+                            
+                            <!-- Details Drawer Toggle -->
+                            <button id="detailDetailsToggle" class="flex items-center justify-between w-full p-3 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors mb-3 group">
+                                <span class="font-medium text-gray-700 dark:text-gray-300">Detailed Information</span>
+                                <i id="detailDetailsChevron" data-lucide="chevron-down" class="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-transform duration-200"></i>
+                            </button>
+                            
+                            <!-- Details Drawer Content -->
+                            <div id="detailDetailsDrawer" class="hidden overflow-hidden">
+                                <div id="detailModalDetails" class="markdown-content bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-600"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Compatibility</h3>
+                            <div id="detailModalPlatforms" class="space-y-2"></div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Download</h3>
+                            <div id="detailModalDownload" class="space-y-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Gallery -->
+                    <div>
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-2">Screenshots</h3>
+                        <div id="detailModalGallery" class="flex space-x-3 overflow-x-auto pb-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <div id="imageViewer" class="fixed inset-0 bg-black bg-opacity-90 z-[70] hidden flex items-center justify-center p-4 sm:p-6 md:p-8">
+        <div class="relative w-full h-full flex items-center justify-center">
+            <img id="viewerImage" src="" alt="" class="max-w-full max-h-full object-contain">
+            <button id="closeViewer" class="absolute top-4 right-4 text-white hover:text-gray-300 z-10">
+                <i data-lucide="x" class="w-8 h-8"></i>
+            </button>
         </div>
     </div>
 
@@ -222,6 +486,7 @@
         let currentFileId = null;
         let fileToDelete = null;
         let dragCounter = 0;
+        let currentPreviewMode = 'source'; // 'source' or 'rendered'
 
         // Initialize Lucide icons
         lucide.createIcons();
@@ -1239,7 +1504,7 @@ ${apps}
                                                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
                                                         <input
                                                             type="text"
-                                                            placeholder="Google Play, exe..."
+                                                            placeholder="Google Play, App Store, apk, ipa, exe..."
                                                             value="${download.type}"
                                                             onchange="updateDownload(${appIndex}, ${downloadIndex}, 'type', this.value)"
                                                             class="p-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded focus:ring-2 focus:ring-primary focus:border-primary text-base"
@@ -1300,9 +1565,194 @@ ${apps}
         // Show preview
         function showPreview() {
             const currentFile = getCurrentFile();
+            
+            // Update source code view
             const xml = generateXML(currentFile);
             document.getElementById('previewContent').textContent = xml;
+            
+            // Update rendered view
+            renderPreviewApps(currentFile);
+            
+            // Show the modal
             document.getElementById('previewModal').classList.remove('hidden');
+        }
+
+        // Render apps in preview modal
+        function renderPreviewApps(file) {
+            const appsGrid = document.getElementById('renderedAppsGrid');
+            const noAppsMessage = document.getElementById('noAppsMessage');
+            
+            if (!file || file.content.apps.length === 0) {
+                appsGrid.classList.add('hidden');
+                noAppsMessage.classList.remove('hidden');
+                return;
+            }
+            
+            appsGrid.classList.remove('hidden');
+            noAppsMessage.classList.add('hidden');
+            
+            // Filter out apps with external sources and apps with missing required fields
+            const validApps = file.content.apps.filter(app => 
+                !app.src && app.name && app.developer && app.category
+            );
+            
+            appsGrid.innerHTML = validApps.map(app => `
+                <div class="app-card bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-700 p-4 cursor-pointer" onclick="openAppDetailModal('${app.id}')">
+                    <div class="flex items-center space-x-3 mb-3">
+                        <img src="${app.icon || 'https://via.placeholder.com/48x48/5D5CDE/ffffff?text=APP'}" alt="${app.name}" class="w-12 h-12 rounded-lg object-cover">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-semibold text-lg text-gray-900 dark:text-white truncate">${app.name}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 truncate">${app.developer}</p>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">${app.intro}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1 rounded">${app.category}</span>
+                        <div class="flex space-x-1">
+                            ${app.platforms.slice(0, 3).map(platform => `
+                                <span class="text-xs bg-primary text-white px-2 py-1 rounded">${platform.os}</span>
+                            `).join('')}
+                            ${app.platforms.length > 3 ? '<span class="text-xs text-gray-500">+' + (app.platforms.length - 3) + '</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (validApps.length === 0) {
+                appsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-yellow-500 mb-3"></i>
+                        <p class="text-gray-600 dark:text-gray-400">No valid apps to preview</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-500 mt-1">Apps need at least a name, developer, and category to be displayed</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        // Open app detail modal
+        async function openAppDetailModal(appId) {
+            const currentFile = getCurrentFile();
+            const app = currentFile.content.apps.find(a => a.id.toString() === appId.toString());
+            if (!app) return;
+            
+            document.getElementById('detailModalIcon').src = app.icon || 'https://via.placeholder.com/64x64/5D5CDE/ffffff?text=APP';
+            document.getElementById('detailModalTitle').textContent = app.name;
+            document.getElementById('detailModalDeveloper').textContent = app.developer;
+            document.getElementById('detailModalIntro').textContent = app.intro;
+            
+            // Handle details
+            const detailsDiv = document.getElementById('detailModalDetails');
+            if (app.details && app.details.src && (app.details.src.startsWith('http://') || app.details.src.startsWith('https://'))) {
+                detailsDiv.innerHTML = '<div class="flex items-center space-x-2 text-gray-500"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i><span>Loading details...</span></div>';
+                lucide.createIcons();
+                
+                try {
+                    const response = await fetch(app.details.src);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const markdownContent = await response.text();
+                    detailsDiv.innerHTML = marked.parse(markdownContent);
+                } catch (error) {
+                    console.error('Failed to fetch app details:', error);
+                    detailsDiv.innerHTML = '<div class="text-red-500 dark:text-red-400"><i data-lucide="alert-triangle" class="w-4 h-4 inline mr-2"></i>Failed to load details. Please try again later.</div>';
+                    lucide.createIcons();
+                }
+            } else {
+                const content = app.details && app.details.content ? app.details.content : 'No details available.';
+                detailsDiv.innerHTML = marked.parse(content);
+            }
+
+            // Platforms
+            const platformsDiv = document.getElementById('detailModalPlatforms');
+            platformsDiv.innerHTML = app.platforms.map(platform => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div>
+                        <span class="font-medium text-gray-900 dark:text-white">${platform.os}</span>
+                        ${platform.version ? `<span class="text-sm text-gray-600 dark:text-gray-400 ml-2">${platform.version}</span>` : ''}
+                        ${platform.deviceType ? `<span class="text-sm text-gray-600 dark:text-gray-400 ml-2">(${platform.deviceType})</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Download
+            const downloadDiv = document.getElementById('detailModalDownload');
+            downloadDiv.innerHTML = app.downloads.map(download => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div>
+                        <span class="font-medium text-gray-900 dark:text-white">${download.type}</span>
+                        ${download.version ? `<span class="text-sm text-gray-600 dark:text-gray-400 ml-2">v${download.version}</span>` : ''}
+                        ${download.size ? `<span class="text-sm text-gray-600 dark:text-gray-400 ml-2">(${download.size})</span>` : ''}
+                    </div>
+                    <a href="${download.url}" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors" target="_blank">
+                        <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>Download
+                    </a>
+                </div>
+            `).join('');
+
+            // Gallery
+            const galleryDiv = document.getElementById('detailModalGallery');
+            const galleryImages = app.gallery.filter(img => img);
+            if (galleryImages.length > 0) {
+                galleryDiv.innerHTML = galleryImages.map(image => `
+                    <img src="${image}" alt="Screenshot" class="gallery-image flex-shrink-0 w-48 rounded-lg cursor-pointer" onclick="openImageViewer('${image}')">
+                `).join('');
+            } else {
+                galleryDiv.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-sm">No screenshots available</p>';
+            }
+            
+            lucide.createIcons();
+            document.getElementById('appDetailModal').classList.remove('hidden');
+        }
+
+        // Toggle preview mode
+        function togglePreviewMode(mode) {
+            currentPreviewMode = mode;
+            
+            const sourceTab = document.getElementById('sourceCodeTab');
+            const renderedTab = document.getElementById('renderedTab');
+            const sourceView = document.getElementById('sourceCodeView');
+            const renderedView = document.getElementById('renderedView');
+            
+            if (mode === 'source') {
+                // Source Code view
+                sourceTab.className = 'flex items-center gap-2 px-3 py-1 text-sm rounded-md transition-colors bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm';
+                renderedTab.className = 'flex items-center gap-2 px-3 py-1 text-sm rounded-md transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white';
+                sourceView.classList.remove('hidden');
+                renderedView.classList.add('hidden');
+            } else {
+                // Rendered Preview view
+                renderedTab.className = 'flex items-center gap-2 px-3 py-1 text-sm rounded-md transition-colors bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm';
+                sourceTab.className = 'flex items-center gap-2 px-3 py-1 text-sm rounded-md transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white';
+                sourceView.classList.add('hidden');
+                renderedView.classList.remove('hidden');
+            }
+        }
+
+        // Open image viewer
+        function openImageViewer(imageSrc) {
+            document.getElementById('viewerImage').src = imageSrc;
+            document.getElementById('imageViewer').classList.remove('hidden');
+        }
+
+        // Close image viewer
+        function closeImageViewer() {
+            document.getElementById('imageViewer').classList.add('hidden');
+        }
+
+        // Toggle details drawer
+        function toggleDetailsDrawer() {
+            const drawer = document.getElementById('detailDetailsDrawer');
+            const chevron = document.getElementById('detailDetailsChevron');
+            
+            if (drawer.classList.contains('hidden')) {
+                drawer.classList.remove('hidden');
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                drawer.classList.add('hidden');
+                chevron.style.transform = 'rotate(0deg)';
+            }
         }
 
         // Drag and drop functionality
@@ -1387,9 +1837,27 @@ ${apps}
         });
         document.getElementById('exportBtn').addEventListener('click', exportFile);
         document.getElementById('previewBtn').addEventListener('click', showPreview);
+        
+        // Preview modal event listeners
         document.getElementById('closePreviewBtn').addEventListener('click', () => {
             document.getElementById('previewModal').classList.add('hidden');
         });
+        document.getElementById('sourceCodeTab').addEventListener('click', () => togglePreviewMode('source'));
+        document.getElementById('renderedTab').addEventListener('click', () => togglePreviewMode('rendered'));
+        
+        // App detail modal event listeners
+        document.getElementById('closeDetailModal').addEventListener('click', () => {
+            document.getElementById('appDetailModal').classList.add('hidden');
+        });
+        document.getElementById('detailDetailsToggle').addEventListener('click', toggleDetailsDrawer);
+        
+        // Image viewer event listeners
+        document.getElementById('closeViewer').addEventListener('click', closeImageViewer);
+        document.getElementById('imageViewer').addEventListener('click', function(e) {
+            if (e.target === this) closeImageViewer();
+        });
+        
+        // Other modal event listeners
         document.getElementById('cancelRenameBtn').addEventListener('click', () => {
             document.getElementById('renameModal').classList.add('hidden');
         });
@@ -1402,6 +1870,26 @@ ${apps}
             fileToDelete = null;
         });
         document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+
+        // URL import modal event listeners
+        document.getElementById('cancelImportUrlBtn').addEventListener('click', () => {
+            document.getElementById('importUrlModal').classList.add('hidden');
+            document.getElementById('importUrlInput').value = '';
+        });
+        document.getElementById('confirmImportUrlBtn').addEventListener('click', () => {
+            const url = document.getElementById('importUrlInput').value.trim();
+            if (url) {
+                importFromUrl(url);
+            }
+        });
+        document.getElementById('importUrlInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const url = document.getElementById('importUrlInput').value.trim();
+                if (url) {
+                    importFromUrl(url);
+                }
+            }
+        });
 
         // Close modals on outside click
         document.getElementById('previewModal').addEventListener('click', (e) => {
@@ -1426,24 +1914,9 @@ ${apps}
                 document.getElementById('importUrlInput').value = '';
             }
         });
-
-        // URL import modal event listeners
-        document.getElementById('cancelImportUrlBtn').addEventListener('click', () => {
-            document.getElementById('importUrlModal').classList.add('hidden');
-            document.getElementById('importUrlInput').value = '';
-        });
-        document.getElementById('confirmImportUrlBtn').addEventListener('click', () => {
-            const url = document.getElementById('importUrlInput').value.trim();
-            if (url) {
-                importFromUrl(url);
-            }
-        });
-        document.getElementById('importUrlInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                const url = document.getElementById('importUrlInput').value.trim();
-                if (url) {
-                    importFromUrl(url);
-                }
+        document.getElementById('appDetailModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                document.getElementById('appDetailModal').classList.add('hidden');
             }
         });
 
