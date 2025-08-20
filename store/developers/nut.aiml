@@ -3,7 +3,7 @@
 <aiml>
   <app>
     <id>com.john.nutfun-for-android</id>
-    <name>Nut Fun(Android)</name>
+    <name>Nut Fun</name>
     <developer>Nut</developer>
     <category>Lifestyle</category>
     <platforms>
@@ -24,43 +24,66 @@
       <image>https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H7.png</image>
     </gallery>
     <intro>Enjoy a smoother experience than web version with more function.</intro>
-    <details>
-# Detailed Description
+    <details>## Detailed Description  
 ---
 This is the app version of Nut Fun, gives you a brand new user experience than the web version. The app gives more functions such as offline browsing, games, tools etc.  
 Hope you enjoy the app!  
+
+### Features
+- Main page
+- Cookie settings
+- Offline browsing
+- Tools
+- Games
+- Others...  
+
+## Requirements
+- Android 5 or later
+- Wi-Fi
 ---
-## *Features*
-- · Main page
-- · Cookie settings
-- · Offline browsing
-- · Tools
-- · Games
-- · Others...  
----
-## *Requirements*
-- · Android 5 or later
-- · Wi-Fi
-    </details>
+### What's New
+1. Used side navigation for more space when your phone is in landscape mode.
+2. In web view, it will enter fullscreen when both "Home" and "Menu" buttons are clicked on same time.
+3. Change the orientation of your screen to exit fullscreen.
+4. Reduced over 50% of the download size. (23.7MB --> 10.6MB)
+5. Changed the minSDK: 21 (Android 5.0 Lollipop)</details>
     <downloads>
       <download>
         <type>Google Drive(APK)</type>
         <url>https://drive.google.com/file/d/1kosJnOGkXJoSHlidom4BeSYR0uePAHMM/view?usp=share_link</url>
-        <version>1.3.2</version>
+        <version>1.3.2(Stable)</version>
         <size>10.6 MB</size>
       </download>
       <download>
-        <type>Elder Versions</type>
-        <url>https://sites.google.com/view/nut-fun/apps</url>
-        <version></version>
-        <size></size>
+        <type></type>
+        <url>https://drive.google.com/file/d/1KaaWbrh2LbGGWiprL8VdOyg_G5wEj8al/view?usp=share_link</url>
+        <version>1.3.1(Stable)</version>
+        <size>23.7 MB</size>
+      </download>
+      <download>
+        <type></type>
+        <url>https://drive.google.com/file/d/1t8eJ9AHdMa44BmLaV5JCJooYI-K9NIs0/view?usp=share_link</url>
+        <version>1.3.0(Android 15+)</version>
+        <size>23.7 MB</size>
+      </download>
+      <download>
+        <type></type>
+        <url>https://drive.google.com/file/d/1I5vjN6JKHms5TuJQSqvCt7JYqoNdq97n/view?usp=share_link</url>
+        <version>1.2.5</version>
+        <size>23.7 MB</size>
+      </download>
+      <download>
+        <type></type>
+        <url>https://drive.google.com/file/d/1ZLXIHZ63UE-47nJIgMn5B3IbwvhgeW6n/view?usp=share_link</url>
+        <version>1.2.4</version>
+        <size>23 MB</size>
       </download>
     </downloads>
   </app>
 
   <app>
-    <id>com.john.ytplayer-for-android</id>
-    <name>YouTube Player by Nut(Android)</name>
+    <id>com.john.ytplayer-global</id>
+    <name>YouTube Player by Nut</name>
     <developer>Nut</developer>
     <category>Tools</category>
     <platforms>
@@ -69,9 +92,23 @@ Hope you enjoy the app!
         <version>5.0+ (SE)(Developing)</version>
         <deviceType>Phone, Tablet, PC</deviceType>
       </platform>
+      <platform>
+        <os>WebApp</os>
+        <version>HTML 5</version>
+        <deviceType>Any(Support Browser)</deviceType>
+      </platform>
     </platforms>
     <icon>https://tsetse6789.github.io/player/ic_launcher-playstore.png</icon>
-    <gallery></gallery>
+    <gallery>
+      <image>https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/H1.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/H2.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/H3.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/H4.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/H5.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/H6.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/H7.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/H8.jpg</image>
+    </gallery>
     <intro>No ads, unlimited YouTube video playing.</intro>
     <details src="https://tsetse6789.github.io/store/data/com.john.ytplayer-for-android/description.md" format="markdown"></details>
     <downloads>
@@ -81,29 +118,9 @@ Hope you enjoy the app!
         <version>1.0.0(SE)(Developing)</version>
         <size></size>
       </download>
-    </downloads>
-  </app>
-
-  <app>
-    <id>com.john.Nut-Fun-for-ios</id>
-    <name>Nut Fun(iOS)</name>
-    <developer>Nut</developer>
-    <category>Lifestyle</category>
-    <platforms>
-      <platform>
-        <os>iOS</os>
-        <version>15.6+</version>
-        <deviceType>iPhone, iPad, Mac(Designed for iPad), Apple Vision(Designed for iPad)</deviceType>
-      </platform>
-    </platforms>
-    <icon>https://tsetse6789.github.io/store/data/com.john.Nut-Fun-for-ios/Nut26-iOS-Default.png</icon>
-    <gallery></gallery>
-    <intro>Enjoy a smoother experience than web version with more function.</intro>
-    <details></details>
-    <downloads>
       <download>
-        <type>Unavailable</type>
-        <url>https://tsetse6789.github.io/store?app=com.john.Nut-Fun-for-ios</url>
+        <type>WebApp(Any)</type>
+        <url>https://tsetse6789.github.io/player</url>
         <version></version>
         <size></size>
       </download>
