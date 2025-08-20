@@ -5,7 +5,7 @@
     <id>com.john.nutfun-for-android</id>
     <name>Nut Fun</name>
     <developer>Nut</developer>
-    <category>Lifestyle</category>
+    <category>Social</category>
     <platforms>
       <platform>
         <os>Android</os>
@@ -123,6 +123,56 @@ Hope you enjoy the app!
         <url>https://tsetse6789.github.io/player</url>
         <version></version>
         <size></size>
+      </download>
+    </downloads>
+  </app>
+
+  <app>
+    <id>org.chromium.webapk.a6428527539a3ccaf_v2</id>
+    <name>Web Menu</name>
+    <developer>Nut</developer>
+    <category>Multifunctional</category>
+    <platforms>
+      <platform>
+        <os>Android</os>
+        <version>7.0+</version>
+        <deviceType>Phone, Tablet, PC</deviceType>
+      </platform>
+    </platforms>
+    <icon>https://tsetse6789.github.io/Logo_v2.png</icon>
+    <gallery>
+      <image>https://tsetse6789.github.io/store/data/org.chromium.webapk.a6428527539a3ccaf_v2/H1.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/org.chromium.webapk.a6428527539a3ccaf_v2/H2.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/org.chromium.webapk.a6428527539a3ccaf_v2/H3.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/org.chromium.webapk.a6428527539a3ccaf_v2/H4.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/org.chromium.webapk.a6428527539a3ccaf_v2/H5.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/org.chromium.webapk.a6428527539a3ccaf_v2/H6.jpg</image>
+      <image>https://tsetse6789.github.io/store/data/com.john.nutfun-for-android/H1.png</image>
+    </gallery>
+    <intro>A menu to open all websites by Nut instantly.</intro>
+    <details>## An app that can browse all websites by Nut
+---
+### Benefits:
+- **All-in-one app** : No need to download other apps
+- **Simple and Fast** : Designed with a clear interface & Loading with a short time
+- **Hyperlink Support** : Open links to Nut's website in app
+
+###Site Map
+- Menu
+    -  Account Console
+    - aiml/editor/
+        - AIML Editor
+    - Fun Chat
+    - YT Player
+    - App Market
+---
+For more information, [Click here](https://tsetse6789.github.io) and read README.md to learn more.</details>
+    <downloads>
+      <download>
+        <type>Google Drive(APK)</type>
+        <url>https://drive.google.com/file/d/1tJxAkrm2w44JzC-0yMb3OUMJAun88wU7/view?usp=share_link</url>
+        <version>1</version>
+        <size>162 KB</size>
       </download>
     </downloads>
   </app>
