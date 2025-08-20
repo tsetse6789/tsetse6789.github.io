@@ -102,8 +102,11 @@
 
     <!-- Main App -->
     <div id="main-app" class="hidden min-h-screen flex">
+        <!-- Mobile Menu Overlay -->
+        <div id="mobile-menu-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden" onclick="toggleMobileMenu()"></div>
+        
         <!-- Sidebar -->
-        <div class="w-64 bg-white dark:bg-gray-800 shadow-lg flex flex-col">
+        <div id="sidebar" class="fixed lg:static inset-y-0 left-0 transform -translate-x-full lg:translate-x-0 w-64 bg-white dark:bg-gray-800 shadow-lg flex flex-col transition-transform duration-300 ease-in-out z-50 lg:z-auto">
             <!-- User Info Header -->
             <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center">
@@ -190,15 +193,27 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col lg:ml-0">
             <!-- Header -->
-            <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-                <h1 id="page-title" class="text-2xl font-bold">Account Overview</h1>
-                <p id="page-description" class="text-gray-600 dark:text-gray-400 mt-1">Manage your account information and settings</p>
+            <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <!-- Mobile Menu Button -->
+                        <button id="mobile-menu-btn" class="lg:hidden mr-3 p-2 rounded-md text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary" onclick="toggleMobileMenu()">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                        <div>
+                            <h1 id="page-title" class="text-xl sm:text-2xl font-bold">Account Overview</h1>
+                            <p id="page-description" class="text-gray-600 dark:text-gray-400 mt-1 text-sm sm:text-base hidden sm:block">Manage your account information and settings</p>
+                        </div>
+                    </div>
+                </div>
             </header>
 
             <!-- Content Area -->
-            <main class="flex-1 p-6 overflow-y-auto custom-scrollbar">
+            <main class="flex-1 p-4 sm:p-6 overflow-y-auto custom-scrollbar">
                 <!-- Overview Tab -->
                 <div id="content-overview" class="tab-content">
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
@@ -378,11 +393,11 @@
                         <p class="text-gray-600 dark:text-gray-400 mb-6">
                             Download a copy of all your data from Fun Chat including profile information, friends, rooms, and messages.
                         </p>
-                        <div class="space-y-4">
-                            <button id="export-profile-btn" class="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors focus-visible mr-4">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button id="export-profile-btn" class="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors focus-visible">
                                 Export Profile Data
                             </button>
-                            <button id="export-messages-btn" class="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors focus-visible mr-4">
+                            <button id="export-messages-btn" class="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors focus-visible">
                                 Export Messages Data
                             </button>
                             <button id="export-all-btn" class="w-full sm:w-auto bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors focus-visible">
@@ -622,6 +637,15 @@
         }
 
         function switchTab(tabName) {
+            // Close mobile menu on mobile
+            if (window.innerWidth < 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('mobile-menu-overlay');
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+            
             // Update tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('tab-active');
@@ -1224,6 +1248,25 @@
                 await auth.signOut();
             } catch (error) {
                 showAlert('Error logging out: ' + error.message, 'error');
+            }
+        }
+
+        // Mobile menu functionality
+        window.toggleMobileMenu = function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-menu-overlay');
+            const isOpen = sidebar.classList.contains('translate-x-0');
+            
+            if (isOpen) {
+                // Close menu
+                sidebar.classList.remove('translate-x-0');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            } else {
+                // Open menu
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
             }
         }
 
