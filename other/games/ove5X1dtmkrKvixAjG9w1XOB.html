@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狼人殺遊戲</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐺</text></svg>"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .double-tap {
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .role-card {
+            transition: all 0.3s ease;
+        }
+        .role-hidden {
+            background: #1f2937;
+            color: #1f2937;
+        }
+        .role-revealed {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .action-button {
+            transition: all 0.2s ease;
+        }
+        .action-button:active {
+            transform: scale(0.95);
+        }
+        .selected {
+            background: #3b82f6 !important;
+            color: white !important;
+        }
+        .phone-center {
+            border: 2px dashed #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
+        }
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e5e7eb;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .dot {
+            transition: transform 0.2s;
+        }
+
+        .theme-toggle input:checked + .toggle-bg {
+            background-color: #3b82f6;
+        }
+
+        .theme-toggle input:checked + .toggle-bg .dot {
+            transform: translateX(24px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <!-- 遊戲標題 -->
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">🐺 狼人殺遊戲</h1>
+            <div class="flex justify-center space-x-4">
+                <button id="showPlayerManager" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition duration-200">
+                    👥 玩家管理
+                </button>
+                <button id="showSettings" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition duration-200">
+                    ⚙️ 遊戲設置
+                </button>
+            </div>
+        </div>
+        
+        <!-- 設置階段 -->
+        <div id="setup" class="max-w-lg mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">遊戲設置</h2>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 dark:text-gray-300 mb-2">玩家數量</label>
+                <select id="playerCount" class="w-full p-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <option value="6">6人</option>
+                    <option value="7">7人</option>
+                    <option value="8">8人</option>
+                    <option value="9" selected="">9人</option>
+                    <option value="10">10人</option>
+                    <option value="11">11人</option>
+                    <option value="12">12人</option>
+                </select>
+            </div>
+
+            <!-- 玩家選擇 -->
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-gray-700 dark:text-gray-300">參與玩家</label>
+                    <div class="flex space-x-2">
+                        <button id="addGuestPlayer" class="text-sm bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded transition duration-200">
+                            ➕ 訪客
+                        </button>
+                        <button id="autoSelectPlayers" class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded transition duration-200">
+                            自動選擇
+                        </button>
+                    </div>
+                </div>
+                <div id="playerSelectionGrid" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                    <!-- 玩家選擇列表 -->
+                </div>
+                <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    已選擇: <span id="selectedPlayerCount">0</span> / <span id="requiredPlayerCount">9</span> 人
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-gray-700 dark:text-gray-300">角色配置</label>
+                    <button id="useCustomConfig" class="text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded transition duration-200">
+                        自訂配置
+                    </button>
+                </div>
+                <div id="roleConfig" class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <!-- 動態生成角色配置 -->
+                </div>
+            </div>
+            
+            <!-- 自訂角色配置 -->
+            <div id="customRoleConfig" class="hidden mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">自訂角色配置</h3>
+                <div class="space-y-3" id="roleInputs">
+                    <!-- 動態生成角色輸入 -->
+                </div>
+                <div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                    總計: <span id="totalPlayers">0</span> 人
+                </div>
+                <div class="flex space-x-2 mt-3">
+                    <button id="applyCustomConfig" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition duration-200">
+                        套用
+                    </button>
+                    <button id="cancelCustomConfig" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded transition duration-200">
+                        取消
+                    </button>
+                </div>
+            </div>
+            
+            <div class="phone-center p-4 rounded-lg mb-4">
+                <p class="text-center text-amber-700 dark:text-amber-300 text-sm">
+                    📱 請將手機放在所有玩家的正中間，方便大家操作
+                </p>
+            </div>
+            
+            <button id="startGame" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                開始遊戲
+            </button>
+        </div>
+        
+        <!-- 角色分配階段 -->
+        <div id="roleAssignment" class="hidden max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4 text-center">角色分配</h2>
+            <div class="text-center mb-6">
+                <div class="flex items-center justify-center mb-4">
+                    <img id="currentPlayerAvatar" class="player-avatar mr-3" src="" alt="">
+                    <p class="text-gray-600 dark:text-gray-400">請將手機交給 <span id="currentPlayerText" class="font-bold text-blue-600">玩家</span></p>
+                </div>
+                <div class="role-card role-hidden double-tap w-full h-48 rounded-lg flex items-center justify-center mb-4 cursor-pointer" id="roleCard">
+                    <p class="text-lg font-semibold">雙擊查看角色</p>
+                </div>
+                <p class="text-sm text-gray-500 dark:text-gray-400">查看完畢後雙擊隱藏，再交給下一位玩家</p>
+            </div>
+            <button id="nextPlayer" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                下一位玩家
+            </button>
+        </div>
+        
+        <!-- 遊戲進行階段 -->
+        <div id="gamePlay" class="hidden max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 dark:text-white mb-2">第 <span id="dayCount">1</span> 天</h2>
+                <p id="gamePhase" class="text-lg text-blue-600 font-medium">夜晚階段</p>
+            </div>
+            
+            <!-- 玩家狀態列表 -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">玩家狀態</h3>
+                    <button id="forceEndGame" class="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded transition duration-200">
+                        強制結束遊戲
+                    </button>
+                </div>
+                <div id="playerList" class="grid grid-cols-2 gap-2">
+                    <!-- 動態生成玩家列表 -->
+                </div>
+            </div>
+            
+            <!-- 夜晚操作 -->
+            <div id="nightActions" class="mb-6">
+                <div class="text-center">
+                    <p id="actionText" class="text-lg text-gray-700 dark:text-gray-300 mb-4">請所有玩家閉眼</p>
+                    <div id="roleActionPanel" class="hidden mb-4">
+                        <!-- 角色技能操作面板 -->
+                    </div>
+                    <button id="nextAction" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                        下一步
+                    </button>
+                    <div id="autoTimer" class="hidden mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        自動進行下一步: <span id="countdown">2</span>秒
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 白天討論 -->
+            <div id="dayDiscussion" class="hidden mb-6">
+                <div class="text-center">
+                    <p id="deathAnnouncement" class="text-lg text-gray-700 dark:text-gray-300 mb-4"></p>
+                    <div id="hunterAction" class="hidden mb-4">
+                        <p class="text-red-600 font-semibold mb-3">獵人死亡，請選擇要開槍的目標</p>
+                        <div id="hunterTargets" class="grid grid-cols-3 gap-2 mb-3">
+                            <!-- 獵人開槍目標 -->
+                        </div>
+                        <button id="skipHunterShot" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition duration-200">
+                            不開槍
+                        </button>
+                    </div>
+                    <p class="text-md text-gray-600 dark:text-gray-400 mb-4">請玩家們進行討論</p>
+                    <button id="startVoting" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                        開始投票
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 投票階段 -->
+            <div id="votingPhase" class="hidden">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4 text-center">
+                    請 <span id="currentVoterText" class="text-blue-600">玩家</span> 投票
+                </h3>
+                <div id="votingOptions" class="grid grid-cols-2 gap-3 mb-4">
+                    <!-- 動態生成投票選項 -->
+                </div>
+                <button id="skipVote" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 mb-2">
+                    跳過投票
+                </button>
+                <button id="nextVoter" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                    下一位玩家
+                </button>
+            </div>
+
+            <!-- 遺言階段 -->
+            <div id="lastWordsPhase" class="hidden">
+                <div class="text-center">
+                    <div class="flex items-center justify-center mb-4">
+                        <img id="lastWordsPlayerAvatar" class="player-avatar mr-3" src="" alt="">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">
+                            <span id="lastWordsPlayerName" class="text-red-600">玩家</span> 請說遺言
+                        </h3>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">請被投票出局的玩家說出遺言</p>
+                    <button id="finishLastWords" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                        遺言完畢
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 遊戲結束 -->
+        <div id="gameEnd" class="hidden max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-semibold text-center text-gray-800 dark:text-white mb-4">遊戲結束</h2>
+            <div id="winnerAnnouncement" class="text-center mb-6">
+                <!-- 勝利公告 -->
+            </div>
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">角色揭曉與積分結算</h3>
+                <div id="finalRoles" class="space-y-2">
+                    <!-- 最終角色列表 -->
+                </div>
+            </div>
+            <button id="restartGame" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                重新開始
+            </button>
+        </div>
+    </div>
+
+    <!-- 玩家管理模態框 -->
+    <div id="playerManagerModal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-white">👥 玩家管理</h2>
+                    <button id="closePlayerManager" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        ✕
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <button id="addPlayerBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition duration-200">
+                        ➕ 添加玩家
+                    </button>
+                </div>
+                
+                <div id="playerManagerList" class="space-y-3">
+                    <!-- 玩家列表 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 玩家編輯模態框 -->
+    <div id="playerEditModal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="playerEditTitle" class="text-xl font-semibold text-gray-800 dark:text-white">編輯玩家</h2>
+                    <button id="closePlayerEdit" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        ✕
+                    </button>
+                </div>
+                
+                <form id="playerEditForm" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">玩家姓名</label>
+                        <input type="text" id="playerNameInput" class="w-full p-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required="">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">頭像</label>
+                        <div class="flex items-center space-x-4">
+                            <img id="playerAvatarPreview" class="player-avatar" src="" alt="預覽">
+                            <input type="file" id="playerAvatarInput" accept="image/*" class="text-sm text-gray-500 dark:text-gray-400">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">積分</label>
+                        <input type="number" id="playerScoreInput" class="w-full p-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" min="0">
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition duration-200">
+                            保存
+                        </button>
+                        <button type="button" id="cancelPlayerEdit" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded transition duration-200">
+                            取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 遊戲設置模態框 -->
+    <div id="settingsModal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-white">⚙️ 遊戲設置</h2>
+                    <button id="closeSettings" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        ✕
+                    </button>
+                </div>
+                
+                <form id="settingsForm" class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">入場積分</label>
+                        <input type="number" id="entryPointsInput" class="w-full p-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" min="0" value="10">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">參與遊戲需要扣除的積分</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">獲勝積分</label>
+                        <input type="number" id="winPointsInput" class="w-full p-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" min="0" value="20">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">獲勝玩家獲得的積分</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2">失敗積分</label>
+                        <input type="number" id="losePointsInput" class="w-full p-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white" min="0" value="5">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">失敗玩家扣除的額外積分</p>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition duration-200">
+                            保存
+                        </button>
+                        <button type="button" id="cancelSettings" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded transition duration-200">
+                            取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 訪客玩家模態框 -->
+    <div id="guestPlayerModal" class="hidden fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full fade-in">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-white">🎮 添加訪客玩家</h2>
+                    <button id="closeGuestPlayer" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        ✕
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center">
+                        <h3 class="text-lg font-semibold text-blue-700 dark:text-blue-300 mb-2">
+                            將添加：<span id="nextGuestName">訪客1</span>
+                        </h3>
+                        <p class="text-sm text-blue-600 dark:text-blue-400">
+                            系統會自動命名訪客玩家
+                        </p>
+                    </div>
+                    
+                    <div class="bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg">
+                        <p class="text-sm text-orange-700 dark:text-orange-300">
+                            💡 訪客玩家不會保存檔案，也不參與積分結算
+                        </p>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button id="confirmAddGuest" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded transition duration-200">
+                            添加訪客
+                        </button>
+                        <button id="cancelGuestPlayer" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded transition duration-200">
+                            取消
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 本地存儲管理
+        const Storage = {
+            getPlayers: () => JSON.parse(localStorage.getItem('werewolf_players') || '[]'),
+            savePlayers: (players) => localStorage.setItem('werewolf_players', JSON.stringify(players)),
+            getSettings: () => JSON.parse(localStorage.getItem('werewolf_settings') || '{"entryPoints": 10, "winPoints": 20, "losePoints": 5}'),
+            saveSettings: (settings) => localStorage.setItem('werewolf_settings', JSON.stringify(settings))
+        };
+
+        // 遊戲狀態管理
+        let gameState = {
+            players: [],
+            selectedPlayers: [],
+            currentPlayer: 0,
+            currentVoter: 0,
+            day: 1,
+            phase: 'setup',
+            nightActionIndex: 0,
+            votes: {},
+            selectedVote: null,
+            votingResult: null,
+            nightActions: {
+                guardTarget: null,
+                werewolfTarget: null,
+                witchSave: false,
+                witchPoison: null,
+                seerTarget: null,
+                witchUsedPotion: false,
+                witchUsedPoison: false
+            },
+            customConfig: null
+        };
+
+        // 角色定義
+        const roles = {
+            '狼人': { team: 'werewolf', description: '夜晚可以殺害一名玩家', emoji: '🐺' },
+            '村民': { team: 'villager', description: '善良的村民，沒有特殊能力', emoji: '👨' },
+            '預言家': { team: 'villager', description: '夜晚可以查驗一名玩家的身份', emoji: '🔮' },
+            '女巫': { team: 'villager', description: '擁有一瓶解藥和一瓶毒藥', emoji: '🧙‍♀️' },
+            '獵人': { team: 'villager', description: '死亡時可以開槍帶走一名玩家', emoji: '🏹' },
+            '守衛': { team: 'villager', description: '夜晚可以守護一名玩家', emoji: '🛡️' }
+        };
+
+        // 預設角色配置
+        const defaultRoleConfigs = {
+            6: { '狼人': 2, '村民': 2, '預言家': 1, '女巫': 1 },
+            7: { '狼人': 2, '村民': 3, '預言家': 1, '女巫': 1 },
+            8: { '狼人': 2, '村民': 3, '預言家': 1, '女巫': 1, '獵人': 1 },
+            9: { '狼人': 3, '村民': 3, '預言家': 1, '女巫': 1, '獵人': 1 },
+            10: { '狼人': 3, '村民': 3, '預言家': 1, '女巫': 1, '獵人': 1, '守衛': 1 },
+            11: { '狼人': 3, '村民': 4, '預言家': 1, '女巫': 1, '獵人': 1, '守衛': 1 },
+            12: { '狼人': 4, '村民': 4, '預言家': 1, '女巫': 1, '獵人': 1, '守衛': 1 }
+        };
+
+        let isSpeaking = false;
+
+        // TTS 語音合成 (帶同步功能)
+        function speak(text, lang = 'zh-HK') {
+            return new Promise((resolve) => {
+                if ('speechSynthesis' in window) {
+                    speechSynthesis.cancel();
+                    
+                    isSpeaking = true;
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = lang;
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1;
+                    
+                    const voices = speechSynthesis.getVoices();
+                    const cantonese = voices.find(voice => 
+                        voice.lang.includes('zh-HK') || 
+                        voice.lang.includes('yue') ||
+                        voice.name.toLowerCase().includes('cantonese')
+                    );
+                    
+                    if (cantonese) {
+                        utterance.voice = cantonese;
+                    }
+                    
+                    utterance.onend = () => {
+                        isSpeaking = false;
+                        resolve();
+                    };
+                    
+                    utterance.onerror = () => {
+                        isSpeaking = false;
+                        resolve();
+                    };
+                    
+                    speechSynthesis.speak(utterance);
+                } else {
+                    resolve();
+                }
+            });
+        }
+
+        // 玩家管理功能
+        function showPlayerManager() {
+            document.getElementById('playerManagerModal').classList.remove('hidden');
+            loadPlayerList();
+        }
+
+        function hidePlayerManager() {
+            document.getElementById('playerManagerModal').classList.add('hidden');
+        }
+
+        function loadPlayerList() {
+            const players = Storage.getPlayers();
+            const list = document.getElementById('playerManagerList');
+            
+            if (players.length === 0) {
+                list.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center">暫無玩家資料</p>';
+                return;
+            }
+            
+            list.innerHTML = players.map(player => `
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="flex items-center">
+                        <img src="${player.avatar || createDefaultAvatar(player.name)}" class="player-avatar mr-3" alt="">
+                        <div>
+                            <h3 class="font-semibold text-gray-800 dark:text-white">${player.name}</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">積分: ${player.score}</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="editPlayer('${player.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition duration-200">
+                            編輯
+                        </button>
+                        <button onclick="deletePlayer('${player.id}')" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition duration-200">
+                            刪除
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function createDefaultAvatar(name) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 80;
+            canvas.height = 80;
+            const ctx = canvas.getContext('2d');
+            
+            // 生成背景顏色
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+            const bgColor = colors[name.charCodeAt(0) % colors.length];
+            
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, 80, 80);
+            
+            // 添加文字
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 32px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(name.charAt(0), 40, 40);
+            
+            return canvas.toDataURL();
+        }
+
+        function showPlayerEdit(playerId = null) {
+            const modal = document.getElementById('playerEditModal');
+            const title = document.getElementById('playerEditTitle');
+            const form = document.getElementById('playerEditForm');
+            
+            form.dataset.playerId = playerId || '';
+            
+            if (playerId) {
+                const player = Storage.getPlayers().find(p => p.id === playerId);
+                title.textContent = '編輯玩家';
+                document.getElementById('playerNameInput').value = player.name;
+                document.getElementById('playerScoreInput').value = player.score;
+                document.getElementById('playerAvatarPreview').src = player.avatar || createDefaultAvatar(player.name);
+            } else {
+                title.textContent = '添加玩家';
+                form.reset();
+                document.getElementById('playerScoreInput').value = 100;
+                document.getElementById('playerAvatarPreview').src = '';
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function hidePlayerEdit() {
+            document.getElementById('playerEditModal').classList.add('hidden');
+        }
+
+        function editPlayer(playerId) {
+            showPlayerEdit(playerId);
+        }
+
+        function deletePlayer(playerId) {
+            showConfirmDialog('確定要刪除這個玩家嗎？', () => {
+                const players = Storage.getPlayers().filter(p => p.id !== playerId);
+                Storage.savePlayers(players);
+                loadPlayerList();
+                updatePlayerSelection();
+            });
+        }
+
+        function savePlayer(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const playerId = form.dataset.playerId;
+            const name = document.getElementById('playerNameInput').value.trim();
+            const score = parseInt(document.getElementById('playerScoreInput').value) || 100;
+            const avatarFile = document.getElementById('playerAvatarInput').files[0];
+            
+            if (!name) {
+                showAlert('請輸入玩家姓名');
+                return;
+            }
+            
+            const players = Storage.getPlayers();
+            
+            // 檢查重複名稱
+            const existingPlayer = players.find(p => p.name === name && p.id !== playerId);
+            if (existingPlayer) {
+                showAlert('玩家姓名已存在');
+                return;
+            }
+            
+            if (avatarFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    savePlayerData(playerId, name, score, e.target.result);
+                };
+                reader.readAsDataURL(avatarFile);
+            } else {
+                const existingAvatar = playerId ? players.find(p => p.id === playerId)?.avatar : null;
+                savePlayerData(playerId, name, score, existingAvatar || createDefaultAvatar(name));
+            }
+        }
+
+        function savePlayerData(playerId, name, score, avatar) {
+            const players = Storage.getPlayers();
+            
+            if (playerId) {
+                const index = players.findIndex(p => p.id === playerId);
+                players[index] = { ...players[index], name, score, avatar };
+            } else {
+                const newPlayer = {
+                    id: Date.now().toString(),
+                    name,
+                    score,
+                    avatar
+                };
+                players.push(newPlayer);
+            }
+            
+            Storage.savePlayers(players);
+            hidePlayerEdit();
+            loadPlayerList();
+            updatePlayerSelection();
+        }
+
+        // 設置管理
+        function showSettings() {
+            const settings = Storage.getSettings();
+            document.getElementById('entryPointsInput').value = settings.entryPoints;
+            document.getElementById('winPointsInput').value = settings.winPoints;
+            document.getElementById('losePointsInput').value = settings.losePoints;
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function hideSettings() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function saveSettings(event) {
+            event.preventDefault();
+            
+            const settings = {
+                entryPoints: parseInt(document.getElementById('entryPointsInput').value) || 10,
+                winPoints: parseInt(document.getElementById('winPointsInput').value) || 20,
+                losePoints: parseInt(document.getElementById('losePointsInput').value) || 5
+            };
+            
+            Storage.saveSettings(settings);
+            hideSettings();
+            showAlert('設置已保存');
+        }
+
+        // 玩家選擇功能（包含訪客支持）
+        function updatePlayerSelection() {
+            const players = Storage.getPlayers();
+            const grid = document.getElementById('playerSelectionGrid');
+            const requiredCount = parseInt(document.getElementById('playerCount').value);
+            
+            document.getElementById('requiredPlayerCount').textContent = requiredCount;
+            
+            // 合併正式玩家和訪客玩家
+            const allPlayerItems = [];
+            
+            // 添加正式玩家
+            players.forEach(player => {
+                allPlayerItems.push({
+                    id: player.id,
+                    name: player.name,
+                    avatar: player.avatar || createDefaultAvatar(player.name),
+                    info: `${player.score}分`,
+                    isGuest: false
+                });
+            });
+            
+            // 添加已選中的訪客玩家
+            gameState.selectedPlayers.forEach(playerId => {
+                if (playerId.startsWith('guest_')) {
+                    const guestData = gameState.guestPlayers?.[playerId];
+                    if (guestData) {
+                        allPlayerItems.push({
+                            id: guestData.id,
+                            name: guestData.name,
+                            avatar: guestData.avatar,
+                            info: '訪客',
+                            isGuest: true
+                        });
+                    }
+                }
+            });
+            
+            if (allPlayerItems.length === 0) {
+                grid.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center col-span-2">請先添加玩家資料或訪客</p>';
+                return;
+            }
+            
+            grid.innerHTML = allPlayerItems.map(player => `
+                <div class="player-selection-item flex items-center p-2 border border-gray-300 dark:border-gray-600 rounded cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${gameState.selectedPlayers.includes(player.id) ? 'bg-blue-100 dark:bg-blue-800 border-blue-500' : ''}" 
+                     data-player-id="${player.id}">
+                    <img src="${player.avatar}" class="w-8 h-8 rounded-full mr-2" alt="">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">${player.name} ${player.isGuest ? '👤' : ''}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">${player.info}</p>
+                    </div>
+                    ${player.isGuest ? `
+                        <button onclick="removeGuestPlayer('${player.id}')" class="ml-2 text-red-500 hover:text-red-700 text-xs" title="移除訪客">
+                            ✕
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+            
+            // 添加點擊事件
+            grid.querySelectorAll('.player-selection-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    // 如果點擊的是移除按鈕，不執行選擇邏輯
+                    if (e.target.tagName === 'BUTTON') {
+                        return;
+                    }
+                    const playerId = this.dataset.playerId;
+                    togglePlayerSelection(playerId);
+                });
+            });
+            
+            updateSelectedPlayerCount();
+        }
+
+        function togglePlayerSelection(playerId) {
+            const requiredCount = parseInt(document.getElementById('playerCount').value);
+            const index = gameState.selectedPlayers.indexOf(playerId);
+            
+            if (index === -1) {
+                if (gameState.selectedPlayers.length < requiredCount) {
+                    gameState.selectedPlayers.push(playerId);
+                }
+            } else {
+                gameState.selectedPlayers.splice(index, 1);
+            }
+            
+            updatePlayerSelection();
+        }
+
+        function updateSelectedPlayerCount() {
+            document.getElementById('selectedPlayerCount').textContent = gameState.selectedPlayers.length;
+        }
+
+        function autoSelectPlayers() {
+            const players = Storage.getPlayers();
+            const requiredCount = parseInt(document.getElementById('playerCount').value);
+            
+            if (players.length < requiredCount) {
+                showAlert(`玩家數量不足，需要${requiredCount}人，目前只有${players.length}人`);
+                return;
+            }
+            
+            // 隨機選擇玩家
+            const shuffled = [...players].sort(() => Math.random() - 0.5);
+            gameState.selectedPlayers = shuffled.slice(0, requiredCount).map(p => p.id);
+            updatePlayerSelection();
+        }
+
+        // 初始化遊戲
+        function initGame() {
+            updateRoleConfig();
+            updatePlayerSelection();
+            setupCustomConfigEvents();
+            setupEventListeners();
+        }
+
+        // 設置事件監聽器
+        function setupEventListeners() {
+            // 玩家管理
+            document.getElementById('showPlayerManager').addEventListener('click', showPlayerManager);
+            document.getElementById('closePlayerManager').addEventListener('click', hidePlayerManager);
+            document.getElementById('addPlayerBtn').addEventListener('click', () => showPlayerEdit());
+            document.getElementById('playerEditForm').addEventListener('submit', savePlayer);
+            document.getElementById('cancelPlayerEdit').addEventListener('click', hidePlayerEdit);
+            document.getElementById('closePlayerEdit').addEventListener('click', hidePlayerEdit);
+            
+            // 頭像預覽
+            document.getElementById('playerAvatarInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('playerAvatarPreview').src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // 設置管理
+            document.getElementById('showSettings').addEventListener('click', showSettings);
+            document.getElementById('closeSettings').addEventListener('click', hideSettings);
+            document.getElementById('settingsForm').addEventListener('submit', saveSettings);
+            document.getElementById('cancelSettings').addEventListener('click', hideSettings);
+            
+            // 訪客玩家
+            document.getElementById('addGuestPlayer').addEventListener('click', showGuestPlayer);
+            document.getElementById('closeGuestPlayer').addEventListener('click', hideGuestPlayer);
+            document.getElementById('confirmAddGuest').addEventListener('click', addGuestPlayer);
+            document.getElementById('cancelGuestPlayer').addEventListener('click', hideGuestPlayer);
+            
+            // 玩家選擇
+            document.getElementById('autoSelectPlayers').addEventListener('click', autoSelectPlayers);
+            document.getElementById('playerCount').addEventListener('change', function() {
+                gameState.selectedPlayers = [];
+                updateRoleConfig();
+                updatePlayerSelection();
+            });
+            
+            // 遊戲控制
+            document.getElementById('startGame').addEventListener('click', startGame);
+            document.getElementById('nextPlayer').addEventListener('click', nextPlayer);
+            document.getElementById('nextAction').addEventListener('click', nextNightAction);
+            document.getElementById('startVoting').addEventListener('click', startVoting);
+            document.getElementById('skipVote').addEventListener('click', skipVote);
+            document.getElementById('nextVoter').addEventListener('click', nextVoter);
+            document.getElementById('finishLastWords').addEventListener('click', finishLastWords);
+            document.getElementById('restartGame').addEventListener('click', restartGame);
+            document.getElementById('forceEndGame').addEventListener('click', forceEndGame);
+            
+            // 角色卡片
+            let tapCount = 0;
+            let tapTimer = null;
+            document.getElementById('roleCard').addEventListener('click', function() {
+                tapCount++;
+                if (tapCount === 1) {
+                    tapTimer = setTimeout(() => {
+                        tapCount = 0;
+                    }, 300);
+                } else if (tapCount === 2) {
+                    clearTimeout(tapTimer);
+                    tapCount = 0;
+                    toggleRoleCard();
+                }
+            });
+        }
+
+        // 設置自訂配置事件
+        function setupCustomConfigEvents() {
+            document.getElementById('useCustomConfig').addEventListener('click', showCustomConfig);
+            document.getElementById('applyCustomConfig').addEventListener('click', applyCustomConfig);
+            document.getElementById('cancelCustomConfig').addEventListener('click', hideCustomConfig);
+        }
+
+        // 其他遊戲功能保持原樣，但需要修改投票結果處理
+        function processVotingResult() {
+            let maxVotes = 0;
+            let votedOut = [];
+            
+            for (const [playerId, votes] of Object.entries(gameState.votes)) {
+                if (votes > maxVotes) {
+                    maxVotes = votes;
+                    votedOut = [parseInt(playerId)];
+                } else if (votes === maxVotes && votes > 0) {
+                    votedOut.push(parseInt(playerId));
+                }
+            }
+            
+            let resultMessage = '';
+            if (votedOut.length === 1 && maxVotes > 0) {
+                const players = Storage.getPlayers();
+                const playerData = players.find(p => p.id === gameState.selectedPlayers[votedOut[0] - 1]);
+                resultMessage = `投票結果：${playerData?.name || votedOut[0] + '號'}玩家被淘汰`;
+                gameState.votingResult = votedOut[0];
+            } else {
+                resultMessage = '投票平票，本輪無人被淘汰';
+                gameState.votingResult = null;
+            }
+            
+            // 隱藏投票界面，顯示投票結果並播報
+            document.getElementById('votingPhase').classList.add('hidden');
+            
+            // 播報投票結果，必須播報完成才能繼續
+            speak(resultMessage).then(() => {
+                if (gameState.votingResult) {
+                    // 有人被投票出局，進入遺言階段
+                    showLastWordsPhase();
+                } else {
+                    // 無人出局，直接進入下一天
+                    continueToNextDay();
+                }
+            });
+        }
+
+        function showLastWordsPhase() {
+            const votedOutIndex = gameState.votingResult - 1;
+            const players = Storage.getPlayers();
+            const playerData = players.find(p => p.id === gameState.selectedPlayers[votedOutIndex]);
+            
+            document.getElementById('lastWordsPhase').classList.remove('hidden');
+            document.getElementById('lastWordsPlayerName').textContent = playerData?.name || `${gameState.votingResult}號`;
+            document.getElementById('lastWordsPlayerAvatar').src = playerData?.avatar || createDefaultAvatar(playerData?.name || '');
+            
+            speak(`請${playerData?.name || gameState.votingResult + '號'}玩家說遺言`);
+        }
+
+        function finishLastWords() {
+            // 標記玩家死亡
+            const player = gameState.players.find(p => p.id === gameState.votingResult);
+            if (player) {
+                player.alive = false;
+            }
+            
+            document.getElementById('lastWordsPhase').classList.add('hidden');
+            
+            if (checkGameEnd()) {
+                return;
+            }
+            
+            continueToNextDay();
+        }
+
+        // 結算積分
+        function calculateScores(winningTeam) {
+            const settings = Storage.getSettings();
+            const players = Storage.getPlayers();
+            const scoreChanges = [];
+            
+            gameState.players.forEach((gamePlayer, index) => {
+                const playerId = gameState.selectedPlayers[index];
+                const playerData = players.find(p => p.id === playerId);
+                
+                if (playerData) {
+                    let scoreChange = -settings.entryPoints; // 入場費
+                    
+                    if (gamePlayer.team === winningTeam) {
+                        scoreChange += settings.winPoints; // 獲勝獎勵
+                    } else {
+                        scoreChange -= settings.losePoints; // 失敗懲罰
+                    }
+                    
+                    playerData.score = Math.max(0, playerData.score + scoreChange);
+                    scoreChanges.push({
+                        name: playerData.name,
+                        role: gamePlayer.role,
+                        change: scoreChange,
+                        newScore: playerData.score
+                    });
+                }
+            });
+            
+            Storage.savePlayers(players);
+            return scoreChanges;
+        }
+
+        // 修改結束遊戲函數
+        function endGame(winner) {
+            gameState.phase = 'ended';
+            
+            document.getElementById('gamePlay').classList.add('hidden');
+            document.getElementById('gameEnd').classList.remove('hidden');
+            
+            const winningTeam = winner.includes('好人') ? 'villager' : 'werewolf';
+            const scoreChanges = calculateScores(winningTeam);
+            
+            document.getElementById('winnerAnnouncement').innerHTML = 
+                `<h3 class="text-xl font-bold text-green-600 mb-2">${winner}勝利！</h3>`;
+            
+            const finalRoles = document.getElementById('finalRoles');
+            finalRoles.innerHTML = scoreChanges.map(change => `
+                <div class="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-700 rounded">
+                    <div class="flex items-center">
+                        <span class="font-semibold mr-2">${change.name}</span>
+                        <span class="text-blue-600 dark:text-blue-400">${roles[change.role].emoji} ${change.role}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm ${change.change >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${change.change >= 0 ? '+' : ''}${change.change}
+                        </span>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            總分: ${change.newScore}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            speak(`遊戲結束，${winner}勝利`);
+        }
+
+        // 其他函數保持原樣，只需要補充剩餘的核心遊戲邏輯
+        function showCustomConfig() {
+            document.getElementById('customRoleConfig').classList.remove('hidden');
+            updateRoleInputs();
+        }
+
+        function hideCustomConfig() {
+            document.getElementById('customRoleConfig').classList.add('hidden');
+        }
+
+        function updateRoleInputs() {
+            const roleInputs = document.getElementById('roleInputs');
+            roleInputs.innerHTML = '';
+            
+            Object.keys(roles).forEach(role => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center';
+                div.innerHTML = `
+                    <span class="text-gray-700 dark:text-gray-300">${roles[role].emoji} ${role}</span>
+                    <input type="number" min="0" max="12" value="0" 
+                           class="w-16 p-2 text-base border border-gray-300 dark:border-gray-600 rounded 
+                                  bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                           data-role="${role}">
+                `;
+                roleInputs.appendChild(div);
+            });
+            
+            roleInputs.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', updateTotalPlayers);
+            });
+        }
+
+        function updateTotalPlayers() {
+            const inputs = document.querySelectorAll('#roleInputs input');
+            let total = 0;
+            inputs.forEach(input => {
+                total += parseInt(input.value) || 0;
+            });
+            document.getElementById('totalPlayers').textContent = total;
+        }
+
+        function applyCustomConfig() {
+            const inputs = document.querySelectorAll('#roleInputs input');
+            const config = {};
+            let total = 0;
+            
+            inputs.forEach(input => {
+                const role = input.getAttribute('data-role');
+                const count = parseInt(input.value) || 0;
+                if (count > 0) {
+                    config[role] = count;
+                    total += count;
+                }
+            });
+            
+            if (total < 3) {
+                showAlert('玩家總數不能少於3人');
+                return;
+            }
+            
+            const werewolfCount = config['狼人'] || 0;
+            const villagerCount = total - werewolfCount;
+            
+            if (werewolfCount === 0) {
+                showAlert('必須至少有1個狼人');
+                return;
+            }
+            
+            if (werewolfCount >= villagerCount) {
+                showAlert('狼人數量不能大於等於好人數量');
+                return;
+            }
+            
+            gameState.customConfig = config;
+            document.getElementById('playerCount').value = Math.min(total, 12);
+            gameState.selectedPlayers = [];
+            updateRoleConfig();
+            updatePlayerSelection();
+            hideCustomConfig();
+        }
+
+        function updateRoleConfig() {
+            const playerCount = parseInt(document.getElementById('playerCount').value);
+            const config = gameState.customConfig || defaultRoleConfigs[playerCount];
+            const configDiv = document.getElementById('roleConfig');
+            
+            let configText = '';
+            for (const [role, count] of Object.entries(config)) {
+                configText += `${roles[role].emoji} ${role} ${count}人, `;
+            }
+            configText = configText.slice(0, -2);
+            
+            configDiv.textContent = configText;
+        }
+
+        function startGame() {
+            const requiredCount = parseInt(document.getElementById('playerCount').value);
+            
+            if (gameState.selectedPlayers.length !== requiredCount) {
+                showAlert(`請選擇${requiredCount}名玩家`);
+                return;
+            }
+            
+            const config = gameState.customConfig || defaultRoleConfigs[requiredCount];
+            
+            if (!config) {
+                showAlert('請選擇有效的玩家數量');
+                return;
+            }
+            
+            // 生成角色列表
+            const roleList = [];
+            for (const [role, count] of Object.entries(config)) {
+                for (let i = 0; i < count; i++) {
+                    roleList.push(role);
+                }
+            }
+            
+            // 隨機分配角色
+            for (let i = roleList.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [roleList[i], roleList[j]] = [roleList[j], roleList[i]];
+            }
+            
+            // 初始化玩家
+            gameState.players = roleList.map((role, index) => ({
+                id: index + 1,
+                role: role,
+                team: roles[role].team,
+                alive: true,
+                protected: false
+            }));
+            
+            // 重置遊戲狀態
+            gameState.nightActions = {
+                guardTarget: null,
+                werewolfTarget: null,
+                witchSave: false,
+                witchPoison: null,
+                seerTarget: null,
+                witchUsedPotion: false,
+                witchUsedPoison: false
+            };
+            
+            gameState.phase = 'roleAssignment';
+            gameState.currentPlayer = 0;
+            
+            document.getElementById('setup').classList.add('hidden');
+            document.getElementById('roleAssignment').classList.remove('hidden');
+            
+            updateRoleAssignment();
+            speak('遊戲開始，請將手機交給第一位玩家查看角色');
+        }
+
+        function updateRoleAssignment() {
+            const players = Storage.getPlayers();
+            const playerId = gameState.selectedPlayers[gameState.currentPlayer];
+            const playerData = players.find(p => p.id === playerId);
+            
+            document.getElementById('currentPlayerText').textContent = playerData?.name || `${gameState.currentPlayer + 1}號`;
+            document.getElementById('currentPlayerAvatar').src = playerData?.avatar || createDefaultAvatar(playerData?.name || '');
+            
+            const roleCard = document.getElementById('roleCard');
+            roleCard.className = 'role-card role-hidden double-tap w-full h-48 rounded-lg flex items-center justify-center mb-4 cursor-pointer';
+            roleCard.innerHTML = '<p class="text-lg font-semibold">雙擊查看角色</p>';
+        }
+
+        function toggleRoleCard() {
+            const roleCard = document.getElementById('roleCard');
+            const player = gameState.players[gameState.currentPlayer];
+            
+            if (roleCard.classList.contains('role-hidden')) {
+                roleCard.classList.remove('role-hidden');
+                roleCard.classList.add('role-revealed');
+                roleCard.innerHTML = `
+                    <div class="text-center">
+                        <h3 class="text-3xl mb-2">${roles[player.role].emoji}</h3>
+                        <h3 class="text-2xl font-bold mb-2">${player.role}</h3>
+                        <p class="text-sm">${roles[player.role].description}</p>
+                    </div>
+                `;
+            } else {
+                roleCard.classList.remove('role-revealed');
+                roleCard.classList.add('role-hidden');
+                roleCard.innerHTML = '<p class="text-lg font-semibold">雙擊查看角色</p>';
+            }
+        }
+
+        function nextPlayer() {
+            gameState.currentPlayer++;
+            
+            if (gameState.currentPlayer >= gameState.players.length) {
+                startNightPhase();
+            } else {
+                updateRoleAssignment();
+                const players = Storage.getPlayers();
+                const playerId = gameState.selectedPlayers[gameState.currentPlayer];
+                const playerData = players.find(p => p.id === playerId);
+                speak(`請將手機交給${playerData?.name || (gameState.currentPlayer + 1) + '號'}玩家`);
+            }
+        }
+
+        async function startNightPhase() {
+            gameState.phase = 'night';
+            gameState.nightActionIndex = 0;
+            
+            document.getElementById('roleAssignment').classList.add('hidden');
+            document.getElementById('gamePlay').classList.remove('hidden');
+            
+            updatePlayerList();
+            
+            await speak('天黑了，請所有玩家閉眼');
+            updateNightAction();
+        }
+
+        function updatePlayerList() {
+            const playerList = document.getElementById('playerList');
+            const players = Storage.getPlayers();
+            playerList.innerHTML = '';
+            
+            gameState.players.forEach((player, index) => {
+                const playerId = gameState.selectedPlayers[index];
+                const playerData = players.find(p => p.id === playerId);
+                
+                const playerDiv = document.createElement('div');
+                playerDiv.className = `p-2 rounded text-center text-sm flex items-center ${
+                    player.alive 
+                        ? 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100' 
+                        : 'bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100'
+                }`;
+                
+                playerDiv.innerHTML = `
+                    <img src="${playerData?.avatar || createDefaultAvatar(playerData?.name || '')}" class="w-6 h-6 rounded-full mr-2" alt="">
+                    <span>${playerData?.name || (index + 1) + '號'} ${player.alive ? '存活' : '死亡'}</span>
+                `;
+                playerList.appendChild(playerDiv);
+            });
+        }
+
+        // 補充其餘的遊戲邏輯函數（夜晚行動、投票等）
+        // 由於篇幅限制，這裡只展示主要的新功能實現
+        // 其他函數如 generateNightSequence, updateNightAction 等保持原有邏輯
+
+        function showAlert(message) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4 fade-in">
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">${message}</p>
+                    <div class="flex justify-end">
+                        <button class="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded" 
+                                onclick="this.closest('.fixed').remove()">確定</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function showConfirmDialog(message, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4 fade-in">
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">${message}</p>
+                    <div class="flex justify-end space-x-3">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">取消</button>
+                        <button class="confirm-btn px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded">確定</button>
+                    </div>
+                </div>
+            `;
+            
+            const cancelBtn = modal.querySelector('.cancel-btn');
+            const confirmBtn = modal.querySelector('.confirm-btn');
+            
+            cancelBtn.addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+            
+            confirmBtn.addEventListener('click', () => {
+                document.body.removeChild(modal);
+                onConfirm();
+            });
+            
+            document.body.appendChild(modal);
+        }
+
+        function restartGame() {
+            // 停止語音合成
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+            }
+            
+            // 清除任何計時器
+            if (autoTimer) {
+                clearTimeout(autoTimer);
+                autoTimer = null;
+            }
+            
+            // 重置遊戲狀態
+            gameState = {
+                players: [],
+                selectedPlayers: [],
+                guestPlayers: {},
+                currentPlayer: 0,
+                currentVoter: 0,
+                day: 1,
+                phase: 'setup',
+                nightActionIndex: 0,
+                votes: {},
+                selectedVote: null,
+                votingResult: null,
+                nightActions: {
+                    guardTarget: null,
+                    werewolfTarget: null,
+                    witchSave: false,
+                    witchPoison: null,
+                    seerTarget: null,
+                    witchUsedPotion: false,
+                    witchUsedPoison: false
+                },
+                customConfig: null
+            };
+            
+            // 隱藏所有遊戲階段界面
+            document.getElementById('gameEnd').classList.add('hidden');
+            document.getElementById('gamePlay').classList.add('hidden');
+            document.getElementById('roleAssignment').classList.add('hidden');
+            document.getElementById('lastWordsPhase').classList.add('hidden');
+            document.getElementById('votingPhase').classList.add('hidden');
+            document.getElementById('dayDiscussion').classList.add('hidden');
+            document.getElementById('nightActions').classList.add('hidden');
+            
+            // 重置夜晚行動相關界面
+            document.getElementById('roleActionPanel').classList.add('hidden');
+            document.getElementById('autoTimer').classList.add('hidden');
+            document.getElementById('nextAction').classList.remove('hidden');
+            document.getElementById('actionText').textContent = '請所有玩家閉眼';
+            
+            // 顯示設置界面
+            document.getElementById('setup').classList.remove('hidden');
+            
+            // 重置界面狀態
+            document.getElementById('dayCount').textContent = '1';
+            document.getElementById('gamePhase').textContent = '夜晚階段';
+            
+            // 重新更新配置和玩家選擇
+            updateRoleConfig();
+            updatePlayerSelection();
+        }
+
+        function forceEndGame() {
+            showConfirmDialog('確定要強制結束遊戲嗎？', () => {
+                endGame('遊戲強制結束');
+            });
+        }
+
+        // 訪客玩家功能
+        function showGuestPlayer() {
+            // 更新下一個訪客名稱顯示
+            const nextGuestNumber = getNextGuestNumber();
+            document.getElementById('nextGuestName').textContent = `訪客${nextGuestNumber}`;
+            document.getElementById('guestPlayerModal').classList.remove('hidden');
+        }
+
+        function hideGuestPlayer() {
+            document.getElementById('guestPlayerModal').classList.add('hidden');
+        }
+
+        function getNextGuestNumber() {
+            const players = Storage.getPlayers();
+            const existingGuestNumbers = [];
+            
+            // 收集已存在的訪客編號
+            players.forEach(player => {
+                if (player.name.startsWith('訪客')) {
+                    const number = parseInt(player.name.replace('訪客', ''));
+                    if (!isNaN(number)) {
+                        existingGuestNumbers.push(number);
+                    }
+                }
+            });
+            
+            // 收集當前選中的訪客編號
+            gameState.selectedPlayers.forEach(playerId => {
+                if (playerId.startsWith('guest_')) {
+                    const guestData = gameState.guestPlayers?.[playerId];
+                    if (guestData && guestData.name.startsWith('訪客')) {
+                        const number = parseInt(guestData.name.replace('訪客', ''));
+                        if (!isNaN(number)) {
+                            existingGuestNumbers.push(number);
+                        }
+                    }
+                }
+            });
+            
+            // 找到最小的可用編號
+            let nextNumber = 1;
+            while (existingGuestNumbers.includes(nextNumber)) {
+                nextNumber++;
+            }
+            
+            return nextNumber;
+        }
+
+        function addGuestPlayer() {
+            const requiredCount = parseInt(document.getElementById('playerCount').value);
+            if (gameState.selectedPlayers.length >= requiredCount) {
+                showAlert('已達到最大玩家數量');
+                return;
+            }
+            
+            // 自動生成訪客名稱
+            const guestNumber = getNextGuestNumber();
+            const name = `訪客${guestNumber}`;
+            
+            // 創建訪客玩家ID
+            const guestId = `guest_${Date.now()}`;
+            gameState.selectedPlayers.push(guestId);
+            
+            // 將訪客資料臨時存儲在 gameState 中
+            if (!gameState.guestPlayers) {
+                gameState.guestPlayers = {};
+            }
+            gameState.guestPlayers[guestId] = {
+                id: guestId,
+                name: name,
+                avatar: createDefaultAvatar(name),
+                isGuest: true
+            };
+            
+            hideGuestPlayer();
+            updatePlayerSelection();
+        }
+
+        // 獲取玩家資料（包括訪客）
+        function getPlayerData(playerId) {
+            if (playerId.startsWith('guest_')) {
+                return gameState.guestPlayers?.[playerId] || null;
+            } else {
+                const players = Storage.getPlayers();
+                return players.find(p => p.id === playerId) || null;
+            }
+        }
+
+        function removeGuestPlayer(guestId) {
+            // 從選中列表移除
+            const index = gameState.selectedPlayers.indexOf(guestId);
+            if (index !== -1) {
+                gameState.selectedPlayers.splice(index, 1);
+            }
+            
+            // 從訪客資料移除
+            if (gameState.guestPlayers) {
+                delete gameState.guestPlayers[guestId];
+            }
+            
+            updatePlayerSelection();
+        }
+
+        // 補充核心遊戲邏輯函數
+        function generateNightSequence() {
+            const sequence = [{ text: '請所有玩家閉眼', speak: '請所有玩家閉眼', role: null, auto: true }];
+            
+            const roleOrder = ['守衛', '狼人', '女巫', '預言家'];
+            
+            roleOrder.forEach(role => {
+                if (hasRole(role)) {
+                    if (role === '狼人') {
+                        sequence.push(
+                            { text: '狼人請睜眼，選擇要殺的人', speak: '狼人請睜眼，選擇要殺嘅人', role: '狼人', auto: false },
+                            { text: '狼人請閉眼', speak: '狼人請閉眼', role: null, auto: true }
+                        );
+                    } else if (role === '女巫') {
+                        sequence.push(
+                            { text: '女巫請睜眼', speak: '女巫請睜眼', role: '女巫', auto: false },
+                            { text: '女巫請閉眼', speak: '女巫請閉眼', role: null, auto: true }
+                        );
+                    } else if (role === '預言家') {
+                        sequence.push(
+                            { text: '預言家請睜眼，選擇要查驗的人', speak: '預言家請睜眼，選擇要查驗嘅人', role: '預言家', auto: false },
+                            { text: '預言家請閉眼', speak: '預言家請閉眼', role: null, auto: true }
+                        );
+                    } else if (role === '守衛') {
+                        sequence.push(
+                            { text: '守衛請睜眼，選擇要保護的人', speak: '守衛請睜眼，選擇要保護嘅人', role: '守衛', auto: false },
+                            { text: '守衛請閉眼', speak: '守衛請閉眼', role: null, auto: true }
+                        );
+                    }
+                }
+            });
+            
+            return sequence;
+        }
+
+        function hasRole(role) {
+            return gameState.players.some(p => p.role === role);
+        }
+
+        function hasRoleAlive(role) {
+            return gameState.players.some(p => p.role === role && p.alive);
+        }
+
+        let autoTimer = null;
+
+        async function updateNightAction() {
+            const nightSequence = generateNightSequence();
+            
+            if (gameState.nightActionIndex >= nightSequence.length) {
+                startDayPhase();
+                return;
+            }
+            
+            const action = nightSequence[gameState.nightActionIndex];
+            document.getElementById('actionText').textContent = action.text;
+            
+            if (autoTimer) {
+                clearTimeout(autoTimer);
+                autoTimer = null;
+            }
+            
+            const roleActionPanel = document.getElementById('roleActionPanel');
+            const autoTimerDiv = document.getElementById('autoTimer');
+            const nextActionBtn = document.getElementById('nextAction');
+            
+            roleActionPanel.classList.add('hidden');
+            autoTimerDiv.classList.add('hidden');
+            nextActionBtn.classList.add('hidden');
+            
+            await speak(action.speak);
+            
+            if (action.role && hasRoleAlive(action.role)) {
+                showRoleActionPanel(action.role);
+                roleActionPanel.classList.remove('hidden');
+                nextActionBtn.classList.remove('hidden');
+            } else {
+                if (action.auto) {
+                    autoTimerDiv.classList.remove('hidden');
+                    startCountdown(2);
+                } else {
+                    nextActionBtn.classList.remove('hidden');
+                }
+            }
+        }
+
+        function startCountdown(seconds) {
+            let countdown = seconds;
+            document.getElementById('countdown').textContent = countdown;
+            
+            autoTimer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    document.getElementById('countdown').textContent = countdown;
+                } else {
+                    clearInterval(autoTimer);
+                    autoTimer = null;
+                    document.getElementById('autoTimer').classList.add('hidden');
+                    document.getElementById('nextAction').classList.remove('hidden');
+                    nextNightAction();
+                }
+            }, 1000);
+        }
+
+        function showRoleActionPanel(role) {
+            const panel = document.getElementById('roleActionPanel');
+            const alivePlayers = gameState.players.filter(p => p.alive);
+            
+            switch (role) {
+                case '守衛':
+                    panel.innerHTML = `
+                        <h4 class="text-lg font-semibold mb-3 text-center">🛡️ 守衛請選擇要保護的玩家</h4>
+                        <div class="grid grid-cols-3 gap-2" id="guardTargets">
+                            ${alivePlayers.map(p => `
+                                <button class="action-button bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded" 
+                                        onclick="setGuardTarget(${p.id})">${p.id}號</button>
+                            `).join('')}
+                        </div>
+                        <button class="mt-3 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded" 
+                                onclick="setGuardTarget(null)">不保護任何人</button>
+                    `;
+                    break;
+                    
+                case '狼人':
+                    panel.innerHTML = `
+                        <h4 class="text-lg font-semibold mb-3 text-center">🐺 狼人請選擇要殺害的玩家</h4>
+                        <div class="grid grid-cols-3 gap-2" id="werewolfTargets">
+                            ${alivePlayers.map(p => `
+                                <button class="action-button bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded" 
+                                        onclick="setWerewolfTarget(${p.id})">${p.id}號</button>
+                            `).join('')}
+                        </div>
+                    `;
+                    break;
+                    
+                case '女巫':
+                    const witchInfo = gameState.nightActions.werewolfTarget ? 
+                        `${gameState.nightActions.werewolfTarget}號玩家被狼人殺害` : '沒有人被狼人殺害';
+                    panel.innerHTML = `
+                        <h4 class="text-lg font-semibold mb-3 text-center">🧙‍♀️ 女巫的回合</h4>
+                        <p class="text-center mb-3">${witchInfo}</p>
+                        <div class="space-y-2">
+                            ${!gameState.nightActions.witchUsedPotion ? `
+                                <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded" 
+                                        onclick="showSaveTargets()">使用解藥救人</button>
+                            ` : ''}
+                            ${!gameState.nightActions.witchUsedPoison ? `
+                                <button class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded" 
+                                        onclick="showPoisonTargets()">使用毒藥</button>
+                            ` : ''}
+                            <button class="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded" 
+                                    onclick="setWitchAction('skip')">跳過</button>
+                        </div>
+                        <div id="saveTargets" class="hidden mt-3">
+                            <p class="text-center mb-2">選擇要救的玩家：</p>
+                            <div class="grid grid-cols-3 gap-2">
+                                ${alivePlayers.map(p => `
+                                    <button class="action-button bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded" 
+                                            onclick="setWitchSaveTarget(${p.id})">${p.id}號</button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div id="poisonTargets" class="hidden mt-3">
+                            <p class="text-center mb-2">選擇要毒殺的玩家：</p>
+                            <div class="grid grid-cols-3 gap-2">
+                                ${alivePlayers.map(p => `
+                                    <button class="action-button bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded" 
+                                            onclick="setWitchPoison(${p.id})">${p.id}號</button>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case '預言家':
+                    panel.innerHTML = `
+                        <h4 class="text-lg font-semibold mb-3 text-center">🔮 預言家請選擇要查驗的玩家</h4>
+                        <div class="grid grid-cols-3 gap-2" id="seerTargets">
+                            ${alivePlayers.map(p => `
+                                <button class="action-button bg-purple-500 hover:bg-purple-600 text-white py-2 px-3 rounded" 
+                                        onclick="setSeerTarget(${p.id})">${p.id}號</button>
+                            `).join('')}
+                        </div>
+                        <div id="seerResult" class="hidden mt-3 p-3 bg-yellow-100 dark:bg-yellow-800 rounded text-center">
+                            <!-- 查驗結果 -->
+                        </div>
+                    `;
+                    break;
+            }
+        }
+
+        function setGuardTarget(playerId) {
+            gameState.nightActions.guardTarget = playerId;
+            document.getElementById('roleActionPanel').classList.add('hidden');
+        }
+
+        function setWerewolfTarget(playerId) {
+            gameState.nightActions.werewolfTarget = playerId;
+            document.getElementById('roleActionPanel').classList.add('hidden');
+        }
+
+        function showSaveTargets() {
+            document.getElementById('saveTargets').classList.remove('hidden');
+        }
+
+        function setWitchSaveTarget(playerId) {
+            gameState.nightActions.witchSave = playerId;
+            gameState.nightActions.witchUsedPotion = true;
+            document.getElementById('roleActionPanel').classList.add('hidden');
+        }
+
+        function showPoisonTargets() {
+            document.getElementById('poisonTargets').classList.remove('hidden');
+        }
+
+        function setWitchPoison(playerId) {
+            gameState.nightActions.witchPoison = playerId;
+            gameState.nightActions.witchUsedPoison = true;
+            document.getElementById('roleActionPanel').classList.add('hidden');
+        }
+
+        function setWitchAction(action) {
+            if (action === 'skip') {
+                document.getElementById('roleActionPanel').classList.add('hidden');
+            }
+        }
+
+        function setSeerTarget(playerId) {
+            if (gameState.nightActions.seerTarget) {
+                return;
+            }
+            
+            gameState.nightActions.seerTarget = playerId;
+            const target = gameState.players.find(p => p.id === playerId);
+            const result = target.team === 'werewolf' ? '壞人' : '好人';
+            
+            const buttons = document.querySelectorAll('#seerTargets .action-button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+            
+            document.getElementById('seerResult').classList.remove('hidden');
+            document.getElementById('seerResult').textContent = `${playerId}號是${result}`;
+        }
+
+        function nextNightAction() {
+            gameState.nightActionIndex++;
+            updateNightAction();
+        }
+
+        function startDayPhase() {
+            gameState.phase = 'day';
+            
+            const deaths = [];
+            
+            if (gameState.nightActions.werewolfTarget) {
+                const target = gameState.nightActions.werewolfTarget;
+                if (target !== gameState.nightActions.guardTarget) {
+                    if (gameState.nightActions.witchSave !== target) {
+                        deaths.push(target);
+                    }
+                }
+            }
+            
+            if (gameState.nightActions.witchPoison) {
+                deaths.push(gameState.nightActions.witchPoison);
+            }
+            
+            let deathMessage = '';
+            if (deaths.length === 0) {
+                deathMessage = '昨晚非常平安，沒有人死亡';
+            } else {
+                deaths.forEach(playerId => {
+                    const player = gameState.players.find(p => p.id === playerId);
+                    player.alive = false;
+                });
+                
+                const deathList = deaths.map(id => `${id}號`).join('、');
+                deathMessage = `昨晚，${deathList}玩家死亡了`;
+            }
+            
+            document.getElementById('deathAnnouncement').textContent = deathMessage;
+            speak(deathMessage);
+            
+            const deadHunter = deaths.find(id => {
+                const player = gameState.players.find(p => p.id === id);
+                return player && player.role === '獵人';
+            });
+            
+            if (deadHunter) {
+                showHunterAction();
+            } else {
+                document.getElementById('nightActions').classList.add('hidden');
+                document.getElementById('dayDiscussion').classList.remove('hidden');
+                document.getElementById('hunterAction').classList.add('hidden');
+            }
+            
+            updatePlayerList();
+            
+            gameState.nightActions = {
+                guardTarget: null,
+                werewolfTarget: null,
+                witchSave: false,
+                witchPoison: null,
+                seerTarget: null,
+                witchUsedPotion: gameState.nightActions.witchUsedPotion,
+                witchUsedPoison: gameState.nightActions.witchUsedPoison
+            };
+            
+            if (!deadHunter && checkGameEnd()) {
+                return;
+            }
+        }
+
+        function showHunterAction() {
+            document.getElementById('nightActions').classList.add('hidden');
+            document.getElementById('dayDiscussion').classList.remove('hidden');
+            document.getElementById('hunterAction').classList.remove('hidden');
+            
+            const hunterTargets = document.getElementById('hunterTargets');
+            const alivePlayers = gameState.players.filter(p => p.alive);
+            
+            hunterTargets.innerHTML = alivePlayers.map(p => `
+                <button class="action-button bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded" 
+                        onclick="hunterShoot(${p.id})">${p.id}號</button>
+            `).join('');
+            
+            speak('獵人死亡，請選擇要開槍嘅目標');
+        }
+
+        function hunterShoot(playerId) {
+            const target = gameState.players.find(p => p.id === playerId);
+            target.alive = false;
+            
+            document.getElementById('hunterAction').classList.add('hidden');
+            updatePlayerList();
+            
+            speak(`獵人開槍帶走${playerId}號玩家`);
+            
+            checkGameEnd();
+        }
+
+        document.getElementById('skipHunterShot').addEventListener('click', function() {
+            document.getElementById('hunterAction').classList.add('hidden');
+            speak('獵人選擇不開槍');
+            checkGameEnd();
+        });
+
+        function startVoting() {
+            gameState.phase = 'voting';
+            gameState.currentVoter = 0;
+            gameState.votes = {};
+            gameState.selectedVote = null;
+            
+            while (gameState.currentVoter < gameState.players.length && 
+                   !gameState.players[gameState.currentVoter].alive) {
+                gameState.currentVoter++;
+            }
+            
+            document.getElementById('dayDiscussion').classList.add('hidden');
+            document.getElementById('votingPhase').classList.remove('hidden');
+            
+            updateVotingOptions();
+            updateCurrentVoter();
+            
+            speak('開始投票，請將手機交給第一位存活的玩家');
+        }
+
+        function updateVotingOptions() {
+            const votingOptions = document.getElementById('votingOptions');
+            votingOptions.innerHTML = '';
+            
+            const alivePlayers = gameState.players.filter(p => p.alive);
+            
+            alivePlayers.forEach(player => {
+                const button = document.createElement('button');
+                button.className = 'action-button bg-gray-200 dark:bg-gray-600 hover:bg-blue-500 hover:text-white text-gray-800 dark:text-gray-200 font-semibold py-3 px-4 rounded-lg transition duration-200';
+                button.textContent = `${player.id}號`;
+                button.onclick = () => selectVote(player.id);
+                votingOptions.appendChild(button);
+            });
+        }
+
+        function selectVote(playerId) {
+            gameState.selectedVote = playerId;
+            
+            const buttons = document.querySelectorAll('#votingOptions .action-button');
+            buttons.forEach(btn => {
+                if (btn.textContent === `${playerId}號`) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+        }
+
+        function skipVote() {
+            gameState.selectedVote = null;
+            nextVoter();
+        }
+
+        function nextVoter() {
+            const currentPlayer = gameState.players[gameState.currentVoter];
+            
+            if (currentPlayer.alive && gameState.selectedVote) {
+                if (!gameState.votes[gameState.selectedVote]) {
+                    gameState.votes[gameState.selectedVote] = 0;
+                }
+                gameState.votes[gameState.selectedVote]++;
+            }
+            
+            do {
+                gameState.currentVoter++;
+            } while (gameState.currentVoter < gameState.players.length && 
+                     !gameState.players[gameState.currentVoter].alive);
+            
+            if (gameState.currentVoter >= gameState.players.length) {
+                processVotingResult();
+            } else {
+                gameState.selectedVote = null;
+                updateCurrentVoter();
+                updateVotingOptions();
+                
+                const nextVoterNum = gameState.currentVoter + 1;
+                speak(`請將手機交給${nextVoterNum}號玩家投票`);
+            }
+        }
+
+        function updateCurrentVoter() {
+            const currentVoterNum = gameState.currentVoter + 1;
+            document.getElementById('currentVoterText').textContent = `${currentVoterNum}號`;
+        }
+
+        function continueToNextDay() {
+            gameState.day++;
+            gameState.nightActionIndex = 0;
+            gameState.phase = 'night';
+            
+            document.getElementById('dayCount').textContent = gameState.day;
+            document.getElementById('gamePhase').textContent = '夜晚階段';
+            document.getElementById('votingPhase').classList.add('hidden');
+            document.getElementById('nightActions').classList.remove('hidden');
+            
+            updatePlayerList();
+            updateNightAction();
+        }
+
+        function checkGameEnd() {
+            const aliveWerewolves = gameState.players.filter(p => p.alive && p.team === 'werewolf').length;
+            const aliveVillagers = gameState.players.filter(p => p.alive && p.team === 'villager').length;
+            
+            if (aliveWerewolves === 0) {
+                endGame('好人陣營');
+                return true;
+            } else if (aliveWerewolves >= aliveVillagers) {
+                endGame('狼人陣營');
+                return true;
+            }
+            
+            return false;
+        }
+
+        // 初始化
+        initGame();
+    </script>
+    <!-- Theme Toggle -->
+    <div class="flex justify-center mt-6">
+        <div class="theme-toggle">
+            <label for="theme-toggle" class="flex items-center cursor-pointer">
+                <div class="relative">
+                    <input type="checkbox" id="theme-toggle" class="sr-only" />
+                    <div class="toggle-bg block bg-gray-400 w-14 h-8 rounded-full transition-colors duration-200">
+                        <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform duration-200"></div>
+                    </div>
+                </div>
+                <div class="ml-3 text-gray-700 dark:text-gray-300">🌙 深色模式</div>
+            </label>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced theme management
+        function initTheme() {
+            const toggle = document.getElementById('theme-toggle');
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            // Determine initial theme
+            const shouldBeDark = savedTheme === 'dark' || (savedTheme === null && prefersDark);
+            
+            if (shouldBeDark) {
+                document.documentElement.classList.add('dark');
+                toggle.checked = true;
+            } else {
+                document.documentElement.classList.remove('dark');
+                toggle.checked = false;
+            }
+            
+            // Toggle theme on change
+            toggle.addEventListener('change', () => {
+                if (toggle.checked) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+            
+            // Remove the automatic theme change listener to prevent conflicts
+            // (The original code was conflicting with manual toggle)
+        }
+        
+        // Initialize theme when page loads
+        initTheme();
+    </script>
+
+</body></html>
