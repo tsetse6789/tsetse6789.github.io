@@ -466,7 +466,9 @@
                 witchPoison: null,
                 seerTarget: null,
                 witchUsedPotion: false,
-                witchUsedPoison: false
+                witchUsedPoison: false,
+                bakerMark: null,
+                littleGirlCaught: false
             },
             customConfig: null
         };
@@ -478,18 +480,20 @@
             '預言家': { team: 'villager', description: '夜晚可以查驗一名玩家的身份', emoji: '🔮' },
             '女巫': { team: 'villager', description: '擁有一瓶解藥和一瓶毒藥', emoji: '🧙‍♀️' },
             '獵人': { team: 'villager', description: '死亡時可以開槍帶走一名玩家', emoji: '🏹' },
-            '守衛': { team: 'villager', description: '夜晚可以守護一名玩家', emoji: '🛡️' }
+            '守衛': { team: 'villager', description: '夜晚可以守護一名玩家', emoji: '🛡️' },
+            '小女孩': { team: 'villager', description: '狼人殺人時可偷看，但被發現會死亡', emoji: '👧' },
+            '麵包師傅': { team: 'villager', description: '夜晚標記玩家，限制狼人攻擊範圍', emoji: '🍞' }
         };
 
         // 預設角色配置
         const defaultRoleConfigs = {
             6: { '狼人': 2, '村民': 2, '預言家': 1, '女巫': 1 },
             7: { '狼人': 2, '村民': 3, '預言家': 1, '女巫': 1 },
-            8: { '狼人': 2, '村民': 3, '預言家': 1, '女巫': 1, '獵人': 1 },
-            9: { '狼人': 3, '村民': 3, '預言家': 1, '女巫': 1, '獵人': 1 },
-            10: { '狼人': 3, '村民': 3, '預言家': 1, '女巫': 1, '獵人': 1, '守衛': 1 },
-            11: { '狼人': 3, '村民': 4, '預言家': 1, '女巫': 1, '獵人': 1, '守衛': 1 },
-            12: { '狼人': 4, '村民': 4, '預言家': 1, '女巫': 1, '獵人': 1, '守衛': 1 }
+            8: { '狼人': 2, '村民': 2, '預言家': 1, '女巫': 1, '獵人': 1, '小女孩': 1 },
+            9: { '狼人': 3, '村民': 2, '預言家': 1, '女巫': 1, '獵人': 1, '小女孩': 1 },
+            10: { '狼人': 3, '村民': 2, '預言家': 1, '女巫': 1, '獵人': 1, '守衛': 1, '麵包師傅': 1 },
+            11: { '狼人': 3, '村民': 3, '預言家': 1, '女巫': 1, '獵人': 1, '守衛': 1, '小女孩': 1 },
+            12: { '狼人': 4, '村民': 2, '預言家': 1, '女巫': 1, '獵人': 1, '守衛': 1, '小女孩': 1, '麵包師傅': 1 }
         };
 
         let isSpeaking = false;
@@ -710,10 +714,14 @@
         function saveSettings(event) {
             event.preventDefault();
             
+            const entryPoints = document.getElementById('entryPointsInput').value;
+            const winPoints = document.getElementById('winPointsInput').value;
+            const losePoints = document.getElementById('losePointsInput').value;
+            
             const settings = {
-                entryPoints: parseInt(document.getElementById('entryPointsInput').value) || 10,
-                winPoints: parseInt(document.getElementById('winPointsInput').value) || 20,
-                losePoints: parseInt(document.getElementById('losePointsInput').value) || 5
+                entryPoints: entryPoints === '' ? 10 : parseInt(entryPoints),
+                winPoints: winPoints === '' ? 20 : parseInt(winPoints),
+                losePoints: losePoints === '' ? 5 : parseInt(losePoints)
             };
             
             Storage.saveSettings(settings);
@@ -1512,11 +1520,16 @@
         function generateNightSequence() {
             const sequence = [{ text: '請所有玩家閉眼', speak: '請所有玩家閉眼', role: null, auto: true }];
             
-            const roleOrder = ['守衛', '狼人', '女巫', '預言家'];
+            const roleOrder = ['麵包師傅', '守衛', '狼人', '小女孩', '女巫', '預言家'];
             
             roleOrder.forEach(role => {
                 if (hasRole(role)) {
-                    if (role === '狼人') {
+                    if (role === '麵包師傅') {
+                        sequence.push(
+                            { text: '麵包師傅請睜眼，選擇要標記的人', speak: '麵包師傅請睜眼，選擇要標記嘅人', role: '麵包師傅', auto: false },
+                            { text: '麵包師傅請閉眼', speak: '麵包師傅請閉眼', role: null, auto: true }
+                        );
+                    } else if (role === '狼人') {
                         sequence.push(
                             { text: '狼人請睜眼，選擇要殺的人', speak: '狼人請睜眼，選擇要殺嘅人', role: '狼人', auto: false },
                             { text: '狼人請閉眼', speak: '狼人請閉眼', role: null, auto: true }
@@ -1616,6 +1629,21 @@
             const alivePlayers = gameState.players.filter(p => p.alive);
             
             switch (role) {
+                case '麵包師傅':
+                    panel.innerHTML = `
+                        <h4 class="text-lg font-semibold mb-3 text-center">🍞 麵包師傅請選擇要標記的玩家</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3 text-center">標記後，狼人只能攻擊被標記的玩家或其左右鄰居</p>
+                        <div class="grid grid-cols-3 gap-2" id="bakerTargets">
+                            ${alivePlayers.map(p => `
+                                <button class="action-button bg-orange-500 hover:bg-orange-600 text-white py-2 px-3 rounded" 
+                                        onclick="setBakerMark(${p.id})">${p.id}號</button>
+                            `).join('')}
+                        </div>
+                        <button class="mt-3 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded" 
+                                onclick="setBakerMark(null)">不標記任何人</button>
+                    `;
+                    break;
+                    
                 case '守衛':
                     panel.innerHTML = `
                         <h4 class="text-lg font-semibold mb-3 text-center">🛡️ 守衛請選擇要保護的玩家</h4>
@@ -1631,14 +1659,38 @@
                     break;
                     
                 case '狼人':
+                    // 如果有麵包師傅標記，限制狼人的攻擊選項
+                    let availableTargets = alivePlayers;
+                    let restrictionText = '';
+                    
+                    if (gameState.nightActions.bakerMark) {
+                        const markedPlayer = gameState.nightActions.bakerMark;
+                        const markedIndex = gameState.players.findIndex(p => p.id === markedPlayer && p.alive);
+                        
+                        if (markedIndex !== -1) {
+                            const leftNeighbor = getLeftNeighbor(markedIndex);
+                            const rightNeighbor = getRightNeighbor(markedIndex);
+                            
+                            const allowedIds = [markedPlayer];
+                            if (leftNeighbor && leftNeighbor.alive) allowedIds.push(leftNeighbor.id);
+                            if (rightNeighbor && rightNeighbor.alive) allowedIds.push(rightNeighbor.id);
+                            
+                            availableTargets = alivePlayers.filter(p => allowedIds.includes(p.id));
+                            restrictionText = `<p class="text-sm text-yellow-600 dark:text-yellow-400 mb-3 text-center">麵包師傅限制：只能攻擊${markedPlayer}號及其左右鄰居</p>`;
+                        }
+                    }
+                    
                     panel.innerHTML = `
                         <h4 class="text-lg font-semibold mb-3 text-center">🐺 狼人請選擇要殺害的玩家</h4>
+                        ${restrictionText}
                         <div class="grid grid-cols-3 gap-2" id="werewolfTargets">
-                            ${alivePlayers.map(p => `
+                            ${availableTargets.map(p => `
                                 <button class="action-button bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded" 
                                         onclick="setWerewolfTarget(${p.id})">${p.id}號</button>
                             `).join('')}
                         </div>
+                        <button class="mt-3 bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded" 
+                                onclick="setWerewolfTarget(null)">不殺任何人</button>
                     `;
                     break;
                     
@@ -1696,6 +1748,32 @@
                     `;
                     break;
             }
+        }
+
+        // 新增麵包師傅和小女孩的功能函數
+        function setBakerMark(playerId) {
+            gameState.nightActions.bakerMark = playerId;
+            document.getElementById('roleActionPanel').classList.add('hidden');
+        }
+
+
+
+        function getLeftNeighbor(playerIndex) {
+            const alivePlayers = gameState.players.filter(p => p.alive);
+            const aliveIndex = alivePlayers.findIndex(p => p.id === gameState.players[playerIndex].id);
+            if (aliveIndex === -1) return null;
+            
+            const leftIndex = (aliveIndex - 1 + alivePlayers.length) % alivePlayers.length;
+            return alivePlayers[leftIndex];
+        }
+
+        function getRightNeighbor(playerIndex) {
+            const alivePlayers = gameState.players.filter(p => p.alive);
+            const aliveIndex = alivePlayers.findIndex(p => p.id === gameState.players[playerIndex].id);
+            if (aliveIndex === -1) return null;
+            
+            const rightIndex = (aliveIndex + 1) % alivePlayers.length;
+            return alivePlayers[rightIndex];
         }
 
         function setGuardTarget(playerId) {
