@@ -332,9 +332,15 @@
                     <div>
                         <label class="block text-gray-700 dark:text-gray-300 mb-2">頭像</label>
                         <div class="flex items-center space-x-4">
-                            <img id="playerAvatarPreview" class="player-avatar" src="" alt="預覽">
+                            <div class="relative">
+                                <img id="playerAvatarPreview" class="player-avatar cursor-pointer hover:opacity-80 transition-opacity" src="" alt="預覽" title="長按移除頭像">
+                                <div class="absolute -bottom-1 -right-1 bg-gray-500 text-white text-xs px-1 rounded text-center opacity-70">
+                                    長按
+                                </div>
+                            </div>
                             <input type="file" id="playerAvatarInput" accept="image/*" class="text-sm text-gray-500 dark:text-gray-400">
                         </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">💡 長按頭像可移除自訂頭像</p>
                     </div>
                     
                     <div>
@@ -855,17 +861,27 @@
             document.getElementById('cancelPlayerEdit').addEventListener('click', hidePlayerEdit);
             document.getElementById('closePlayerEdit').addEventListener('click', hidePlayerEdit);
             
-            // 頭像預覽
+            // 頭像預覽和壓縮
             document.getElementById('playerAvatarInput').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        document.getElementById('playerAvatarPreview').src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
+                    if (!file.type.startsWith('image/')) {
+                        showAlert('請選擇圖片文件');
+                        return;
+                    }
+                    
+                    // 檢查文件大小 (5MB限制)
+                    if (file.size > 5 * 1024 * 1024) {
+                        showAlert('圖片文件過大，請選擇小於5MB的圖片');
+                        return;
+                    }
+                    
+                    compressAndPreviewImage(file);
                 }
             });
+
+            // 頭像長按移除功能
+            setupAvatarLongPress();
             
             // 設置管理
             document.getElementById('showSettings').addEventListener('click', showSettings);
@@ -2046,6 +2062,136 @@
             }
             
             return false;
+        }
+
+        // 圖片壓縮函數
+        function compressAndPreviewImage(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // 創建canvas進行壓縮
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 設置輸出尺寸為64x64
+                    const outputSize = 64;
+                    canvas.width = outputSize;
+                    canvas.height = outputSize;
+                    
+                    // 計算裁剪參數以保持圖片比例
+                    const sourceSize = Math.min(img.width, img.height);
+                    const offsetX = (img.width - sourceSize) / 2;
+                    const offsetY = (img.height - sourceSize) / 2;
+                    
+                    // 繪製正方形裁剪的圖片
+                    ctx.drawImage(img, offsetX, offsetY, sourceSize, sourceSize, 0, 0, outputSize, outputSize);
+                    
+                    // 轉換為壓縮的base64 (JPEG格式，品質80%)
+                    let compressedDataUrl;
+                    try {
+                        compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    } catch (error) {
+                        // 如果JPEG失敗，回退到PNG
+                        compressedDataUrl = canvas.toDataURL('image/png');
+                    }
+                    
+                    // 計算壓縮率
+                    const originalSize = e.target.result.length;
+                    const compressedSize = compressedDataUrl.length;
+                    const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
+                    
+                    // 更新預覽
+                    document.getElementById('playerAvatarPreview').src = compressedDataUrl;
+                    
+                    // 顯示壓縮信息（可選）
+                    console.log(`圖片已壓縮：${compressionRatio}% (${Math.round(originalSize/1024)}KB → ${Math.round(compressedSize/1024)}KB)`);
+                    
+                    // 可選：顯示壓縮提示
+                    if (compressionRatio > 50) {
+                        showAlert(`圖片已自動壓縮${compressionRatio}%以節省空間`);
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 頭像長按移除功能
+        function setupAvatarLongPress() {
+            const avatarPreview = document.getElementById('playerAvatarPreview');
+            let longPressTimer = null;
+            let isLongPress = false;
+            
+            // 鼠標事件
+            avatarPreview.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                startLongPress();
+            });
+            
+            avatarPreview.addEventListener('mouseup', function(e) {
+                endLongPress();
+            });
+            
+            avatarPreview.addEventListener('mouseleave', function(e) {
+                endLongPress();
+            });
+            
+            // 觸摸事件
+            avatarPreview.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                startLongPress();
+            });
+            
+            avatarPreview.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                endLongPress();
+            });
+            
+            avatarPreview.addEventListener('touchcancel', function(e) {
+                endLongPress();
+            });
+            
+            function startLongPress() {
+                isLongPress = false;
+                longPressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    showRemoveAvatarConfirm();
+                }, 800); // 800ms 長按
+            }
+            
+            function endLongPress() {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+            }
+            
+            function showRemoveAvatarConfirm() {
+                const currentSrc = avatarPreview.src;
+                const playerName = document.getElementById('playerNameInput').value.trim() || '玩家';
+                const isDefaultAvatar = currentSrc.startsWith('data:image/png;base64') || !currentSrc;
+                
+                if (isDefaultAvatar) {
+                    showAlert('已經是默認頭像，無需移除');
+                    return;
+                }
+                
+                showConfirmDialog(`確定要移除 ${playerName} 的頭像嗎？`, () => {
+                    removePlayerAvatar();
+                });
+            }
+            
+            function removePlayerAvatar() {
+                const playerName = document.getElementById('playerNameInput').value.trim() || '默認';
+                const defaultAvatar = createDefaultAvatar(playerName);
+                document.getElementById('playerAvatarPreview').src = defaultAvatar;
+                
+                // 清除文件輸入
+                document.getElementById('playerAvatarInput').value = '';
+                
+                showAlert('頭像已移除，將使用默認頭像');
+            }
         }
 
         // 初始化
