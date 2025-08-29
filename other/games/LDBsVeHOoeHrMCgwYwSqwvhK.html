@@ -766,40 +766,58 @@
             // Generate QR code
             setTimeout(() => {
                 const qrCodeElement = document.getElementById('qrCode');
-                if (qrCodeElement && typeof QRCode !== 'undefined') {
-                    QRCode.toCanvas(qrCodeElement, currentRoom, { 
-                        width: 200,
-                        height: 200,
-                        colorDark: '#5D5CDE',
-                        colorLight: '#FFFFFF'
-                    }, function (error) {
-                        if (error) {
-                            console.error('QR Code generation failed:', error);
-                            // Fallback to text display
-                            qrCodeElement.innerHTML = `
-                                <div class="w-48 h-48 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto">
-                                    <div class="text-center">
-                                        <div class="text-4xl mb-2">📱</div>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">QR Code unavailable</p>
-                                        <p class="text-xs text-gray-500">Use PIN: ${currentRoom}</p>
-                                    </div>
-                                </div>
-                            `;
+                if (qrCodeElement) {
+                    // Clear the container first
+                    qrCodeElement.innerHTML = '';
+                    
+                    // Create canvas element
+                    const canvas = document.createElement('canvas');
+                    canvas.style.display = 'block';
+                    canvas.style.margin = '0 auto';
+                    
+                    try {
+                        if (typeof QRCode !== 'undefined') {
+                            QRCode.toCanvas(canvas, currentRoom, {
+                                width: 200,
+                                height: 200,
+                                margin: 2,
+                                color: {
+                                    dark: '#5D5CDE',
+                                    light: '#FFFFFF'
+                                },
+                                errorCorrectionLevel: 'M'
+                            }, function (error) {
+                                if (error) {
+                                    console.error('QR Code generation failed:', error);
+                                    showQRFallback(qrCodeElement);
+                                } else {
+                                    qrCodeElement.appendChild(canvas);
+                                }
+                            });
+                        } else {
+                            console.error('QRCode library not loaded');
+                            showQRFallback(qrCodeElement);
                         }
-                    });
+                    } catch (error) {
+                        console.error('QR Code generation error:', error);
+                        showQRFallback(qrCodeElement);
+                    }
                 } else {
-                    // Fallback if QRCode library is not available
-                    qrCodeElement.innerHTML = `
-                        <div class="w-48 h-48 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto">
-                            <div class="text-center">
-                                <div class="text-4xl mb-2">📱</div>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">QR Code unavailable</p>
-                                <p class="text-xs text-gray-500">Use PIN: ${currentRoom}</p>
-                            </div>
-                        </div>
-                    `;
+                    console.error('QR Code element not found');
                 }
-            }, 100);
+            }, 200);
+
+            function showQRFallback(element) {
+                element.innerHTML = `
+                    <div class="w-48 h-48 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto border-2 border-dashed border-gray-300 dark:border-gray-600">
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">📱</div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">QR Code</p>
+                            <p class="text-xs text-gray-500 mt-1">PIN: ${currentRoom}</p>
+                        </div>
+                    </div>
+                `;
+            }
 
             // Set up listeners after DOM is ready
             setTimeout(() => {
@@ -867,7 +885,18 @@
             });
             
             showHostQuestionUI(question);
-            startQuestionTimer(question.time || 30);
+            
+            // Parse time string to seconds
+            let timeInSeconds = 30; // default
+            if (question.time) {
+                if (typeof question.time === 'string') {
+                    timeInSeconds = parseTimeString(question.time);
+                } else {
+                    timeInSeconds = question.time;
+                }
+            }
+            
+            startQuestionTimer(timeInSeconds);
         }
 
         function showHostQuestionUI(question) {
@@ -902,16 +931,17 @@
         function renderQuestionForHost(question) {
             let content = `
                 <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Question Preview</h3>
+                    <h3 class="text-lg font-semibold mb-4">Answer Options</h3>
             `;
             
+            // Show options WITHOUT revealing correct answers (for TV display)
             switch (question.answerType) {
                 case 'radio':
                     content += `
                         <div class="space-y-2">
                             ${question.answerSettings.options.map((option, index) => `
-                                <div class="p-3 border border-gray-200 dark:border-gray-600 rounded-md ${index === question.answer ? 'bg-green-100 dark:bg-green-900 border-green-500' : ''}">
-                                    ${option} ${index === question.answer ? '✓' : ''}
+                                <div class="p-3 border border-gray-200 dark:border-gray-600 rounded-md">
+                                    ${String.fromCharCode(65 + index)}. ${option}
                                 </div>
                             `).join('')}
                         </div>
@@ -921,45 +951,50 @@
                     content += `
                         <div class="space-y-2">
                             ${question.answerSettings.options.map((option, index) => `
-                                <div class="p-3 border border-gray-200 dark:border-gray-600 rounded-md ${question.answer.includes(index) ? 'bg-green-100 dark:bg-green-900 border-green-500' : ''}">
-                                    ${option} ${question.answer.includes(index) ? '✓' : ''}
+                                <div class="p-3 border border-gray-200 dark:border-gray-600 rounded-md">
+                                    ${String.fromCharCode(65 + index)}. ${option}
                                 </div>
                             `).join('')}
                         </div>
+                        <p class="text-sm text-gray-500 mt-3">Select all that apply</p>
                     `;
                     break;
                 case 'range':
                     content += `
                         <div class="text-center">
-                            <p>Range: ${question.answerSettings.min} - ${question.answerSettings.max}</p>
+                            <p class="text-lg">Range: ${question.answerSettings.min} - ${question.answerSettings.max}</p>
+                            <p class="text-sm text-gray-500 mt-2">Use slider to select value</p>
                         </div>
                     `;
                     break;
                 case 'text':
                     content += `
                         <div class="text-center">
-                            <p>Text input (max ${question.answerSettings.maxLength} characters)</p>
-                            <p class="text-sm text-gray-500">Accepted answers: ${question.answer.join(', ')}</p>
+                            <p class="text-lg">Text Answer Required</p>
+                            <p class="text-sm text-gray-500 mt-2">Max ${question.answerSettings.maxLength} characters</p>
                         </div>
                     `;
                     break;
                 case 'number':
                     content += `
                         <div class="text-center">
-                            <p>Number input (${question.answerSettings.min} - ${question.answerSettings.max})</p>
-                            <p class="text-sm text-gray-500">Correct answer: ${question.answer}</p>
+                            <p class="text-lg">Number Input</p>
+                            <p class="text-sm text-gray-500 mt-2">Range: ${question.answerSettings.min} - ${question.answerSettings.max}</p>
                         </div>
                     `;
                     break;
                 case 'rearrange':
-                    const correctOrder = question.answer.split(',').map(i => question.answerSettings.items[parseInt(i)]);
                     content += `
                         <div class="text-center">
-                            <p class="mb-2">Items to arrange:</p>
-                            <div class="space-y-2">
-                                ${question.answerSettings.items.map(item => `<div class="p-2 border rounded">${item}</div>`).join('')}
+                            <p class="mb-4 text-lg">Arrange these items in correct order:</p>
+                            <div class="grid grid-cols-2 gap-3 max-w-md mx-auto">
+                                ${question.answerSettings.items.map(item => `
+                                    <div class="p-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-center">
+                                        ${item}
+                                    </div>
+                                `).join('')}
                             </div>
-                            <p class="text-sm text-gray-500 mt-4">Correct order: ${correctOrder.join(' → ')}</p>
+                            <p class="text-sm text-gray-500 mt-4">Players will drag to reorder</p>
                         </div>
                     `;
                     break;
@@ -967,12 +1002,12 @@
             
             content += `</div>`;
             
-            // Add player responses
+            // Add player responses tracker (no actual answers shown)
             content += `
                 <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                    <h3 class="text-lg font-semibold mb-4">Player Responses <span id="responseCount" class="text-sm text-gray-500">(0 answered)</span></h3>
+                    <h3 class="text-lg font-semibold mb-4">Player Activity <span id="responseCount" class="text-sm text-gray-500">(0 answered)</span></h3>
                     <div id="playerResponses" class="space-y-2">
-                        <p class="text-gray-500 dark:text-gray-400 text-center">Waiting for responses...</p>
+                        <p class="text-gray-500 dark:text-gray-400 text-center">Waiting for player responses...</p>
                     </div>
                 </div>
             `;
