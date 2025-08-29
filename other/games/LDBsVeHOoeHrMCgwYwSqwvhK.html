@@ -764,15 +764,54 @@
             `;
 
             // Generate QR code
-            QRCode.toCanvas(document.getElementById('qrCode'), currentRoom, { width: 200 }, function (error) {
-                if (error) console.error(error);
-            });
+            setTimeout(() => {
+                const qrCodeElement = document.getElementById('qrCode');
+                if (qrCodeElement && typeof QRCode !== 'undefined') {
+                    QRCode.toCanvas(qrCodeElement, currentRoom, { 
+                        width: 200,
+                        height: 200,
+                        colorDark: '#5D5CDE',
+                        colorLight: '#FFFFFF'
+                    }, function (error) {
+                        if (error) {
+                            console.error('QR Code generation failed:', error);
+                            // Fallback to text display
+                            qrCodeElement.innerHTML = `
+                                <div class="w-48 h-48 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto">
+                                    <div class="text-center">
+                                        <div class="text-4xl mb-2">📱</div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">QR Code unavailable</p>
+                                        <p class="text-xs text-gray-500">Use PIN: ${currentRoom}</p>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                } else {
+                    // Fallback if QRCode library is not available
+                    qrCodeElement.innerHTML = `
+                        <div class="w-48 h-48 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto">
+                            <div class="text-center">
+                                <div class="text-4xl mb-2">📱</div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">QR Code unavailable</p>
+                                <p class="text-xs text-gray-500">Use PIN: ${currentRoom}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }, 100);
 
-            // Listen for players joining
-            database.ref(`rooms/${currentRoom}/players`).on('value', updatePlayersList);
-            
-            // Start game button
-            document.getElementById('startGameBtn').addEventListener('click', startGame);
+            // Set up listeners after DOM is ready
+            setTimeout(() => {
+                // Listen for players joining
+                database.ref(`rooms/${currentRoom}/players`).on('value', updatePlayersList);
+                
+                // Start game button
+                const startBtn = document.getElementById('startGameBtn');
+                if (startBtn) {
+                    startBtn.addEventListener('click', startGame);
+                }
+            }, 100);
         }
 
         function updatePlayersList(snapshot) {
