@@ -594,7 +594,9 @@
 
         function deleteGame(index) {
             showConfirmDialog('Are you sure you want to delete this game?', () => {
-                storage.games.splice(index, 1);
+                const currentGames = storage.games;
+                currentGames.splice(index, 1);
+                storage.games = currentGames;
                 updateGamesList();
             });
         }
@@ -642,7 +644,10 @@
                 reader.onload = function(e) {
                     try {
                         const gameData = JSON.parse(e.target.result);
-                        storage.games.push(gameData);
+                        // Get current games, add new game, and save back to localStorage
+                        const currentGames = storage.games;
+                        currentGames.push(gameData);
+                        storage.games = currentGames;
                         updateGamesList();
                         closeImportModal();
                         showCustomAlert('Game imported successfully!');
@@ -1392,10 +1397,12 @@
                 id: Date.now()
             };
             
-            storage.history.unshift(historyEntry);
-            if (storage.history.length > 50) {
-                storage.history = storage.history.slice(0, 50);
+            const currentHistory = storage.history;
+            currentHistory.unshift(historyEntry);
+            if (currentHistory.length > 50) {
+                currentHistory.splice(50);
             }
+            storage.history = currentHistory;
         }
 
         function loadGameHistory() {
@@ -1431,7 +1438,8 @@
         }
 
         function deleteHistoryEntry(id) {
-            storage.history = storage.history.filter(entry => entry.id !== id);
+            const currentHistory = storage.history.filter(entry => entry.id !== id);
+            storage.history = currentHistory;
             loadGameHistory();
         }
 
