@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quiz Game</title>
+    <title>Quiz Game Pro by Nut</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -763,49 +763,62 @@
                 </div>
             `;
 
-            // Generate QR code
+            // Generate QR code with better error handling
             setTimeout(() => {
+                generateQRCode();
+            }, 300);
+
+            function generateQRCode() {
                 const qrCodeElement = document.getElementById('qrCode');
-                if (qrCodeElement) {
-                    // Clear the container first
-                    qrCodeElement.innerHTML = '';
-                    
-                    // Create canvas element
-                    const canvas = document.createElement('canvas');
-                    canvas.style.display = 'block';
-                    canvas.style.margin = '0 auto';
-                    
-                    try {
-                        if (typeof QRCode !== 'undefined') {
-                            QRCode.toCanvas(canvas, currentRoom, {
-                                width: 200,
-                                height: 200,
-                                margin: 2,
-                                color: {
-                                    dark: '#5D5CDE',
-                                    light: '#FFFFFF'
-                                },
-                                errorCorrectionLevel: 'M'
-                            }, function (error) {
-                                if (error) {
-                                    console.error('QR Code generation failed:', error);
-                                    showQRFallback(qrCodeElement);
-                                } else {
-                                    qrCodeElement.appendChild(canvas);
-                                }
-                            });
-                        } else {
-                            console.error('QRCode library not loaded');
-                            showQRFallback(qrCodeElement);
-                        }
-                    } catch (error) {
-                        console.error('QR Code generation error:', error);
-                        showQRFallback(qrCodeElement);
-                    }
-                } else {
+                if (!qrCodeElement) {
                     console.error('QR Code element not found');
+                    return;
                 }
-            }, 200);
+
+                // Clear the container first
+                qrCodeElement.innerHTML = '';
+                
+                // Check if library is loaded
+                console.log('QRCode library available:', typeof QRCode !== 'undefined');
+                
+                if (typeof QRCode === 'undefined') {
+                    console.error('QRCode library not loaded');
+                    showQRFallback(qrCodeElement);
+                    return;
+                }
+
+                try {
+                    // Use simpler QRCode.toDataURL first, then create img element
+                    QRCode.toDataURL(currentRoom, {
+                        width: 200,
+                        height: 200,
+                        margin: 2,
+                        color: {
+                            dark: '#5D5CDE',
+                            light: '#FFFFFF'
+                        },
+                        errorCorrectionLevel: 'M'
+                    })
+                    .then(url => {
+                        console.log('QR Code generated successfully');
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.style.display = 'block';
+                        img.style.margin = '0 auto';
+                        img.style.width = '200px';
+                        img.style.height = '200px';
+                        img.alt = `QR Code for PIN ${currentRoom}`;
+                        qrCodeElement.appendChild(img);
+                    })
+                    .catch(error => {
+                        console.error('QR Code generation failed:', error);
+                        showQRFallback(qrCodeElement);
+                    });
+                } catch (error) {
+                    console.error('QR Code generation error:', error);
+                    showQRFallback(qrCodeElement);
+                }
+            }
 
             function showQRFallback(element) {
                 element.innerHTML = `
@@ -897,6 +910,9 @@
             }
             
             startQuestionTimer(timeInSeconds);
+            
+            // Listen for player answers in real-time
+            listenToPlayerAnswers();
         }
 
         function showHostQuestionUI(question) {
@@ -1125,15 +1141,69 @@
                 </div>
             `;
             
+            // Load and display leaderboard
+            loadLeaderboard();
+            
             // Save to history and clean up
             setTimeout(() => {
                 saveGameToHistory();
-                cleanupGame();
-            }, 5000);
+            }, 3000);
         }
 
-        function endHosting() {
+        function loadLeaderboard() {
+            database.ref(`rooms/${currentRoom}/players`).once('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const playersArray = Object.values(players);
+                
+                // Sort players by score (highest first)
+                playersArray.sort((a, b) => (b.score || 0) - (a.score || 0));
+                
+                const leaderboardElement = document.getElementById('leaderboard');
+                if (leaderboardElement && playersArray.length > 0) {
+                    const leaderboardHTML = playersArray.map((player, index) => {
+                        const rank = index + 1;
+                        const score = player.score || 0;
+                        let rankIcon = '';
+                        let rankColor = '';
+                        
+                        if (rank === 1) {
+                            rankIcon = '🥇';
+                            rankColor = 'text-yellow-600';
+                        } else if (rank === 2) {
+                            rankIcon = '🥈';
+                            rankColor = 'text-gray-500';
+                        } else if (rank === 3) {
+                            rankIcon = '🥉';
+                            rankColor = 'text-yellow-600';
+                        } else {
+                            rankIcon = `#${rank}`;
+                            rankColor = 'text-gray-600 dark:text-gray-400';
+                        }
+                        
+                        return `
+                            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg ${rank <= 3 ? 'ring-2 ring-primary/20' : ''}">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-2xl font-bold ${rankColor} min-w-[2rem]">${rankIcon}</span>
+                                    <span class="font-semibold text-lg">${player.name}</span>
+                                </div>
+                                <span class="text-xl font-bold text-primary">${score}</span>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    leaderboardElement.innerHTML = leaderboardHTML;
+                } else if (leaderboardElement) {
+                    leaderboardElement.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No players found</p>';
+                }
+            });
+        }
+
+        async function endHosting() {
             if (currentRoom) {
+                // Save complete game data to localStorage before removing from Firebase
+                await saveCompleteGameData();
+                
+                // Remove from Firebase
                 database.ref(`rooms/${currentRoom}`).remove();
             }
             cleanupGame();
@@ -1298,7 +1368,18 @@
                         </div>
                     `;
                 case 'rearrange':
-                    setTimeout(() => setupDragAndDrop(), 100);
+                    setTimeout(() => {
+                        setupDragAndDrop();
+                        // Set original order after DOM is ready
+                        const sortableItems = document.getElementById('sortableItems');
+                        if (sortableItems) {
+                            originalOrder = Array.from(sortableItems.children).map(item => 
+                                item.getAttribute('data-index')
+                            );
+                        }
+                        // Initially button should be disabled for rearrange
+                        validatePlayerAnswer();
+                    }, 100);
                     return `
                         <div>
                             <label class="block text-sm font-medium mb-4">Drag to arrange in correct order</label>
@@ -1309,6 +1390,7 @@
                                     </div>
                                 `).join('')}
                             </div>
+                            <p class="text-xs text-gray-500 mt-2">Drag items to rearrange them, then submit</p>
                         </div>
                     `;
             }
@@ -1316,6 +1398,8 @@
 
         function validatePlayerAnswer() {
             const submitBtn = document.getElementById('submitAnswer');
+            if (!submitBtn) return;
+            
             let hasAnswer = false;
             
             // Check based on answer type
@@ -1324,15 +1408,61 @@
             const textInput = document.querySelector('input[type="text"]');
             const numberInput = document.querySelector('input[type="number"]');
             const rangeInput = document.querySelector('input[type="range"]');
+            const sortableItems = document.getElementById('sortableItems');
             
-            if (radios.length > 0 || checkboxes.length > 0 || 
-                (textInput && textInput.value.trim()) || 
-                (numberInput && numberInput.value) || 
-                rangeInput) {
+            if (radios.length > 0) {
                 hasAnswer = true;
+            } else if (checkboxes.length > 0) {
+                hasAnswer = true;
+            } else if (textInput && textInput.value.trim().length > 0) {
+                hasAnswer = true;
+            } else if (numberInput && numberInput.value.trim().length > 0) {
+                hasAnswer = true;
+            } else if (rangeInput) {
+                hasAnswer = true; // Range always has a value
+            } else if (sortableItems) {
+                // For rearrange questions, check if order has changed
+                hasAnswer = checkIfRearranged();
             }
             
             submitBtn.disabled = !hasAnswer;
+            
+            // Visual feedback
+            if (hasAnswer) {
+                submitBtn.classList.remove('opacity-50');
+                submitBtn.classList.add('opacity-100');
+            } else {
+                submitBtn.classList.add('opacity-50');
+                submitBtn.classList.remove('opacity-100');
+            }
+        }
+
+        // Track original order for rearrange questions
+        let originalOrder = [];
+        
+        function checkIfRearranged() {
+            const sortableItems = document.getElementById('sortableItems');
+            if (!sortableItems) return false;
+            
+            const currentOrder = Array.from(sortableItems.children).map(item => 
+                item.getAttribute('data-index')
+            );
+            
+            // Check if current order is different from original
+            if (originalOrder.length === 0) {
+                // First time - this means no rearrangement yet
+                return false;
+            }
+            
+            return !arraysEqual(originalOrder, currentOrder);
+        }
+        
+        function arraysEqual(a, b) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) return false;
+            }
+            return true;
         }
 
         function submitPlayerAnswer(question) {
@@ -1360,8 +1490,16 @@
                     answer = number ? parseFloat(number.value) : null;
                     break;
                 case 'rearrange':
-                    // This would need more complex implementation for drag-and-drop
-                    answer = '0,1,2,3'; // Placeholder
+                    // Get current order from sortable items
+                    const sortableItems = document.getElementById('sortableItems');
+                    if (sortableItems) {
+                        const currentOrder = Array.from(sortableItems.children).map(item => 
+                            item.getAttribute('data-index')
+                        );
+                        answer = currentOrder.join(',');
+                    } else {
+                        answer = '0,1,2,3'; // Fallback
+                    }
                     break;
             }
             
@@ -1378,36 +1516,96 @@
         }
 
         function showPlayerQuestionResult(question) {
-            // Calculate if answer was correct
-            const isCorrect = checkAnswerCorrect(question);
-            
-            const playerUI = document.getElementById('playerGameUI');
-            playerUI.innerHTML = `
-                <div class="text-center">
-                    <div class="mb-6">
-                        <div class="text-6xl mb-4">${isCorrect ? '✅' : '❌'}</div>
-                        <h2 class="text-2xl font-bold mb-2">${isCorrect ? 'Correct!' : 'Incorrect'}</h2>
-                        <p class="text-lg text-gray-600 dark:text-gray-400">
-                            ${isCorrect ? `+${question.points} points` : '0 points'}
-                        </p>
+            // Calculate if answer was correct and update score
+            checkAnswerCorrect(question).then(isCorrect => {
+                const pointsEarned = isCorrect ? question.points : 0;
+                
+                // Update player score in Firebase
+                if (pointsEarned > 0) {
+                    database.ref(`rooms/${currentRoom}/players/${currentUser.id}/score`).transaction(currentScore => {
+                        return (currentScore || 0) + pointsEarned;
+                    });
+                }
+                
+                const playerUI = document.getElementById('playerGameUI');
+                playerUI.innerHTML = `
+                    <div class="text-center">
+                        <div class="mb-6">
+                            <div class="text-6xl mb-4">${isCorrect ? '✅' : '❌'}</div>
+                            <h2 class="text-2xl font-bold mb-2">${isCorrect ? 'Correct!' : 'Incorrect'}</h2>
+                            <p class="text-lg text-gray-600 dark:text-gray-400">
+                                ${isCorrect ? `+${question.points} points` : '0 points'}
+                            </p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
+                            <h3 class="text-lg font-semibold mb-2">Correct Answer:</h3>
+                            <p class="text-lg">${getCorrectAnswerText(question)}</p>
+                        </div>
+                        
+                        <div class="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
+                            <h3 class="text-lg font-semibold mb-2">Your Current Score</h3>
+                            <p class="text-2xl font-bold text-primary" id="currentScore">Loading...</p>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <p class="text-lg">Waiting for next question...</p>
+                        </div>
                     </div>
-                    
-                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                        <h3 class="text-lg font-semibold mb-2">Correct Answer:</h3>
-                        <p class="text-lg">${getCorrectAnswerText(question)}</p>
-                    </div>
-                    
-                    <div class="mt-6">
-                        <p class="text-lg">Waiting for next question...</p>
-                    </div>
-                </div>
-            `;
+                `;
+                
+                // Update current score display
+                database.ref(`rooms/${currentRoom}/players/${currentUser.id}/score`).once('value', (snapshot) => {
+                    const currentScore = snapshot.val() || 0;
+                    const scoreElement = document.getElementById('currentScore');
+                    if (scoreElement) {
+                        scoreElement.textContent = currentScore;
+                    }
+                });
+            });
         }
 
         function checkAnswerCorrect(question) {
-            // This would check the player's submitted answer against the correct answer
-            // For demo purposes, return random result
-            return Math.random() > 0.5;
+            // Get the player's submitted answer
+            return database.ref(`rooms/${currentRoom}/answers/${currentUser.id}`).once('value').then((snapshot) => {
+                const playerAnswer = snapshot.val();
+                if (!playerAnswer || playerAnswer.questionIndex !== currentQuestionIndex) {
+                    return false;
+                }
+
+                const answer = playerAnswer.answer;
+                const correctAnswer = question.answer;
+
+                switch (question.answerType) {
+                    case 'radio':
+                        return answer === correctAnswer;
+                    
+                    case 'checkbox':
+                        if (!Array.isArray(answer) || !Array.isArray(correctAnswer)) return false;
+                        if (answer.length !== correctAnswer.length) return false;
+                        return answer.sort().every((val, index) => val === correctAnswer.sort()[index]);
+                    
+                    case 'number':
+                        return parseFloat(answer) === correctAnswer;
+                    
+                    case 'text':
+                        if (!Array.isArray(correctAnswer)) return false;
+                        const playerText = answer.toString().toLowerCase().trim();
+                        return correctAnswer.some(correct => 
+                            correct.toLowerCase().trim() === playerText
+                        );
+                    
+                    case 'range':
+                        // For range questions, any value is acceptable (no specific correct answer)
+                        return true;
+                    
+                    case 'rearrange':
+                        return answer === correctAnswer;
+                    
+                    default:
+                        return false;
+                }
+            });
         }
 
         function getCorrectAnswerText(question) {
@@ -1436,8 +1634,15 @@
                     
                     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
                         <h3 class="text-xl font-semibold mb-2">Your Final Score</h3>
-                        <div class="text-4xl font-bold text-primary mb-2" id="finalScore">0</div>
+                        <div class="text-4xl font-bold text-primary mb-2" id="finalScore">Loading...</div>
                         <p class="text-lg text-gray-600 dark:text-gray-400">Rank: #<span id="finalRank">-</span></p>
+                    </div>
+                    
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
+                        <h3 class="text-lg font-semibold mb-4">Final Leaderboard</h3>
+                        <div id="playerLeaderboard" class="space-y-2">
+                            <p class="text-gray-500 dark:text-gray-400 text-center">Loading...</p>
+                        </div>
                     </div>
                     
                     <button onclick="leaveGame()" class="px-6 py-3 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
@@ -1446,18 +1651,159 @@
                 </div>
             `;
             
+            // Load player's final score and ranking
+            loadPlayerFinalResults();
+            
             // Save to history
             setTimeout(() => {
                 saveGameToHistory();
             }, 2000);
         }
 
-        function leaveGame() {
+        function loadPlayerFinalResults() {
+            // Get all players with scores
+            database.ref(`rooms/${currentRoom}/players`).once('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const playersArray = Object.values(players);
+                
+                // Sort players by score (highest first)
+                playersArray.sort((a, b) => (b.score || 0) - (a.score || 0));
+                
+                // Find current player's rank and score
+                const currentPlayer = playersArray.find(player => player.name === currentUser.name);
+                const currentPlayerRank = playersArray.findIndex(player => player.name === currentUser.name) + 1;
+                const currentPlayerScore = currentPlayer ? (currentPlayer.score || 0) : 0;
+                
+                // Update player's final score and rank
+                const finalScoreElement = document.getElementById('finalScore');
+                const finalRankElement = document.getElementById('finalRank');
+                
+                if (finalScoreElement) {
+                    finalScoreElement.textContent = currentPlayerScore;
+                }
+                if (finalRankElement) {
+                    finalRankElement.textContent = currentPlayerRank;
+                }
+                
+                // Update leaderboard display
+                const leaderboardElement = document.getElementById('playerLeaderboard');
+                if (leaderboardElement && playersArray.length > 0) {
+                    const leaderboardHTML = playersArray.map((player, index) => {
+                        const rank = index + 1;
+                        const score = player.score || 0;
+                        const isCurrentPlayer = player.name === currentUser.name;
+                        let rankIcon = '';
+                        
+                        if (rank === 1) {
+                            rankIcon = '🥇';
+                        } else if (rank === 2) {
+                            rankIcon = '🥈';
+                        } else if (rank === 3) {
+                            rankIcon = '🥉';
+                        } else {
+                            rankIcon = `#${rank}`;
+                        }
+                        
+                        return `
+                            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg ${isCurrentPlayer ? 'ring-2 ring-primary bg-primary/10' : ''}">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-lg font-bold min-w-[2rem]">${rankIcon}</span>
+                                    <span class="font-medium ${isCurrentPlayer ? 'text-primary font-bold' : ''}">${player.name}${isCurrentPlayer ? ' (You)' : ''}</span>
+                                </div>
+                                <span class="text-lg font-bold ${isCurrentPlayer ? 'text-primary' : ''}">${score}</span>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    leaderboardElement.innerHTML = leaderboardHTML;
+                } else if (leaderboardElement) {
+                    leaderboardElement.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No players found</p>';
+                }
+                
+                // Update history with actual score
+                if (currentPlayer) {
+                    updateHistoryWithActualScore(currentPlayerScore);
+                }
+            });
+        }
+
+        function updateHistoryWithActualScore(actualScore) {
+            const currentHistory = storage.history;
+            if (currentHistory.length > 0) {
+                // Update the most recent entry (which should be this game)
+                currentHistory[0].score = actualScore;
+                storage.history = currentHistory;
+            }
+        }
+
+        // Enhanced leaveGame function for players
+        async function leaveGame() {
             if (currentRoom && currentUser) {
+                // Save personal game data before leaving
+                await savePlayerGameData();
+                
+                // Remove from Firebase
                 database.ref(`rooms/${currentRoom}/players/${currentUser.id}`).remove();
             }
             cleanupGame();
             backToMainUI();
+        }
+
+        async function savePlayerGameData() {
+            if (!currentRoom || !currentUser) return;
+            
+            try {
+                // Get current room data
+                const roomSnapshot = await database.ref(`rooms/${currentRoom}`).once('value');
+                const roomData = roomSnapshot.val();
+                
+                if (!roomData) return;
+                
+                // Get player's answers
+                const answersSnapshot = await database.ref(`rooms/${currentRoom}/answers/${currentUser.id}`).once('value');
+                const playerAnswers = answersSnapshot.val();
+                
+                // Get player's final score and rank
+                const players = roomData.players || {};
+                const playersArray = Object.values(players);
+                playersArray.sort((a, b) => (b.score || 0) - (a.score || 0));
+                
+                const playerData = players[currentUser.id];
+                const playerRank = playersArray.findIndex(p => p.name === currentUser.name) + 1;
+                
+                // Create player's game record
+                const playerGameData = {
+                    id: `player_${currentRoom}_${currentUser.id}_${Date.now()}`,
+                    roomPin: currentRoom,
+                    gameName: roomData.game?.name || 'Unknown Game',
+                    playerName: currentUser.name,
+                    role: 'Player',
+                    startTime: new Date(roomData.created).toISOString(),
+                    endTime: new Date().toISOString(),
+                    finalScore: playerData?.score || 0,
+                    finalRank: playerRank,
+                    totalPlayers: playersArray.length,
+                    totalQuestions: roomData.game?.questions?.length || 0,
+                    answers: playerAnswers || {},
+                    gameQuestions: roomData.game?.questions || []
+                };
+                
+                // Save to player game history
+                const playerGames = JSON.parse(localStorage.getItem('playerGameHistory') || '[]');
+                playerGames.unshift(playerGameData);
+                
+                // Keep only last 50 player games
+                if (playerGames.length > 50) {
+                    playerGames.splice(50);
+                }
+                
+                localStorage.setItem('playerGameHistory', JSON.stringify(playerGames));
+                
+                console.log('💾 Player game data saved:', playerGameData.id);
+                
+            } catch (error) {
+                console.error('❌ Failed to save player game data:', error);
+            }
         }
 
         // History functions
@@ -1591,13 +1937,243 @@
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
 
+        // Real-time player answers listener
+        function listenToPlayerAnswers() {
+            database.ref(`rooms/${currentRoom}/answers`).on('value', (snapshot) => {
+                const answers = snapshot.val() || {};
+                const responseCount = Object.keys(answers).length;
+                
+                // Update response count
+                const responseCountElement = document.getElementById('responseCount');
+                if (responseCountElement) {
+                    responseCountElement.textContent = `(${responseCount} answered)`;
+                }
+                
+                // Update player responses display
+                const playerResponsesElement = document.getElementById('playerResponses');
+                if (playerResponsesElement) {
+                    // Get current players
+                    database.ref(`rooms/${currentRoom}/players`).once('value', (playersSnapshot) => {
+                        const players = playersSnapshot.val() || {};
+                        const playersArray = Object.values(players);
+                        
+                        if (responseCount === 0) {
+                            playerResponsesElement.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center">Waiting for player responses...</p>';
+                        } else {
+                            // Show which players have answered (without revealing answers)
+                            const responsesList = playersArray.map(player => {
+                                const hasAnswered = Object.values(answers).some(answer => 
+                                    answer.questionIndex === currentQuestionIndex && 
+                                    Object.keys(answers).includes(player.id)
+                                );
+                                
+                                return `
+                                    <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                        <span class="text-sm font-medium">${player.name}</span>
+                                        <span class="text-xs ${hasAnswered ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}">
+                                            ${hasAnswered ? '✓ Answered' : 'Waiting...'}
+                                        </span>
+                                    </div>
+                                `;
+                            }).join('');
+                            
+                            playerResponsesElement.innerHTML = responsesList;
+                        }
+                    });
+                }
+            });
+        }
+
         // Update UI
         function updateUI() {
             // This function would update various UI elements based on current state
         }
 
+        // Complete game data saving function
+        async function saveCompleteGameData() {
+            if (!currentRoom) return;
+            
+            try {
+                // Get complete room data from Firebase
+                const roomSnapshot = await database.ref(`rooms/${currentRoom}`).once('value');
+                const roomData = roomSnapshot.val();
+                
+                if (!roomData) return;
+                
+                // Get answers data
+                const answersSnapshot = await database.ref(`rooms/${currentRoom}/answers`).once('value');
+                const answersData = answersSnapshot.val() || {};
+                
+                // Create complete game record
+                const completeGameData = {
+                    id: `game_${currentRoom}_${Date.now()}`,
+                    roomPin: currentRoom,
+                    gameName: roomData.game?.name || 'Unknown Game',
+                    gameAuthor: roomData.game?.author || 'Unknown',
+                    startTime: new Date(roomData.created).toISOString(),
+                    endTime: new Date().toISOString(),
+                    duration: Math.round((Date.now() - roomData.created) / 1000), // in seconds
+                    totalQuestions: roomData.game?.questions?.length || 0,
+                    players: roomData.players || {},
+                    questions: roomData.game?.questions || [],
+                    answers: answersData,
+                    finalScores: {},
+                    leaderboard: []
+                };
+                
+                // Calculate final scores and leaderboard
+                const playersArray = Object.values(roomData.players || {});
+                playersArray.sort((a, b) => (b.score || 0) - (a.score || 0));
+                
+                completeGameData.leaderboard = playersArray.map((player, index) => ({
+                    rank: index + 1,
+                    name: player.name,
+                    score: player.score || 0,
+                    playerId: Object.keys(roomData.players).find(id => roomData.players[id].name === player.name)
+                }));
+                
+                playersArray.forEach(player => {
+                    completeGameData.finalScores[player.name] = player.score || 0;
+                });
+                
+                // Save to localStorage with a specific key for completed games
+                const completedGames = JSON.parse(localStorage.getItem('completedGames') || '[]');
+                completedGames.unshift(completeGameData);
+                
+                // Keep only last 20 completed games to avoid storage overflow
+                if (completedGames.length > 20) {
+                    completedGames.splice(20);
+                }
+                
+                localStorage.setItem('completedGames', JSON.stringify(completedGames));
+                
+                console.log('✅ Complete game data saved to localStorage:', completeGameData.id);
+                
+            } catch (error) {
+                console.error('❌ Failed to save complete game data:', error);
+            }
+        }
+
+        // Automatic room cleanup system
+        function startRoomCleanupService() {
+            console.log('🧹 Starting automatic room cleanup service...');
+            
+            // Run cleanup immediately
+            cleanupExpiredRooms();
+            
+            // Run cleanup every 30 minutes
+            setInterval(cleanupExpiredRooms, 30 * 60 * 1000);
+        }
+
+        async function cleanupExpiredRooms() {
+            try {
+                console.log('🔍 Scanning for expired rooms...');
+                
+                const roomsSnapshot = await database.ref('rooms').once('value');
+                const rooms = roomsSnapshot.val();
+                
+                if (!rooms) {
+                    console.log('📭 No rooms found in database');
+                    return;
+                }
+                
+                const now = Date.now();
+                const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+                let expiredCount = 0;
+                
+                const roomKeys = Object.keys(rooms);
+                console.log(`📊 Found ${roomKeys.length} total rooms`);
+                
+                for (const roomKey of roomKeys) {
+                    const room = rooms[roomKey];
+                    const roomAge = now - (room.created || 0);
+                    
+                    if (roomAge > twentyFourHours) {
+                        console.log(`🗑️ Deleting expired room ${roomKey} (age: ${Math.round(roomAge / (60 * 60 * 1000))} hours)`);
+                        
+                        // Save complete game data before deletion (if it has players)
+                        if (room.players && Object.keys(room.players).length > 0) {
+                            await saveRoomDataBeforeCleanup(roomKey, room);
+                        }
+                        
+                        // Delete the room
+                        await database.ref(`rooms/${roomKey}`).remove();
+                        expiredCount++;
+                    }
+                }
+                
+                if (expiredCount > 0) {
+                    console.log(`✅ Cleaned up ${expiredCount} expired room(s)`);
+                } else {
+                    console.log('✨ No expired rooms found');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error during room cleanup:', error);
+            }
+        }
+
+        async function saveRoomDataBeforeCleanup(roomKey, roomData) {
+            try {
+                // Get answers data
+                const answersSnapshot = await database.ref(`rooms/${roomKey}/answers`).once('value');
+                const answersData = answersSnapshot.val() || {};
+                
+                // Create archived game record
+                const archivedGameData = {
+                    id: `archived_${roomKey}_${Date.now()}`,
+                    roomPin: roomKey,
+                    gameName: roomData.game?.name || 'Unknown Game',
+                    gameAuthor: roomData.game?.author || 'Unknown',
+                    startTime: new Date(roomData.created).toISOString(),
+                    endTime: new Date().toISOString(),
+                    status: 'auto_archived',
+                    duration: Math.round((Date.now() - roomData.created) / 1000),
+                    totalQuestions: roomData.game?.questions?.length || 0,
+                    players: roomData.players || {},
+                    questions: roomData.game?.questions || [],
+                    answers: answersData,
+                    finalScores: {},
+                    leaderboard: []
+                };
+                
+                // Calculate final scores
+                const playersArray = Object.values(roomData.players || {});
+                playersArray.sort((a, b) => (b.score || 0) - (a.score || 0));
+                
+                archivedGameData.leaderboard = playersArray.map((player, index) => ({
+                    rank: index + 1,
+                    name: player.name,
+                    score: player.score || 0
+                }));
+                
+                playersArray.forEach(player => {
+                    archivedGameData.finalScores[player.name] = player.score || 0;
+                });
+                
+                // Save to archived games
+                const archivedGames = JSON.parse(localStorage.getItem('archivedGames') || '[]');
+                archivedGames.unshift(archivedGameData);
+                
+                // Keep only last 10 archived games
+                if (archivedGames.length > 10) {
+                    archivedGames.splice(10);
+                }
+                
+                localStorage.setItem('archivedGames', JSON.stringify(archivedGames));
+                
+                console.log(`💾 Archived game data for room ${roomKey}`);
+                
+            } catch (error) {
+                console.error(`❌ Failed to archive data for room ${roomKey}:`, error);
+            }
+        }
+
         // Initialize the app when the page loads
-        document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            startRoomCleanupService();
+        });
     </script>
 </body>
 </html>
