@@ -833,6 +833,9 @@
             document.getElementById('mainAppUI').classList.add('hidden');
             document.getElementById('hostGameUI').classList.remove('hidden');
             
+            // Add beforeunload protection for host
+            addHostUnloadProtection();
+            
             const hostUI = document.getElementById('hostGameUI');
             hostUI.innerHTML = `
                 <div class="text-center mb-8">
@@ -1333,11 +1336,72 @@
                 clearInterval(questionTimer);
                 questionTimer = null;
             }
+            
+            // Remove beforeunload protection
+            removeHostUnloadProtection();
+            
             currentRoom = null;
             currentGame = null;
             currentQuestionIndex = 0;
             gameStarted = false;
             isHost = false;
+        }
+
+        // Host unload protection functions
+        let hostUnloadHandler = null;
+        let isHostExiting = false;
+
+        function addHostUnloadProtection() {
+            console.log('🛡️ Adding host unload protection');
+            
+            // Create the beforeunload handler
+            hostUnloadHandler = function(event) {
+                // Only show confirmation if we're actually hosting a game
+                if (isHost && currentRoom) {
+                    // Modern browsers only show a generic message
+                    event.preventDefault();
+                    event.returnValue = '';
+                    
+                    // Show our custom confirmation dialog
+                    // Note: This won't prevent the page from unloading, but gives us a chance
+                    setTimeout(() => {
+                        handleHostUnload();
+                    }, 0);
+                    
+                    return '';
+                }
+            };
+            
+            // Add the event listener
+            window.addEventListener('beforeunload', hostUnloadHandler);
+        }
+
+        function removeHostUnloadProtection() {
+            console.log('🛡️ Removing host unload protection');
+            
+            if (hostUnloadHandler) {
+                window.removeEventListener('beforeunload', hostUnloadHandler);
+                hostUnloadHandler = null;
+            }
+        }
+
+        async function handleHostUnload() {
+            if (isHostExiting || !isHost || !currentRoom) return;
+            
+            console.log('🚪 Host is attempting to leave - handling as end game');
+            isHostExiting = true;
+            
+            try {
+                // Save complete game data
+                await saveCompleteGameData();
+                
+                // Remove the room from Firebase
+                await database.ref(`rooms/${currentRoom}`).remove();
+                
+                console.log('✅ Game ended successfully due to host disconnect');
+            } catch (error) {
+                console.error('❌ Error handling host disconnect:', error);
+            }
         }
 
         function backToMainUI() {
@@ -2084,7 +2148,7 @@
                             </div>
                             <div class="flex items-center space-x-2">
                                 <button onclick="event.stopPropagation(); viewHistoryDetails(${index})" class="text-blue-500 hover:text-blue-600 p-1">
-                                    👀
+                                    👁️
                                 </button>
                                 <button onclick="event.stopPropagation(); deleteHistoryEntry('${entry.id || entry.roomPin}', '${entry.type}')" class="text-red-500 hover:text-red-600 p-1">
                                     🗑️
