@@ -488,42 +488,22 @@
                     video.play();
                     
                     const qrScanner = new QrScanner(video, result => {
-                        // Found QR code
-                        const scannedData = result.data;
-                        console.log('📱 QR Code scanned:', scannedData);
+                        // Found QR code - extract PIN from URL or use direct PIN
+                        let pin = result.data;
                         
-                        let pin = null;
-                        
-                        // Method 1: Check if it's a full URL with join parameter
-                        if (scannedData.includes('?join=')) {
-                            try {
-                                const url = new URL(scannedData);
-                                const joinParam = url.searchParams.get('join');
-                                if (joinParam && joinParam.length === 6 && /^\d{6}$/.test(joinParam)) {
-                                    pin = joinParam;
-                                    console.log('✅ Extracted PIN from URL:', pin);
-                                }
-                            } catch (error) {
-                                console.log('❌ Invalid URL format:', error);
+                        // Check if it's a URL with join parameter
+                        try {
+                            const url = new URL(pin);
+                            const joinParam = url.searchParams.get('join');
+                            if (joinParam) {
+                                pin = joinParam;
                             }
+                        } catch (e) {
+                            // Not a URL, treat as direct PIN
                         }
                         
-                        // Method 2: Check if it's a direct 6-digit PIN (backward compatibility)
-                        if (!pin && scannedData.length === 6 && /^\d{6}$/.test(scannedData)) {
-                            pin = scannedData;
-                            console.log('✅ Direct PIN scanned:', pin);
-                        }
-                        
-                        // Method 3: Try to extract any 6-digit number from the string
-                        if (!pin) {
-                            const matches = scannedData.match(/\d{6}/);
-                            if (matches) {
-                                pin = matches[0];
-                                console.log('✅ Extracted PIN from text:', pin);
-                            }
-                        }
-                        
-                        if (pin) {
+                        // Validate PIN format (6 digits)
+                        if (pin && pin.length === 6 && /^\d{6}$/.test(pin)) {
                             // Stop scanner
                             qrScanner.stop();
                             stream.getTracks().forEach(track => track.stop());
@@ -532,12 +512,6 @@
                             // Auto-fill PIN and check room
                             document.getElementById('pinInput').value = pin;
                             checkRoomExists(pin);
-                        } else {
-                            console.log('❌ No valid PIN found in QR code:', scannedData);
-                            // Optional: Show error message to user
-                            showCustomAlert('QR code does not contain a valid game PIN. Please try scanning again or enter the PIN manually.');
-                            
-                            // Keep scanner running for another attempt
                         }
                     }, {
                         returnDetailedScanResult: true,
@@ -2086,10 +2060,6 @@
                 return;
             }
 
-            // Create the full join URL
-            const gameBaseURL = 'https://tsetse6789.github.io/other/games/LDBsVeHOoeHrMCgwYwSqwvhK.html';
-            const joinURL = `${gameBaseURL}?join=${currentRoom}`;
-
             // Show loading state first
             if (retryCount === 0) {
                 qrCodeElement.innerHTML = `
@@ -2106,11 +2076,11 @@
             if (typeof QRCode !== 'undefined') {
                 try {
                     console.log('📱 Attempting QR code generation with qrcode library...');
-                    console.log('🔗 QR URL:', joinURL);
                     
                     // Create a canvas element
                     const canvas = document.createElement('canvas');
-                    QRCode.toCanvas(canvas, joinURL, {
+                    const gameURL = `https://tsetse6789.github.io/other/games/LDBsVeHOoeHrMCgwYwSqwvhK.html?join=${currentRoom}`;
+                    QRCode.toCanvas(canvas, gameURL, {
                         width: 200,
                         height: 200,
                         margin: 2,
@@ -2147,7 +2117,8 @@
                 if (typeof QRCode !== 'undefined') {
                     try {
                         console.log('📱 Trying Data URL method...');
-                        QRCode.toDataURL(joinURL, {
+                        const gameURL = `https://tsetse6789.github.io/other/games/LDBsVeHOoeHrMCgwYwSqwvhK.html?join=${currentRoom}`;
+                        QRCode.toDataURL(gameURL, {
                             width: 200,
                             height: 200,
                             margin: 2,
@@ -2165,7 +2136,7 @@
                             img.style.margin = '0 auto';
                             img.style.width = '200px';
                             img.style.height = '200px';
-                            img.alt = `QR Code for joining game ${currentRoom}`;
+                            img.alt = `QR Code for PIN ${currentRoom}`;
                             img.className = 'rounded-lg';
                             
                             // Clear the container and add the image
@@ -2189,7 +2160,8 @@
             function tryOnlineAPI() {
                 try {
                     console.log('📱 Trying online QR API...');
-                    const qrAPIUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinURL)}&color=5D5CDE&bgcolor=FFFFFF`;
+                    const gameURL = `https://tsetse6789.github.io/other/games/LDBsVeHOoeHrMCgwYwSqwvhK.html?join=${currentRoom}`;
+                    const qrAPIUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(gameURL)}&color=5D5CDE&bgcolor=FFFFFF`;
                     
                     const img = document.createElement('img');
                     img.src = qrAPIUrl;
@@ -2197,7 +2169,7 @@
                     img.style.margin = '0 auto';
                     img.style.width = '200px';
                     img.style.height = '200px';
-                    img.alt = `QR Code for joining game ${currentRoom}`;
+                    img.alt = `QR Code for PIN ${currentRoom}`;
                     img.className = 'rounded-lg';
                     
                     // Handle load success
