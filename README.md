@@ -129,3 +129,354 @@ The YouTube Player included in this site offers advanced features for playlist m
 This feature makes it much easier to find specific videos in large playlists, especially imported YouTube playlists that might contain hundreds of videos. The search is instant and intuitive, providing a much better user experience for playlist management.
 
 ---
+---
+## 🎯 **Quiz Game JSON Documentation & Templates**
+
+### 📋 **Complete Game Structure**
+
+```json
+{
+"name": "Sample Quiz Game",
+"author": "Quiz Creator",
+"description": "A comprehensive quiz covering various topics",
+"version": "1.0",
+"created": "2024-01-01T00:00:00.000Z",
+"questions": [
+// Array of question objects (see question types below)
+],
+"settings": {
+"randomizeQuestions": true,
+"randomizeAnswers": true,
+"timeBonus": false,
+"streakBonus": false,
+"deductIncorrect": false
+},
+"metadata": {
+"difficulty": "medium",
+"category": "general",
+"estimatedTime": "10 minutes",
+"tags": ["trivia", "general knowledge"]
+}
+}
+```
+
+---
+
+## 🔥 **Question Types & Templates**
+
+### **1. 📊 Multiple Choice (Radio)**
+```json
+{
+"questionType": "multiple choice",
+"questionContent": "What is the capital of France?",
+"time": "00:30",
+"points": 100,
+"answerType": "radio",
+"answerSettings": {
+"options": ["London", "Berlin", "Paris", "Madrid"]
+},
+"answer": 2,
+"explanation": "Paris has been the capital of France since 987 AD."
+}
+```
+
+### **2. ☑️ Multiple Select (Checkbox)**
+```json
+{
+"questionType": "multiple select",
+"questionContent": "Which of the following are programming languages?",
+"time": "00:45",
+"points": 150,
+"answerType": "checkbox",
+"answerSettings": {
+"options": ["JavaScript", "HTML", "Python", "CSS", "Java", "XML"]
+},
+"answer": [0, 2, 4],
+"explanation": "JavaScript, Python, and Java are programming languages. HTML, CSS, and XML are markup languages."
+}
+```
+
+### **3. 🎚️ Range/Rating (Slider)**
+```json
+{
+"questionType": "rating",
+"questionContent": "Rate your programming experience from 1 to 10",
+"time": "00:20",
+"points": 50,
+"answerType": "range",
+"answerSettings": {
+"min": 1,
+"max": 10,
+"step": 1,
+"unit": "points"
+},
+"answer": null,
+"explanation": "This is a subjective rating question with no wrong answer."
+}
+```
+
+### **4. ✏️ Text Input**
+```json
+{
+"questionType": "text",
+"questionContent": "What is the largest planet in our solar system?",
+"time": "00:30",
+"points": 100,
+"answerType": "text",
+"answerSettings": {
+"maxLength": 50,
+"caseSensitive": false,
+"allowPartialMatch": false
+},
+"answer": ["jupiter", "Jupiter"],
+"explanation": "Jupiter is the largest planet in our solar system by both mass and volume."
+}
+```
+
+### **5. 🔢 Number Input**
+```json
+{
+"questionType": "number",
+"questionContent": "How many continents are there?",
+"time": "00:25",
+"points": 75,
+"answerType": "number",
+"answerSettings": {
+"min": 1,
+"max": 10,
+"allowDecimals": false,
+"unit": "continents"
+},
+"answer": 7,
+"explanation": "There are 7 continents: Asia, Africa, North America, South America, Antarctica, Europe, and Australia."
+}
+```
+
+### **6. 🔄 Arrange/Reorder**
+```json
+{
+"questionType": "arrange",
+"questionContent": "Arrange these planets by their distance from the sun (closest to farthest)",
+"time": "01:00",
+"points": 200,
+"answerType": "rearrange",
+"answerSettings": {
+"items": ["Venus", "Mercury", "Earth", "Mars"],
+"direction": "horizontal"
+},
+"answer": "1,0,2,3",
+"explanation": "The correct order is: Mercury (closest), Venus, Earth, Mars (farthest)."
+}
+```
+
+### **7. 🖼️ Image-Based Question**
+```json
+{
+"questionType": "image multiple choice",
+"questionContent": "What landmark is shown in this image?",
+"time": "00:45",
+"points": 125,
+"answerType": "radio",
+"answerSettings": {
+"options": ["Eiffel Tower", "Big Ben", "Statue of Liberty", "Leaning Tower of Pisa"],
+"imageUrl": "https://example.com/landmark.jpg",
+"imageAlt": "Famous landmark silhouette"
+},
+"answer": 0,
+"explanation": "The Eiffel Tower is an iconic iron lattice tower in Paris, France."
+}
+```
+
+### **8. ⏱️ True/False**
+```json
+{
+"questionType": "true/false",
+"questionContent": "The Great Wall of China is visible from space with the naked eye.",
+"time": "00:20",
+"points": 50,
+"answerType": "radio",
+"answerSettings": {
+"options": ["True", "False"]
+},
+"answer": 1,
+"explanation": "This is a common myth. The Great Wall is not visible from space with the naked eye."
+}
+```
+
+---
+
+## 🎛️ **Advanced Features & Settings**
+
+### **Time Formats**
+```json
+{
+"time": "00:30", // 30 seconds
+"time": "01:15", // 1 minute 15 seconds
+"time": "02:00", // 2 minutes
+"time": null // No time limit
+}
+```
+
+### **Point Systems**
+```json
+{
+"points": 100, // Fixed points
+"points": 50, // Lower for easier questions
+"points": 200, // Higher for harder questions
+"timeBonus": true, // Extra points for fast answers
+"streakBonus": true // Bonus for consecutive correct answers
+}
+```
+
+### **Difficulty Levels**
+```json
+{
+"difficulty": "easy", // 50-100 points, 30+ seconds
+"difficulty": "medium", // 100-150 points, 20-30 seconds
+"difficulty": "hard", // 150-250 points, 10-20 seconds
+"difficulty": "expert" // 250+ points, <15 seconds
+}
+```
+
+---
+
+## 📝 **Complete Game Template**
+
+```json
+{
+"name": "General Knowledge Quiz",
+"author": "Quiz Master",
+"description": "Test your knowledge across various subjects",
+"version": "1.0",
+"created": "2024-01-01T00:00:00.000Z",
+"settings": {
+"randomizeQuestions": true,
+"randomizeAnswers": true,
+"timeBonus": false,
+"streakBonus": false,
+"deductIncorrect": false
+},
+"metadata": {
+"difficulty": "medium",
+"category": "general",
+"estimatedTime": "15 minutes",
+"tags": ["trivia", "general knowledge", "mixed"]
+},
+"questions": [
+{
+"questionType": "multiple choice",
+"questionContent": "What is the capital of Japan?",
+"time": "00:30",
+"points": 100,
+"answerType": "radio",
+"answerSettings": {
+"options": ["Tokyo", "Osaka", "Kyoto", "Hiroshima"]
+},
+"answer": 0,
+"explanation": "Tokyo has been the capital of Japan since 1868."
+},
+{
+"questionType": "multiple select",
+"questionContent": "Which of these are primary colors?",
+"time": "00:25",
+"points": 150,
+"answerType": "checkbox",
+"answerSettings": {
+"options": ["Red", "Green", "Blue", "Yellow", "Purple", "Orange"]
+},
+"answer": [0, 2, 3],
+"explanation": "Red, blue, and yellow are the primary colors in traditional color theory."
+},
+{
+"questionType": "number",
+"questionContent": "In what year did World War II end?",
+"time": "00:30",
+"points": 125,
+"answerType": "number",
+"answerSettings": {
+"min": 1900,
+"max": 2000
+},
+"answer": 1945,
+"explanation": "World War II ended in 1945 with the surrender of Japan."
+},
+{
+"questionType": "text",
+"questionContent": "What is the chemical symbol for gold?",
+"time": "00:20",
+"points": 75,
+"answerType": "text",
+"answerSettings": {
+"maxLength": 5,
+"caseSensitive": false
+},
+"answer": ["Au", "au"],
+"explanation": "Au comes from the Latin word 'aurum' meaning gold."
+},
+{
+"questionType": "arrange",
+"questionContent": "Arrange these numbers in ascending order",
+"time": "00:45",
+"points": 100,
+"answerType": "rearrange",
+"answerSettings": {
+"items": ["15", "3", "8", "12"]
+},
+"answer": "1,2,3,0",
+"explanation": "The correct ascending order is: 3, 8, 12, 15."
+}
+]
+}
+```
+
+---
+
+## 🎯 **Best Practices & Tips**
+
+### **🏗️ Question Design**
+- **Clear and concise** question text
+- **Balanced difficulty** progression
+- **Varied question types** for engagement
+- **Appropriate time limits** (15-60 seconds typical)
+- **Meaningful point values** (50-250 range)
+
+### **📊 Answer Options**
+- **4-6 options** for multiple choice (optimal)
+- **Mix obvious and tricky** distractors
+- **Avoid "all of the above"** options
+- **Keep option length** similar
+- **Use realistic alternatives**
+
+### **⚡ Performance Tips**
+- **Questions**: 10-30 questions per game
+- **Time limits**: Match question complexity
+- **Points**: Scale with difficulty
+- **Mix question types** for variety
+- **Test thoroughly** before publishing
+
+### **🎨 Accessibility**
+- **Clear, simple language**
+- **Avoid ambiguous wording**
+- **Provide helpful explanations**
+- **Consider color-blind players**
+- **Test on mobile devices**
+
+---
+
+## 🔧 **Features Supported**
+
+✅ **Auto-randomized answer options**
+✅ **Auto-randomized question order**
+✅ **Real-time multiplayer**
+✅ **Auto-finish when all players answer**
+✅ **Mobile-responsive design**
+✅ **Dark/light mode support**
+✅ **QR code joining**
+✅ **Game export/import**
+✅ **Game history tracking**
+✅ **Leaderboards**
+🚧 **Time bonus system** (ready for implementation)
+🚧 **Streak bonus system** (ready for implementation)
+🚧 **Point deduction** (ready for implementation)
+
+Save your game as a `.json` file and import it into the quiz app to start playing! The app automatically handles randomization, scoring, and real-time multiplayer functionality.
