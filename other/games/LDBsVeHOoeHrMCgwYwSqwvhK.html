@@ -1520,7 +1520,7 @@
             
             let hasAnswer = false;
             
-            // Check based on answer type
+            // Check each input type separately (not using else if)
             const radios = document.querySelectorAll('input[type="radio"]:checked');
             const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
             const textInput = document.querySelector('input[type="text"]');
@@ -1528,20 +1528,36 @@
             const rangeInput = document.querySelector('input[type="range"]');
             const sortableItems = document.getElementById('sortableItems');
             
+            // Check each input type
             if (radios.length > 0) {
                 hasAnswer = true;
-            } else if (checkboxes.length > 0) {
-                hasAnswer = true;
-            } else if (textInput && textInput.value.trim().length > 0) {
-                hasAnswer = true;
-            } else if (numberInput && numberInput.value.trim().length > 0) {
-                hasAnswer = true;
-            } else if (rangeInput) {
-                hasAnswer = true; // Range always has a value
-            } else if (sortableItems) {
-                // For rearrange questions, check if order has changed
-                hasAnswer = checkIfRearranged();
             }
+            
+            if (checkboxes.length > 0) {
+                hasAnswer = true;
+            }
+            
+            if (textInput && textInput.value.trim().length > 0) {
+                hasAnswer = true;
+                console.log('Text input has value:', textInput.value.trim());
+            }
+            
+            if (numberInput && numberInput.value.trim().length > 0) {
+                hasAnswer = true;
+            }
+            
+            if (rangeInput) {
+                hasAnswer = true; // Range always has a value
+            }
+            
+            if (sortableItems) {
+                // For rearrange questions, check if order has changed
+                if (checkIfRearranged()) {
+                    hasAnswer = true;
+                }
+            }
+            
+            console.log('validatePlayerAnswer:', { hasAnswer, textValue: textInput?.value });
             
             submitBtn.disabled = !hasAnswer;
             
