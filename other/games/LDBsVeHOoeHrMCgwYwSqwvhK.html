@@ -2405,10 +2405,65 @@
             }
         }
 
+        // URL Parameter handling
+        function getURLParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        function handleURLParameters() {
+            const joinPin = getURLParameter('join');
+            if (joinPin) {
+                console.log('🔗 Found join parameter in URL:', joinPin);
+                
+                // Validate PIN format (6 digits)
+                if (joinPin.length === 6 && /^\d{6}$/.test(joinPin)) {
+                    // Show loading state
+                    showCustomAlert('Checking room...');
+                    
+                    // Check if room exists
+                    database.ref(`rooms/${joinPin}`).once('value').then((snapshot) => {
+                        // Close any existing alert
+                        const existingAlert = document.querySelector('.fixed.inset-0.bg-black.bg-opacity-50');
+                        if (existingAlert) {
+                            existingAlert.remove();
+                        }
+                        
+                        if (snapshot.exists()) {
+                            console.log('✅ Room found, starting join process');
+                            currentRoom = joinPin;
+                            
+                            // Clear URL parameter to prevent re-triggering
+                            const url = new URL(window.location);
+                            url.searchParams.delete('join');
+                            window.history.replaceState({}, document.title, url.toString());
+                            
+                            // Open player name modal directly
+                            openPlayerNameModal();
+                        } else {
+                            console.log('❌ Room not found');
+                            showCustomAlert(`Room with PIN ${joinPin} not found. Please check the PIN code.`);
+                        }
+                    }).catch(error => {
+                        console.error('❌ Error checking room:', error);
+                        showCustomAlert('Error connecting to game. Please try again.');
+                    });
+                } else {
+                    console.log('❌ Invalid PIN format in URL:', joinPin);
+                    showCustomAlert(`Invalid PIN format: ${joinPin}. PIN must be 6 digits.`);
+                }
+            }
+        }
+
         // Initialize the app when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             initializeApp();
             startRoomCleanupService();
+            
+            // Handle URL parameters after app initialization
+            setTimeout(() => {
+                handleURLParameters();
+            }, 1000); // Small delay to ensure Firebase is ready
         });
     </script>
 </body>
