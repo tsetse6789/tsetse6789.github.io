@@ -406,6 +406,7 @@
         let questionTimer = null;
         let playerAnswers = {};
         let gameStarted = false;
+        let previousRankings = []; // Track previous rankings for rank change calculations
 
         // Storage functions using localStorage
         const storage = {
@@ -1144,9 +1145,17 @@
             hostUI.innerHTML = `
                 <div class="text-center mb-8">
                     <h2 class="text-2xl font-bold mb-4">Question ${currentQuestionIndex + 1} Results</h2>
-                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 max-w-2xl mx-auto">
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 max-w-2xl mx-auto mb-6">
                         <h3 class="text-lg font-semibold mb-4">Correct Answer</h3>
                         ${renderCorrectAnswer(question)}
+                    </div>
+                    
+                    <!-- Current Leaderboard -->
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 max-w-4xl mx-auto">
+                        <h3 class="text-xl font-semibold mb-4">Current Leaderboard</h3>
+                        <div id="currentLeaderboard" class="space-y-3">
+                            <p class="text-gray-500 dark:text-gray-400">Loading leaderboard...</p>
+                        </div>
                     </div>
                 </div>
                 
@@ -1159,6 +1168,9 @@
                     </button>
                 </div>
             `;
+            
+            // Load and display current leaderboard with rank changes
+            loadCurrentLeaderboard();
         }
 
         function renderCorrectAnswer(question) {
@@ -1971,7 +1983,48 @@
         function loadGameHistory() {
             const historyContent = document.getElementById('historyContent');
             
-            if (storage.history.length === 0) {
+            // Get all types of history
+            const basicHistory = storage.history;
+            const completedGames = JSON.parse(localStorage.getItem('completedGames') || '[]');
+            const playerGames = JSON.parse(localStorage.getItem('playerGameHistory') || '[]');
+            const archivedGames = JSON.parse(localStorage.getItem('archivedGames') || '[]');
+            
+            // Combine all histories with proper type indicators
+            const allHistory = [
+                ...basicHistory.map(entry => ({ ...entry, type: 'basic' })),
+                ...completedGames.map(entry => ({ 
+                    ...entry, 
+                    type: 'completed',
+                    gameName: entry.gameName,
+                    date: entry.endTime,
+                    role: 'Host',
+                    players: entry.leaderboard?.length || 0,
+                    score: null
+                })),
+                ...playerGames.map(entry => ({
+                    ...entry,
+                    type: 'player',
+                    gameName: entry.gameName,
+                    date: entry.endTime,
+                    role: 'Player',
+                    players: entry.totalPlayers || 0,
+                    score: entry.finalScore
+                })),
+                ...archivedGames.map(entry => ({
+                    ...entry,
+                    type: 'archived',
+                    gameName: entry.gameName,
+                    date: entry.endTime,
+                    role: 'Host (Archived)',
+                    players: entry.leaderboard?.length || 0,
+                    score: null
+                }))
+            ];
+            
+            // Sort by date (newest first)
+            allHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (allHistory.length === 0) {
                 historyContent.innerHTML = `
                     <div class="text-center py-12 text-gray-500 dark:text-gray-400">
                         <div class="text-6xl mb-4">📊</div>
@@ -1980,30 +2033,294 @@
                     </div>
                 `;
             } else {
-                historyContent.innerHTML = storage.history.map(entry => `
-                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                historyContent.innerHTML = allHistory.map((entry, index) => `
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors" onclick="viewHistoryDetails(${index})">
                         <div class="flex justify-between items-start">
-                            <div>
-                                <h4 class="font-semibold">${entry.gameName}</h4>
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <h4 class="font-semibold">${entry.gameName}</h4>
+                                    ${entry.type === 'completed' ? '<span class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">Completed</span>' : ''}
+                                    ${entry.type === 'player' ? '<span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">Played</span>' : ''}
+                                    ${entry.type === 'archived' ? '<span class="text-xs bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded">Archived</span>' : ''}
+                                </div>
                                 <p class="text-sm text-gray-600 dark:text-gray-400">
                                     ${new Date(entry.date).toLocaleDateString()} - 
                                     ${entry.role}
                                     ${entry.score !== null ? ` - Score: ${entry.score}` : ''}
+                                    ${entry.players ? ` - ${entry.players} player(s)` : ''}
                                 </p>
+                                <p class="text-xs text-gray-500 mt-1">Click to view details</p>
                             </div>
-                            <button onclick="deleteHistoryEntry(${entry.id})" class="text-red-500 hover:text-red-600">
-                                🗑️
-                            </button>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="event.stopPropagation(); viewHistoryDetails(${index})" class="text-blue-500 hover:text-blue-600 p-1">
+                                    👁️
+                                </button>
+                                <button onclick="event.stopPropagation(); deleteHistoryEntry('${entry.id || entry.roomPin}', '${entry.type}')" class="text-red-500 hover:text-red-600 p-1">
+                                    🗑️
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `).join('');
+                
+                // Store combined history for detail view
+                window.combinedHistory = allHistory;
             }
         }
 
-        function deleteHistoryEntry(id) {
-            const currentHistory = storage.history.filter(entry => entry.id !== id);
-            storage.history = currentHistory;
-            loadGameHistory();
+        function deleteHistoryEntry(id, type) {
+            showConfirmDialog('Are you sure you want to delete this history entry?', () => {
+                switch (type) {
+                    case 'basic':
+                        const currentHistory = storage.history.filter(entry => entry.id !== id);
+                        storage.history = currentHistory;
+                        break;
+                    case 'completed':
+                        const completedGames = JSON.parse(localStorage.getItem('completedGames') || '[]');
+                        const filteredCompleted = completedGames.filter(entry => entry.roomPin !== id);
+                        localStorage.setItem('completedGames', JSON.stringify(filteredCompleted));
+                        break;
+                    case 'player':
+                        const playerGames = JSON.parse(localStorage.getItem('playerGameHistory') || '[]');
+                        const filteredPlayer = playerGames.filter(entry => entry.roomPin !== id);
+                        localStorage.setItem('playerGameHistory', JSON.stringify(filteredPlayer));
+                        break;
+                    case 'archived':
+                        const archivedGames = JSON.parse(localStorage.getItem('archivedGames') || '[]');
+                        const filteredArchived = archivedGames.filter(entry => entry.roomPin !== id);
+                        localStorage.setItem('archivedGames', JSON.stringify(filteredArchived));
+                        break;
+                }
+                loadGameHistory();
+            });
+        }
+
+        // View detailed history information
+        function viewHistoryDetails(index) {
+            if (!window.combinedHistory || !window.combinedHistory[index]) return;
+            
+            const entry = window.combinedHistory[index];
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            
+            let detailsContent = '';
+            
+            switch (entry.type) {
+                case 'completed':
+                case 'archived':
+                    detailsContent = `
+                        <div class="space-y-6">
+                            <!-- Game Summary -->
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <h4 class="text-lg font-semibold mb-3">Game Summary</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Game Name</p>
+                                        <p class="font-medium">${entry.gameName}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Author</p>
+                                        <p class="font-medium">${entry.gameAuthor || 'Unknown'}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Room PIN</p>
+                                        <p class="font-medium">${entry.roomPin}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Duration</p>
+                                        <p class="font-medium">${Math.round((entry.duration || 0) / 60)} minutes</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Total Questions</p>
+                                        <p class="font-medium">${entry.totalQuestions || 0}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Players</p>
+                                        <p class="font-medium">${entry.leaderboard?.length || 0}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Leaderboard -->
+                            ${entry.leaderboard && entry.leaderboard.length > 0 ? `
+                                <div>
+                                    <h4 class="text-lg font-semibold mb-3">Final Leaderboard</h4>
+                                    <div class="space-y-2 max-h-60 overflow-y-auto">
+                                        ${entry.leaderboard.map(player => `
+                                            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                                <div class="flex items-center space-x-3">
+                                                    <span class="text-lg font-bold ${player.rank === 1 ? 'text-yellow-600' : player.rank === 2 ? 'text-gray-500' : player.rank === 3 ? 'text-yellow-600' : 'text-gray-600'} min-w-[2rem]">
+                                                        ${player.rank === 1 ? '🥇' : player.rank === 2 ? '🥈' : player.rank === 3 ? '🥉' : `#${player.rank}`}
+                                                    </span>
+                                                    <span class="font-medium">${player.name}</span>
+                                                </div>
+                                                <span class="text-lg font-bold text-primary">${player.score}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <!-- Questions Overview -->
+                            ${entry.questions && entry.questions.length > 0 ? `
+                                <div>
+                                    <h4 class="text-lg font-semibold mb-3">Questions Used</h4>
+                                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                                        ${entry.questions.map((question, index) => `
+                                            <div class="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                                <div class="flex justify-between items-start mb-1">
+                                                    <span class="text-sm font-medium">Q${index + 1}</span>
+                                                    <span class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">${question.points} pts</span>
+                                                </div>
+                                                <p class="text-sm text-gray-700 dark:text-gray-300">${question.questionContent}</p>
+                                                <p class="text-xs text-gray-500 mt-1 capitalize">${question.questionType} • ${question.answerType}</p>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    break;
+
+                case 'player':
+                    detailsContent = `
+                        <div class="space-y-6">
+                            <!-- Player Summary -->
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <h4 class="text-lg font-semibold mb-3">Your Performance</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Game Name</p>
+                                        <p class="font-medium">${entry.gameName}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Player Name</p>
+                                        <p class="font-medium">${entry.playerName}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Room PIN</p>
+                                        <p class="font-medium">${entry.roomPin}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Final Score</p>
+                                        <p class="font-medium text-primary text-lg">${entry.finalScore}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Final Rank</p>
+                                        <p class="font-medium">#${entry.finalRank} out of ${entry.totalPlayers}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Questions Answered</p>
+                                        <p class="font-medium">${Object.keys(entry.answers || {}).length} / ${entry.totalQuestions}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Answers Review -->
+                            ${entry.answers && entry.gameQuestions ? `
+                                <div>
+                                    <h4 class="text-lg font-semibold mb-3">Your Answers</h4>
+                                    <div class="space-y-3 max-h-60 overflow-y-auto">
+                                        ${entry.gameQuestions.map((question, index) => {
+                                            const answer = entry.answers;
+                                            const hasAnswer = answer && answer.questionIndex === index;
+                                            return `
+                                                <div class="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                                    <div class="flex justify-between items-start mb-2">
+                                                        <span class="text-sm font-medium">Q${index + 1}</span>
+                                                        <span class="text-xs ${hasAnswer ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'} px-2 py-1 rounded">
+                                                            ${hasAnswer ? 'Answered' : 'Not Answered'}
+                                                        </span>
+                                                    </div>
+                                                    <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">${question.questionContent}</p>
+                                                    ${hasAnswer ? `
+                                                        <p class="text-xs text-gray-500">Your answer: ${formatPlayerAnswer(answer.answer, question)}</p>
+                                                    ` : ''}
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    break;
+
+                default:
+                    detailsContent = `
+                        <div class="space-y-6">
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                <h4 class="text-lg font-semibold mb-3">Game Information</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Game Name</p>
+                                        <p class="font-medium">${entry.gameName}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Date</p>
+                                        <p class="font-medium">${new Date(entry.date).toLocaleDateString()}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Role</p>
+                                        <p class="font-medium">${entry.role}</p>
+                                    </div>
+                                    ${entry.score !== null ? `
+                                        <div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">Score</p>
+                                            <p class="font-medium text-primary text-lg">${entry.score}</p>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            }
+            
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto slide-up">
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold">Game Details - ${entry.gameName}</h3>
+                            <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">✕</button>
+                        </div>
+                        
+                        ${detailsContent}
+                        
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Helper function to format player answers for display
+        function formatPlayerAnswer(answer, question) {
+            switch (question.answerType) {
+                case 'radio':
+                    return question.answerSettings.options[answer] || answer;
+                case 'checkbox':
+                    if (Array.isArray(answer)) {
+                        return answer.map(i => question.answerSettings.options[i]).join(', ');
+                    }
+                    return answer;
+                case 'range':
+                case 'number':
+                    return answer.toString();
+                case 'text':
+                    return answer;
+                case 'rearrange':
+                    if (typeof answer === 'string') {
+                        const indices = answer.split(',');
+                        return indices.map(i => question.answerSettings.items[parseInt(i)]).join(' → ');
+                    }
+                    return answer;
+                default:
+                    return answer;
+            }
         }
 
         // Search functionality
@@ -2536,6 +2853,110 @@
             } catch (error) {
                 console.error(`❌ Failed to archive data for room ${roomKey}:`, error);
             }
+        }
+
+        // Load current leaderboard with rank changes
+        function loadCurrentLeaderboard() {
+            database.ref(`rooms/${currentRoom}/players`).once('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                const playersArray = Object.values(players);
+                
+                // Sort players by score (highest first) to get current rankings
+                playersArray.sort((a, b) => (b.score || 0) - (a.score || 0));
+                
+                // Calculate rank changes
+                const currentRankings = playersArray.map((player, index) => ({
+                    ...player,
+                    currentRank: index + 1,
+                    playerId: Object.keys(players).find(id => players[id].name === player.name)
+                }));
+                
+                // Compare with previous rankings to show changes
+                const rankingsWithChanges = currentRankings.map(player => {
+                    const previousEntry = previousRankings.find(prev => prev.name === player.name);
+                    let rankChange = null;
+                    
+                    if (previousEntry) {
+                        const previousRank = previousEntry.currentRank;
+                        const currentRank = player.currentRank;
+                        
+                        if (currentRank < previousRank) {
+                            rankChange = { type: 'up', amount: previousRank - currentRank };
+                        } else if (currentRank > previousRank) {
+                            rankChange = { type: 'down', amount: currentRank - previousRank };
+                        } else {
+                            rankChange = { type: 'same', amount: 0 };
+                        }
+                    } else {
+                        rankChange = { type: 'new', amount: 0 };
+                    }
+                    
+                    return { ...player, rankChange };
+                });
+                
+                // Update previous rankings for next comparison
+                previousRankings = [...currentRankings];
+                
+                const leaderboardElement = document.getElementById('currentLeaderboard');
+                if (leaderboardElement && rankingsWithChanges.length > 0) {
+                    const leaderboardHTML = rankingsWithChanges.map((player) => {
+                        const rank = player.currentRank;
+                        const score = player.score || 0;
+                        let rankIcon = '';
+                        let rankColor = '';
+                        
+                        if (rank === 1) {
+                            rankIcon = '🥇';
+                            rankColor = 'text-yellow-600';
+                        } else if (rank === 2) {
+                            rankIcon = '🥈';
+                            rankColor = 'text-gray-500';
+                        } else if (rank === 3) {
+                            rankIcon = '🥉';
+                            rankColor = 'text-yellow-600';
+                        } else {
+                            rankIcon = `#${rank}`;
+                            rankColor = 'text-gray-600 dark:text-gray-400';
+                        }
+                        
+                        // Rank change indicator
+                        let changeIndicator = '';
+                        if (player.rankChange) {
+                            switch (player.rankChange.type) {
+                                case 'up':
+                                    changeIndicator = `<span class="text-green-500 text-sm ml-2">↗️ +${player.rankChange.amount}</span>`;
+                                    break;
+                                case 'down':
+                                    changeIndicator = `<span class="text-red-500 text-sm ml-2">↘️ -${player.rankChange.amount}</span>`;
+                                    break;
+                                case 'same':
+                                    changeIndicator = `<span class="text-gray-400 text-sm ml-2">→ 0</span>`;
+                                    break;
+                                case 'new':
+                                    changeIndicator = `<span class="text-blue-500 text-sm ml-2">✨ NEW</span>`;
+                                    break;
+                            }
+                        }
+                        
+                        return `
+                            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg ${rank <= 3 ? 'ring-2 ring-primary/20' : ''} slide-up">
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-2xl font-bold ${rankColor} min-w-[2rem]">${rankIcon}</span>
+                                    <div>
+                                        <span class="font-semibold text-lg">${player.name}</span>
+                                        ${changeIndicator}
+                                    </div>
+                                </div>
+                                <span class="text-xl font-bold text-primary">${score}</span>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    leaderboardElement.innerHTML = leaderboardHTML;
+                } else if (leaderboardElement) {
+                    leaderboardElement.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No players found</p>';
+                }
+            });
         }
 
         // Auto-finish question check
