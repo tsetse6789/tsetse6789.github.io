@@ -197,6 +197,81 @@
         </div>
     </div>
 
+    <!-- Game Details Modal -->
+    <div id="gameDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto slide-up">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">Game Details</h3>
+                    <button id="closeGameDetailsModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">✕</button>
+                </div>
+                
+                <div id="gameDetailsContent">
+                    <!-- Game details content will be populated here -->
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="exportGame()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+                        📥 Export Game
+                    </button>
+                    <button id="closeGameDetails" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Settings Modal -->
+    <div id="gameSettingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full slide-up">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold mb-2">Game Settings</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Configure bonus settings for this game</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                        <div>
+                            <p class="font-medium">Time Bonus</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Extra points for fast answers</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="timeBonusToggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                        <div>
+                            <p class="font-medium">Streak Bonus</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Bonus for consecutive correct answers</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="streakBonusToggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                        <div>
+                            <p class="font-medium">Deduct for Incorrect</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Lose points for wrong answers</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="deductToggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button id="cancelGameSettings" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">Cancel</button>
+                    <button id="startGameWithSettings" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">Start Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Game History Modal -->
     <div id="historyModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto slide-up">
@@ -428,6 +503,8 @@
             document.getElementById('closeJoinModal').addEventListener('click', closeJoinModal);
             document.getElementById('closeQRScanner').addEventListener('click', closeQRScanner);
             document.getElementById('closeHistoryModal').addEventListener('click', closeHistoryModal);
+            document.getElementById('closeGameDetailsModal').addEventListener('click', closeGameDetailsModal);
+            document.getElementById('closeGameDetails').addEventListener('click', closeGameDetailsModal);
 
             // Import modal
             document.getElementById('gameFileInput').addEventListener('change', handleFileSelect);
@@ -592,11 +669,14 @@
                         <h3 class="text-lg font-semibold mb-2">${game.name}</h3>
                         <p class="text-gray-600 dark:text-gray-400 mb-1">By: ${game.author}</p>
                         <p class="text-gray-600 dark:text-gray-400 mb-4">${game.questions.length} questions</p>
-                        <div class="flex space-x-3">
+                        <div class="flex space-x-2">
                             <button onclick="playGame(${index})" class="flex-1 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
                                 ▶️ Play
                             </button>
-                            <button onclick="deleteGame(${index})" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
+                            <button onclick="viewGameDetails(${index})" class="px-3 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
+                                👁️
+                            </button>
+                            <button onclick="deleteGame(${index})" class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
                                 🗑️
                             </button>
                         </div>
@@ -2040,6 +2120,9 @@
             answersRef.on('value', (snapshot) => {
                 console.log('📝 Answers data changed:', snapshot.val());
                 updatePlayerActivity();
+                
+                // Check if all players have answered and auto-finish if so
+                checkAutoFinishQuestion();
             });
             
             // Also listen to player changes (in case players join/leave during question)
@@ -2419,6 +2502,139 @@
             } catch (error) {
                 console.error(`❌ Failed to archive data for room ${roomKey}:`, error);
             }
+        }
+
+        // Auto-finish question check
+        function checkAutoFinishQuestion() {
+            if (!isHost || !gameStarted) return;
+            
+            Promise.all([
+                database.ref(`rooms/${currentRoom}/answers`).once('value'),
+                database.ref(`rooms/${currentRoom}/players`).once('value')
+            ]).then(([answersSnapshot, playersSnapshot]) => {
+                const answers = answersSnapshot.val() || {};
+                const players = playersSnapshot.val() || {};
+                
+                const playersArray = Object.values(players);
+                const totalPlayers = playersArray.length;
+                
+                if (totalPlayers === 0) return; // No players to check
+                
+                // Count answers for current question only
+                const currentQuestionAnswers = Object.values(answers).filter(answer => 
+                    answer && answer.questionIndex === currentQuestionIndex
+                );
+                
+                console.log(`🔍 Auto-finish check: ${currentQuestionAnswers.length}/${totalPlayers} players answered`);
+                
+                // If all players have answered, auto-finish the question
+                if (currentQuestionAnswers.length >= totalPlayers) {
+                    console.log('✅ All players answered! Auto-finishing question...');
+                    finishQuestion();
+                }
+            }).catch(error => {
+                console.error('❌ Error checking auto-finish:', error);
+            });
+        }
+
+        // Game Details Functions
+        let currentGameDetailsIndex = null;
+
+        function viewGameDetails(index) {
+            currentGameDetailsIndex = index;
+            const game = storage.games[index];
+            const modal = document.getElementById('gameDetailsModal');
+            const content = document.getElementById('gameDetailsContent');
+            
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <!-- Basic Info -->
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <h4 class="text-lg font-semibold mb-3">Basic Information</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Name</p>
+                                <p class="font-medium">${game.name}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Author</p>
+                                <p class="font-medium">${game.author}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Questions</p>
+                                <p class="font-medium">${game.questions.length}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Total Points</p>
+                                <p class="font-medium">${game.questions.reduce((sum, q) => sum + (q.points || 0), 0)}</p>
+                            </div>
+                        </div>
+                        ${game.description ? `
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Description</p>
+                                <p class="font-medium">${game.description}</p>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Questions List -->
+                    <div>
+                        <h4 class="text-lg font-semibold mb-3">Questions Preview</h4>
+                        <div class="space-y-3 max-h-96 overflow-y-auto">
+                            ${game.questions.map((question, qIndex) => `
+                                <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h5 class="font-medium text-sm text-gray-600 dark:text-gray-400">Question ${qIndex + 1}</h5>
+                                        <div class="flex space-x-2 text-xs">
+                                            <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">${question.time || 'No time limit'}</span>
+                                            <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">${question.points} pts</span>
+                                        </div>
+                                    </div>
+                                    <p class="font-medium mb-2">${question.questionContent}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 capitalize">${question.questionType} • ${question.answerType}</p>
+                                    ${question.answerSettings && question.answerSettings.options ? `
+                                        <div class="mt-2">
+                                            <p class="text-xs text-gray-500 mb-1">Options:</p>
+                                            <div class="text-xs text-gray-600 dark:text-gray-400">
+                                                ${question.answerSettings.options.slice(0, 3).join(', ')}${question.answerSettings.options.length > 3 ? '...' : ''}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeGameDetailsModal() {
+            document.getElementById('gameDetailsModal').classList.add('hidden');
+            currentGameDetailsIndex = null;
+        }
+
+        function exportGame() {
+            if (currentGameDetailsIndex === null) return;
+            
+            const game = storage.games[currentGameDetailsIndex];
+            const gameJSON = JSON.stringify(game, null, 2);
+            
+            // Create download link
+            const blob = new Blob([gameJSON], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${game.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showCustomAlert('Game exported successfully!');
         }
 
         // URL Parameter handling
