@@ -913,6 +913,40 @@
             
             // Randomize questions
             const shuffledQuestions = [...currentGame.questions].sort(() => Math.random() - 0.5);
+            
+            // Randomize answer options for applicable question types
+            shuffledQuestions.forEach(question => {
+                if (question.answerType === 'radio' || question.answerType === 'checkbox') {
+                    const originalOptions = [...question.answerSettings.options];
+                    const originalAnswer = question.answer;
+                    
+                    // Create array of indices and shuffle them
+                    const indices = Array.from({ length: originalOptions.length }, (_, i) => i);
+                    const shuffledIndices = indices.sort(() => Math.random() - 0.5);
+                    
+                    // Reorder options according to shuffled indices
+                    question.answerSettings.options = shuffledIndices.map(i => originalOptions[i]);
+                    
+                    // Update correct answer mapping
+                    if (question.answerType === 'radio') {
+                        // Find new position of correct answer
+                        question.answer = shuffledIndices.indexOf(originalAnswer);
+                    } else if (question.answerType === 'checkbox') {
+                        // Map multiple correct answers to new positions
+                        question.answer = originalAnswer.map(correctIndex => 
+                            shuffledIndices.indexOf(correctIndex)
+                        );
+                    }
+                    
+                    console.log(`🔀 Randomized options for question: "${question.questionContent}"`, {
+                        original: originalOptions,
+                        shuffled: question.answerSettings.options,
+                        originalAnswer: originalAnswer,
+                        newAnswer: question.answer
+                    });
+                }
+            });
+            
             currentGame.questions = shuffledQuestions;
             
             database.ref(`rooms/${currentRoom}/gameState`).set('playing');
@@ -1377,40 +1411,11 @@
         }
 
         function renderPlayerAnswerInput(question) {
-            // Check if we should randomize answers
-            const shouldRandomize = question.randomizeAnswers === true || question.metadata?.randomizeAnswers === true;
-            let optionsToRender = question.answerSettings.options;
-            let originalIndices = question.answerSettings.options.map((_, index) => index);
-            
-            if (shouldRandomize && (question.answerType === 'radio' || question.answerType === 'checkbox')) {
-                // Create array of options with their original indices
-                const optionsWithIndices = question.answerSettings.options.map((option, index) => ({
-                    option: option,
-                    originalIndex: index
-                }));
-                
-                // Shuffle the array
-                for (let i = optionsWithIndices.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [optionsWithIndices[i], optionsWithIndices[j]] = [optionsWithIndices[j], optionsWithIndices[i]];
-                }
-                
-                // Extract shuffled options and their original indices
-                optionsToRender = optionsWithIndices.map(item => item.option);
-                originalIndices = optionsWithIndices.map(item => item.originalIndex);
-                
-                console.log('🔀 Randomized answer options:', {
-                    original: question.answerSettings.options,
-                    randomized: optionsToRender,
-                    mapping: originalIndices
-                });
-            }
-            
             switch (question.answerType) {
                 case 'radio':
                     return `
-                        <div class="space-y-3" data-original-indices='${JSON.stringify(originalIndices)}'>
-                            ${optionsToRender.map((option, index) => `
+                        <div class="space-y-3">
+                            ${question.answerSettings.options.map((option, index) => `
                                 <label class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                                     <input type="radio" name="answer" value="${index}" class="mr-3" onchange="validatePlayerAnswer()">
                                     <span>${option}</span>
@@ -1420,8 +1425,8 @@
                     `;
                 case 'checkbox':
                     return `
-                        <div class="space-y-3" data-original-indices='${JSON.stringify(originalIndices)}'>
-                            ${optionsToRender.map((option, index) => `
+                        <div class="space-y-3">
+                            ${question.answerSettings.options.map((option, index) => `
                                 <label class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                                     <input type="checkbox" name="answer" value="${index}" class="mr-3" onchange="validatePlayerAnswer()">
                                     <span>${option}</span>
@@ -1557,39 +1562,11 @@
             switch (question.answerType) {
                 case 'radio':
                     const radio = document.querySelector('input[type="radio"]:checked');
-                    if (radio) {
-                        const displayedIndex = parseInt(radio.value);
-                        // Convert back to original index if answers were randomized
-                        const container = document.querySelector('div[data-original-indices]');
-                        if (container) {
-                            const originalIndices = JSON.parse(container.getAttribute('data-original-indices'));
-                            answer = originalIndices[displayedIndex];
-                            console.log('🔄 Converting randomized radio answer:', {
-                                displayed: displayedIndex,
-                                original: answer,
-                                mapping: originalIndices
-                            });
-                        } else {
-                            answer = displayedIndex;
-                        }
-                    }
+                    answer = radio ? parseInt(radio.value) : null;
                     break;
                 case 'checkbox':
                     const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-                    const displayedIndices = Array.from(checkboxes).map(cb => parseInt(cb.value));
-                    // Convert back to original indices if answers were randomized
-                    const checkboxContainer = document.querySelector('div[data-original-indices]');
-                    if (checkboxContainer && displayedIndices.length > 0) {
-                        const originalIndices = JSON.parse(checkboxContainer.getAttribute('data-original-indices'));
-                        answer = displayedIndices.map(displayedIndex => originalIndices[displayedIndex]);
-                        console.log('🔄 Converting randomized checkbox answer:', {
-                            displayed: displayedIndices,
-                            original: answer,
-                            mapping: originalIndices
-                        });
-                    } else {
-                        answer = displayedIndices;
-                    }
+                    answer = Array.from(checkboxes).map(cb => parseInt(cb.value));
                     break;
                 case 'range':
                     const range = document.querySelector('input[type="range"]');
