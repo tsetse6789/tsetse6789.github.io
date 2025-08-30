@@ -1035,22 +1035,40 @@
         }
 
         function renderCorrectAnswer(question) {
+            let answerHtml = '';
             switch (question.answerType) {
                 case 'radio':
-                    return `<p class="text-lg">${question.answerSettings.options[question.answer]}</p>`;
+                    answerHtml = `<p class="text-lg">${question.answerSettings.options[question.answer]}</p>`;
+                    break;
                 case 'checkbox':
                     const correctOptions = question.answer.map(i => question.answerSettings.options[i]);
-                    return `<p class="text-lg">${correctOptions.join(', ')}</p>`;
+                    answerHtml = `<p class="text-lg">${correctOptions.join(', ')}</p>`;
+                    break;
                 case 'text':
-                    return `<p class="text-lg">${question.answer.join(' or ')}</p>`;
+                    answerHtml = `<p class="text-lg">${question.answer.join(' or ')}</p>`;
+                    break;
                 case 'number':
-                    return `<p class="text-lg">${question.answer}</p>`;
+                    answerHtml = `<p class="text-lg">${question.answer}</p>`;
+                    break;
                 case 'rearrange':
                     const correctOrder = question.answer.split(',').map(i => question.answerSettings.items[parseInt(i)]);
-                    return `<p class="text-lg">${correctOrder.join(' → ')}</p>`;
+                    answerHtml = `<p class="text-lg">${correctOrder.join(' → ')}</p>`;
+                    break;
                 default:
-                    return `<p class="text-lg">No specific correct answer</p>`;
+                    answerHtml = `<p class="text-lg">No specific correct answer</p>`;
             }
+            
+            // Add explanation if available
+            if (question.explanation && question.explanation.trim()) {
+                answerHtml += `
+                    <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <h4 class="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">📝 Explanation</h4>
+                        <p class="text-sm text-blue-700 dark:text-blue-300">${question.explanation}</p>
+                    </div>
+                `;
+            }
+            
+            return answerHtml;
         }
 
         function nextQuestion() {
@@ -1937,33 +1955,55 @@
 
         // Real-time player answers listener
         function listenToPlayerAnswers() {
-            database.ref(`rooms/${currentRoom}/answers`).on('value', (snapshot) => {
-                const answers = snapshot.val() || {};
-                const responseCount = Object.keys(answers).length;
-                
-                // Update response count
-                const responseCountElement = document.getElementById('responseCount');
-                if (responseCountElement) {
-                    responseCountElement.textContent = `(${responseCount} answered)`;
-                }
-                
-                // Update player responses display
-                const playerResponsesElement = document.getElementById('playerResponses');
-                if (playerResponsesElement) {
-                    // Get current players
-                    database.ref(`rooms/${currentRoom}/players`).once('value', (playersSnapshot) => {
-                        const players = playersSnapshot.val() || {};
-                        const playersArray = Object.values(players);
-                        
-                        if (responseCount === 0) {
-                            playerResponsesElement.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center">Waiting for player responses...</p>';
+            // Listen to both answers and players to ensure proper updates
+            const answersRef = database.ref(`rooms/${currentRoom}/answers`);
+            const playersRef = database.ref(`rooms/${currentRoom}/players`);
+            
+            function updatePlayerActivity() {
+                // Get both answers and players data
+                Promise.all([
+                    answersRef.once('value'),
+                    playersRef.once('value')
+                ]).then(([answersSnapshot, playersSnapshot]) => {
+                    const answers = answersSnapshot.val() || {};
+                    const players = playersSnapshot.val() || {};
+                    const playersArray = Object.values(players);
+                    
+                    // Count answers for current question only
+                    const currentQuestionAnswers = Object.values(answers).filter(answer => 
+                        answer && answer.questionIndex === currentQuestionIndex
+                    );
+                    const responseCount = currentQuestionAnswers.length;
+                    
+                    // Update response count
+                    const responseCountElement = document.getElementById('responseCount');
+                    if (responseCountElement) {
+                        responseCountElement.textContent = `(${responseCount} answered)`;
+                    }
+                    
+                    // Update player responses display
+                    const playerResponsesElement = document.getElementById('playerResponses');
+                    if (playerResponsesElement) {
+                        if (playersArray.length === 0) {
+                            playerResponsesElement.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center">No players in game...</p>';
+                        } else if (responseCount === 0) {
+                            // Show all players as waiting
+                            const responsesList = playersArray.map(player => `
+                                <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                    <span class="text-sm font-medium">${player.name}</span>
+                                    <span class="text-xs text-gray-400">Waiting...</span>
+                                </div>
+                            `).join('');
+                            playerResponsesElement.innerHTML = responsesList;
                         } else {
-                            // Show which players have answered (without revealing answers)
+                            // Show which players have answered for the current question
                             const responsesList = playersArray.map(player => {
-                                const hasAnswered = Object.values(answers).some(answer => 
-                                    answer.questionIndex === currentQuestionIndex && 
-                                    Object.keys(answers).includes(player.id)
-                                );
+                                // Find player ID by matching name (since we have player objects with names)
+                                const playerId = Object.keys(players).find(id => players[id].name === player.name);
+                                
+                                // Check if this specific player has answered the current question
+                                const hasAnswered = playerId && answers[playerId] && 
+                                                  answers[playerId].questionIndex === currentQuestionIndex;
                                 
                                 return `
                                     <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
@@ -1977,12 +2017,29 @@
                             
                             playerResponsesElement.innerHTML = responsesList;
                         }
-                    });
-                }
+                    }
+                }).catch(error => {
+                    console.error('❌ Error updating player activity:', error);
+                });
+            }
+            
+            // Listen to changes in answers
+            answersRef.on('value', (snapshot) => {
+                console.log('📝 Answers data changed:', snapshot.val());
+                updatePlayerActivity();
             });
+            
+            // Also listen to player changes (in case players join/leave during question)
+            playersRef.on('value', (snapshot) => {
+                console.log('👥 Players data changed:', snapshot.val());
+                updatePlayerActivity();
+            });
+            
+            // Initial update
+            updatePlayerActivity();
         }
 
-        // QR Code generation with retry logic
+        // QR Code generation with retry logic and multiple fallback methods
         function generateQRCodeWithRetry(retryCount = 0) {
             const maxRetries = 3;
             const qrCodeElement = document.getElementById('qrCode');
@@ -2004,42 +2061,96 @@
                 `;
             }
 
-            // Check if QRCode library is available
-            if (typeof QRCode === 'undefined') {
-                console.log(`QRCode library not loaded yet (attempt ${retryCount + 1}/${maxRetries + 1})`);
-                
-                if (retryCount < maxRetries) {
-                    // Retry after increasing delays
-                    const delay = (retryCount + 1) * 500; // 500ms, 1000ms, 1500ms
-                    setTimeout(() => {
-                        generateQRCodeWithRetry(retryCount + 1);
-                    }, delay);
+            // Method 1: Try using the qrcode library with canvas creation
+            if (typeof QRCode !== 'undefined') {
+                try {
+                    console.log('📱 Attempting QR code generation with qrcode library...');
+                    
+                    // Create a canvas element
+                    const canvas = document.createElement('canvas');
+                    QRCode.toCanvas(canvas, currentRoom, {
+                        width: 200,
+                        height: 200,
+                        margin: 2,
+                        color: {
+                            dark: '#5D5CDE',
+                            light: '#FFFFFF'
+                        },
+                        errorCorrectionLevel: 'M'
+                    }, function (error) {
+                        if (error) {
+                            console.error('❌ Canvas QR generation failed:', error);
+                            tryDataURLMethod();
+                        } else {
+                            console.log('✅ Canvas QR Code generated successfully');
+                            canvas.style.display = 'block';
+                            canvas.style.margin = '0 auto';
+                            canvas.className = 'rounded-lg';
+                            
+                            // Clear the container and add the canvas
+                            qrCodeElement.innerHTML = '';
+                            qrCodeElement.appendChild(canvas);
+                        }
+                    });
                     return;
-                } else {
-                    console.error('QRCode library failed to load after multiple attempts');
-                    showQRFallback(qrCodeElement);
+                } catch (error) {
+                    console.error('❌ Canvas method failed:', error);
+                    tryDataURLMethod();
                     return;
                 }
             }
 
-            // Library is available, generate QR code
-            console.log('QRCode library loaded, generating QR code...');
-            
-            try {
-                QRCode.toDataURL(currentRoom, {
-                    width: 200,
-                    height: 200,
-                    margin: 2,
-                    color: {
-                        dark: '#5D5CDE',
-                        light: '#FFFFFF'
-                    },
-                    errorCorrectionLevel: 'M'
-                })
-                .then(url => {
-                    console.log('✅ QR Code generated successfully');
+            // Method 2: Try Data URL method
+            function tryDataURLMethod() {
+                if (typeof QRCode !== 'undefined') {
+                    try {
+                        console.log('📱 Trying Data URL method...');
+                        QRCode.toDataURL(currentRoom, {
+                            width: 200,
+                            height: 200,
+                            margin: 2,
+                            color: {
+                                dark: '#5D5CDE',
+                                light: '#FFFFFF'
+                            },
+                            errorCorrectionLevel: 'M'
+                        })
+                        .then(url => {
+                            console.log('✅ Data URL QR Code generated successfully');
+                            const img = document.createElement('img');
+                            img.src = url;
+                            img.style.display = 'block';
+                            img.style.margin = '0 auto';
+                            img.style.width = '200px';
+                            img.style.height = '200px';
+                            img.alt = `QR Code for PIN ${currentRoom}`;
+                            img.className = 'rounded-lg';
+                            
+                            // Clear the container and add the image
+                            qrCodeElement.innerHTML = '';
+                            qrCodeElement.appendChild(img);
+                        })
+                        .catch(error => {
+                            console.error('❌ Data URL method failed:', error);
+                            tryOnlineAPI();
+                        });
+                    } catch (error) {
+                        console.error('❌ Data URL method failed:', error);
+                        tryOnlineAPI();
+                    }
+                } else {
+                    tryOnlineAPI();
+                }
+            }
+
+            // Method 3: Use online QR code API as fallback
+            function tryOnlineAPI() {
+                try {
+                    console.log('📱 Trying online QR API...');
+                    const qrAPIUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentRoom)}&color=5D5CDE&bgcolor=FFFFFF`;
+                    
                     const img = document.createElement('img');
-                    img.src = url;
+                    img.src = qrAPIUrl;
                     img.style.display = 'block';
                     img.style.margin = '0 auto';
                     img.style.width = '200px';
@@ -2047,17 +2158,53 @@
                     img.alt = `QR Code for PIN ${currentRoom}`;
                     img.className = 'rounded-lg';
                     
-                    // Clear the container and add the image
-                    qrCodeElement.innerHTML = '';
-                    qrCodeElement.appendChild(img);
-                })
-                .catch(error => {
-                    console.error('QR Code generation failed:', error);
+                    // Handle load success
+                    img.onload = function() {
+                        console.log('✅ Online API QR Code loaded successfully');
+                        qrCodeElement.innerHTML = '';
+                        qrCodeElement.appendChild(img);
+                    };
+                    
+                    // Handle load error
+                    img.onerror = function() {
+                        console.error('❌ Online API failed');
+                        retryOrFallback();
+                    };
+                    
+                } catch (error) {
+                    console.error('❌ Online API method failed:', error);
+                    retryOrFallback();
+                }
+            }
+
+            // Method 4: Retry or show fallback
+            function retryOrFallback() {
+                if (retryCount < maxRetries) {
+                    console.log(`🔄 Retrying QR generation (attempt ${retryCount + 1}/${maxRetries + 1})`);
+                    const delay = (retryCount + 1) * 1000; // 1s, 2s, 3s
+                    setTimeout(() => {
+                        generateQRCodeWithRetry(retryCount + 1);
+                    }, delay);
+                } else {
+                    console.log('❌ All QR generation methods failed, showing fallback');
                     showQRFallback(qrCodeElement);
-                });
-            } catch (error) {
-                console.error('QR Code generation error:', error);
-                showQRFallback(qrCodeElement);
+                }
+            }
+
+            // If QRCode library is not loaded, check for loading
+            if (typeof QRCode === 'undefined') {
+                console.log(`📚 QRCode library not loaded yet (attempt ${retryCount + 1}/${maxRetries + 1})`);
+                
+                if (retryCount < maxRetries) {
+                    // Retry after increasing delays
+                    const delay = (retryCount + 1) * 500; // 500ms, 1000ms, 1500ms
+                    setTimeout(() => {
+                        generateQRCodeWithRetry(retryCount + 1);
+                    }, delay);
+                } else {
+                    console.log('📚 QRCode library failed to load, trying online API directly');
+                    tryOnlineAPI();
+                }
             }
         }
 
