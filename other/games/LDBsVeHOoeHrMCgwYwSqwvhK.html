@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full">
-<head>
+<!DOCTYPE html><html lang="en" class="h-full"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Game</title>
@@ -27,7 +25,7 @@
         .slide-up { animation: slideUp 0.3s ease-out; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
-</head>
+<script src="https://puc.poecdn.net/authenticated_preview_page/syncedState.bd4eeeb8e8e02052ee92.js"></script></head>
 <body class="h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
     <!-- Fixed Toolbar -->
     <header class="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-40">
@@ -120,7 +118,7 @@
                 
                 <div class="flex justify-end space-x-3">
                     <button id="cancelImport" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">Cancel</button>
-                    <button id="confirmImport" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Import Game</button>
+                    <button id="confirmImport" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled="">Import Game</button>
                 </div>
             </div>
         </div>
@@ -152,7 +150,7 @@
                 
                 <div class="flex justify-end space-x-3 mt-6">
                     <button id="cancelJoin" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">Cancel</button>
-                    <button id="confirmJoin" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Join Game</button>
+                    <button id="confirmJoin" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled="">Join Game</button>
                 </div>
             </div>
         </div>
@@ -191,7 +189,7 @@
                 
                 <div class="flex justify-end space-x-3">
                     <button id="cancelPlayerName" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">Cancel</button>
-                    <button id="confirmPlayerName" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Join Game</button>
+                    <button id="confirmPlayerName" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled="">Join Game</button>
                 </div>
             </div>
         </div>
@@ -491,8 +489,41 @@
                     
                     const qrScanner = new QrScanner(video, result => {
                         // Found QR code
-                        const pin = result.data;
-                        if (pin && pin.length === 6 && /^\d{6}$/.test(pin)) {
+                        const scannedData = result.data;
+                        console.log('📱 QR Code scanned:', scannedData);
+                        
+                        let pin = null;
+                        
+                        // Method 1: Check if it's a full URL with join parameter
+                        if (scannedData.includes('?join=')) {
+                            try {
+                                const url = new URL(scannedData);
+                                const joinParam = url.searchParams.get('join');
+                                if (joinParam && joinParam.length === 6 && /^\d{6}$/.test(joinParam)) {
+                                    pin = joinParam;
+                                    console.log('✅ Extracted PIN from URL:', pin);
+                                }
+                            } catch (error) {
+                                console.log('❌ Invalid URL format:', error);
+                            }
+                        }
+                        
+                        // Method 2: Check if it's a direct 6-digit PIN (backward compatibility)
+                        if (!pin && scannedData.length === 6 && /^\d{6}$/.test(scannedData)) {
+                            pin = scannedData;
+                            console.log('✅ Direct PIN scanned:', pin);
+                        }
+                        
+                        // Method 3: Try to extract any 6-digit number from the string
+                        if (!pin) {
+                            const matches = scannedData.match(/\d{6}/);
+                            if (matches) {
+                                pin = matches[0];
+                                console.log('✅ Extracted PIN from text:', pin);
+                            }
+                        }
+                        
+                        if (pin) {
                             // Stop scanner
                             qrScanner.stop();
                             stream.getTracks().forEach(track => track.stop());
@@ -501,6 +532,12 @@
                             // Auto-fill PIN and check room
                             document.getElementById('pinInput').value = pin;
                             checkRoomExists(pin);
+                        } else {
+                            console.log('❌ No valid PIN found in QR code:', scannedData);
+                            // Optional: Show error message to user
+                            showCustomAlert('QR code does not contain a valid game PIN. Please try scanning again or enter the PIN manually.');
+                            
+                            // Keep scanner running for another attempt
                         }
                     }, {
                         returnDetailedScanResult: true,
@@ -2049,6 +2086,10 @@
                 return;
             }
 
+            // Create the full join URL
+            const gameBaseURL = 'https://tsetse6789.github.io/other/games/LDBsVeHOoeHrMCgwYwSqwvhK.html';
+            const joinURL = `${gameBaseURL}?join=${currentRoom}`;
+
             // Show loading state first
             if (retryCount === 0) {
                 qrCodeElement.innerHTML = `
@@ -2065,10 +2106,11 @@
             if (typeof QRCode !== 'undefined') {
                 try {
                     console.log('📱 Attempting QR code generation with qrcode library...');
+                    console.log('🔗 QR URL:', joinURL);
                     
                     // Create a canvas element
                     const canvas = document.createElement('canvas');
-                    QRCode.toCanvas(canvas, currentRoom, {
+                    QRCode.toCanvas(canvas, joinURL, {
                         width: 200,
                         height: 200,
                         margin: 2,
@@ -2105,7 +2147,7 @@
                 if (typeof QRCode !== 'undefined') {
                     try {
                         console.log('📱 Trying Data URL method...');
-                        QRCode.toDataURL(currentRoom, {
+                        QRCode.toDataURL(joinURL, {
                             width: 200,
                             height: 200,
                             margin: 2,
@@ -2123,7 +2165,7 @@
                             img.style.margin = '0 auto';
                             img.style.width = '200px';
                             img.style.height = '200px';
-                            img.alt = `QR Code for PIN ${currentRoom}`;
+                            img.alt = `QR Code for joining game ${currentRoom}`;
                             img.className = 'rounded-lg';
                             
                             // Clear the container and add the image
@@ -2147,7 +2189,7 @@
             function tryOnlineAPI() {
                 try {
                     console.log('📱 Trying online QR API...');
-                    const qrAPIUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(currentRoom)}&color=5D5CDE&bgcolor=FFFFFF`;
+                    const qrAPIUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinURL)}&color=5D5CDE&bgcolor=FFFFFF`;
                     
                     const img = document.createElement('img');
                     img.src = qrAPIUrl;
@@ -2155,7 +2197,7 @@
                     img.style.margin = '0 auto';
                     img.style.width = '200px';
                     img.style.height = '200px';
-                    img.alt = `QR Code for PIN ${currentRoom}`;
+                    img.alt = `QR Code for joining game ${currentRoom}`;
                     img.className = 'rounded-lg';
                     
                     // Handle load success
@@ -2466,5 +2508,6 @@
             }, 1000); // Small delay to ensure Firebase is ready
         });
     </script>
-</body>
-</html>
+
+
+</body></html>
