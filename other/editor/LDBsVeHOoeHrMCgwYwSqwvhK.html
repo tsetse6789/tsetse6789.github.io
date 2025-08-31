@@ -716,6 +716,13 @@
             updateQuestion(questionIndex, 'answerSettings', { ...question.answerSettings, items: newItems });
         }
 
+        // Update multiple select answer
+        function updateMultiSelectAnswer(questionIndex) {
+            const checkboxes = document.querySelectorAll(`input[name="answer_${questionIndex}"]:checked`);
+            const selectedValues = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            updateQuestion(questionIndex, 'answer', selectedValues);
+        }
+
         // Generate JSON
         function generateJSON(file) {
             return JSON.stringify(file.content, null, 2);
@@ -1428,10 +1435,10 @@
                                                     ? (question.answer === optionIndex ? 'checked' : '')
                                                     : (Array.isArray(question.answer) && question.answer.includes(optionIndex) ? 'checked' : '')
                                                 }
-                                                onchange="updateQuestion(${questionIndex}, 'answer', ${question.questionType === 'multiple choice' 
-                                                    ? 'parseInt(this.value)' 
-                                                    : `Array.from(document.querySelectorAll('input[name=\"answer_${questionIndex}\"]:checked')).map(cb => parseInt(cb.value))`
-                                                })"
+                                                onchange="${question.questionType === 'multiple choice' 
+                                                    ? `updateQuestion(${questionIndex}, 'answer', parseInt(this.value))` 
+                                                    : `updateMultiSelectAnswer(${questionIndex})`
+                                                }"
                                                 class="mr-2"
                                             />
                                         </div>
