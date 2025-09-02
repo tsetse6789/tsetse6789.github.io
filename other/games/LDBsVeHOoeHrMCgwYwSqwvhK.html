@@ -1499,6 +1499,9 @@
             `;
             
             document.getElementById('submitAnswer').addEventListener('click', () => submitPlayerAnswer(question));
+            
+            // Set up specific event listeners for different input types
+            setupPlayerAnswerEventListeners(question);
         }
 
         function renderPlayerAnswerInput(question) {
@@ -1539,7 +1542,7 @@
                     return `
                         <div>
                             <label class="block text-sm font-medium mb-2">Your answer</label>
-                            <input type="text" maxlength="${question.answerSettings.maxLength}" placeholder="Type your answer..." class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent" oninput="validatePlayerAnswer()">
+                            <input id="textAnswerInput" type="text" maxlength="${question.answerSettings.maxLength}" placeholder="Type your answer..." class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
                         </div>
                     `;
                 case 'number':
@@ -2440,6 +2443,79 @@
                     card.style.display = 'none';
                 }
             });
+        }
+
+        // Set up event listeners for player answer inputs
+        function setupPlayerAnswerEventListeners(question) {
+            console.log('📋 Setting up event listeners for question type:', question.answerType);
+            
+            // Set up event listeners based on question type
+            switch (question.answerType) {
+                case 'text':
+                    const textInput = document.getElementById('textAnswerInput');
+                    if (textInput) {
+                        // Remove any existing listeners
+                        textInput.removeEventListener('input', validatePlayerAnswer);
+                        textInput.removeEventListener('keyup', validatePlayerAnswer);
+                        textInput.removeEventListener('change', validatePlayerAnswer);
+                        
+                        // Add multiple event listeners to ensure validation works
+                        textInput.addEventListener('input', validatePlayerAnswer);
+                        textInput.addEventListener('keyup', validatePlayerAnswer);
+                        textInput.addEventListener('change', validatePlayerAnswer);
+                        
+                        console.log('📝 Text input event listeners added');
+                        
+                        // Initial validation
+                        setTimeout(() => {
+                            validatePlayerAnswer();
+                        }, 100);
+                    }
+                    break;
+                    
+                case 'number':
+                    const numberInput = document.querySelector('input[type="number"]');
+                    if (numberInput) {
+                        numberInput.addEventListener('input', validatePlayerAnswer);
+                        numberInput.addEventListener('change', validatePlayerAnswer);
+                    }
+                    break;
+                    
+                case 'range':
+                    const rangeInput = document.querySelector('input[type="range"]');
+                    if (rangeInput) {
+                        rangeInput.addEventListener('input', (e) => {
+                            const rangeValue = document.getElementById('rangeValue');
+                            if (rangeValue) {
+                                rangeValue.textContent = e.target.value;
+                            }
+                            validatePlayerAnswer();
+                        });
+                        // Range inputs always have a value, so enable button immediately
+                        setTimeout(() => {
+                            validatePlayerAnswer();
+                        }, 100);
+                    }
+                    break;
+                    
+                case 'radio':
+                    const radioInputs = document.querySelectorAll('input[type="radio"]');
+                    radioInputs.forEach(radio => {
+                        radio.addEventListener('change', validatePlayerAnswer);
+                    });
+                    break;
+                    
+                case 'checkbox':
+                    const checkboxInputs = document.querySelectorAll('input[type="checkbox"]');
+                    checkboxInputs.forEach(checkbox => {
+                        checkbox.addEventListener('change', validatePlayerAnswer);
+                    });
+                    break;
+                    
+                case 'rearrange':
+                    // Drag and drop setup will be handled separately
+                    break;
+            }
         }
 
         // Drag and drop functionality for rearrange questions
