@@ -1696,12 +1696,14 @@
                     answer = range ? parseInt(range.value) : null;
                     break;
                 case 'text':
-                    const text = document.querySelector('input[type="text"]');
+                    const text = document.getElementById('textAnswerInput'); // Use specific ID
                     answer = text ? text.value.trim().toLowerCase() : null;
+                    console.log('📝 Text answer being submitted:', answer);
                     break;
                 case 'number':
-                    const number = document.querySelector('input[type="number"]');
+                    const number = document.getElementById('numberAnswerInput'); // Use specific ID
                     answer = number ? parseFloat(number.value) : null;
+                    console.log('🔢 Number answer being submitted:', answer);
                     break;
                 case 'rearrange':
                     // Get current order from sortable items
@@ -1716,6 +1718,12 @@
                     }
                     break;
             }
+            
+            console.log('🎯 Final answer being submitted:', { 
+                questionType: question.answerType, 
+                answer: answer,
+                correctAnswers: question.answer 
+            });
             
             if (answer !== null) {
                 database.ref(`rooms/${currentRoom}/answers/${currentUser.id}`).set({
