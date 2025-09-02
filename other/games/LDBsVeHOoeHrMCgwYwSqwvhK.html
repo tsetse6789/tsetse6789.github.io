@@ -1511,7 +1511,7 @@
                         <div class="space-y-3">
                             ${question.answerSettings.options.map((option, index) => `
                                 <label class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                                    <input type="radio" name="answer" value="${index}" class="mr-3" onchange="validatePlayerAnswer()">
+                                    <input type="radio" name="answer" value="${index}" class="mr-3">
                                     <span>${option}</span>
                                 </label>
                             `).join('')}
@@ -1522,7 +1522,7 @@
                         <div class="space-y-3">
                             ${question.answerSettings.options.map((option, index) => `
                                 <label class="flex items-center p-3 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
-                                    <input type="checkbox" name="answer" value="${index}" class="mr-3" onchange="validatePlayerAnswer()">
+                                    <input type="checkbox" name="answer" value="${index}" class="mr-3">
                                     <span>${option}</span>
                                 </label>
                             `).join('')}
@@ -1549,7 +1549,7 @@
                     return `
                         <div>
                             <label class="block text-sm font-medium mb-2">Enter a number (${question.answerSettings.min} - ${question.answerSettings.max})</label>
-                            <input type="number" min="${question.answerSettings.min}" max="${question.answerSettings.max}" placeholder="Enter number..." class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent" oninput="validatePlayerAnswer()">
+                            <input id="numberAnswerInput" type="number" min="${question.answerSettings.min}" max="${question.answerSettings.max}" placeholder="Enter number..." class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
                         </div>
                     `;
                 case 'rearrange':
@@ -1587,44 +1587,55 @@
             
             let hasAnswer = false;
             
-            // Check each input type separately (not using else if)
+            // Check each input type using specific selectors
             const radios = document.querySelectorAll('input[type="radio"]:checked');
             const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-            const textInput = document.querySelector('input[type="text"]');
-            const numberInput = document.querySelector('input[type="number"]');
+            const textInput = document.getElementById('textAnswerInput'); // Use specific ID
+            const numberInput = document.getElementById('numberAnswerInput'); // Use specific ID
             const rangeInput = document.querySelector('input[type="range"]');
             const sortableItems = document.getElementById('sortableItems');
             
             // Check each input type
             if (radios.length > 0) {
                 hasAnswer = true;
+                console.log('✅ Radio answer selected');
             }
             
             if (checkboxes.length > 0) {
                 hasAnswer = true;
+                console.log('✅ Checkbox answer selected');
             }
             
             if (textInput && textInput.value.trim().length > 0) {
                 hasAnswer = true;
-                console.log('Text input has value:', textInput.value.trim());
+                console.log('✅ Text input has value:', textInput.value.trim());
             }
             
             if (numberInput && numberInput.value.trim().length > 0) {
                 hasAnswer = true;
+                console.log('✅ Number input has value:', numberInput.value.trim());
             }
             
             if (rangeInput) {
                 hasAnswer = true; // Range always has a value
+                console.log('✅ Range input has value:', rangeInput.value);
             }
             
             if (sortableItems) {
                 // For rearrange questions, check if order has changed
                 if (checkIfRearranged()) {
                     hasAnswer = true;
+                    console.log('✅ Items have been rearranged');
                 }
             }
             
-            console.log('validatePlayerAnswer:', { hasAnswer, textValue: textInput?.value });
+            console.log('🔍 validatePlayerAnswer result:', { 
+                hasAnswer, 
+                textValue: textInput?.value,
+                textElement: !!textInput,
+                numberValue: numberInput?.value,
+                numberElement: !!numberInput
+            });
             
             submitBtn.disabled = !hasAnswer;
             
@@ -1632,9 +1643,11 @@
             if (hasAnswer) {
                 submitBtn.classList.remove('opacity-50');
                 submitBtn.classList.add('opacity-100');
+                console.log('✅ Submit button enabled');
             } else {
                 submitBtn.classList.add('opacity-50');
                 submitBtn.classList.remove('opacity-100');
+                console.log('❌ Submit button disabled');
             }
         }
 
