@@ -289,6 +289,17 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             z-index: 10000;
             min-width: 300px;
+            max-width: min(500px, 90vw);
+            width: 100%;
+        }
+
+        @media (max-width: 640px) {
+            .rename-form {
+                min-width: calc(100vw - 32px);
+                max-width: calc(100vw - 32px);
+                margin: 16px;
+                padding: 1rem;
+            }
         }
 
         .dark .rename-form {
@@ -303,6 +314,324 @@
             bottom: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 9999;
+        }
+
+        /* Queue FAB and Panel Styles */
+        .queue-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: #03DAC5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            border: none;
+            color: white;
+            font-size: 20px;
+        }
+
+        .queue-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .queue-fab.has-queue {
+            background: #10b981;
+        }
+
+        .queue-panel {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: min(380px, calc(100vw - 48px));
+            max-height: 60vh;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            z-index: 1001;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 480px) {
+            .queue-panel {
+                width: calc(100vw - 32px);
+                right: 16px;
+                bottom: 16px;
+                max-height: 70vh;
+            }
+        }
+
+        .dark .queue-panel {
+            background: #374151;
+        }
+
+        .queue-panel.open {
+            display: flex;
+            animation: slideInUp 0.3s ease;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .queue-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(249, 250, 251, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .dark .queue-header {
+            background: rgba(31, 41, 55, 0.8);
+            border-bottom: 1px solid rgba(75, 85, 99, 0.5);
+        }
+
+        .queue-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            min-height: 200px;
+            max-height: calc(60vh - 80px);
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+            cursor: grab;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(229, 231, 235, 0.3);
+        }
+
+        .dark .queue-item {
+            background: rgba(55, 65, 81, 0.8);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+
+        .queue-item:hover {
+            background: rgba(93, 92, 222, 0.1);
+            transform: translateX(4px);
+        }
+
+        .queue-item.active {
+            background: rgba(93, 92, 222, 0.2);
+            border-color: #5D5CDE;
+        }
+
+        .queue-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+            cursor: grabbing;
+        }
+
+        .queue-item.drag-over {
+            border-top: 3px solid #5D5CDE;
+            margin-top: 6px;
+        }
+
+        .queue-thumbnail {
+            width: 48px;
+            height: 36px;
+            object-fit: cover;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .queue-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .queue-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.2;
+            margin-bottom: 2px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .queue-channel {
+            font-size: 0.75rem;
+            color: #6b7280;
+            line-height: 1;
+        }
+
+        .dark .queue-channel {
+            color: #9ca3af;
+        }
+
+        .queue-actions {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .queue-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.2s ease;
+            background: rgba(107, 114, 128, 0.2);
+            color: #4b5563;
+        }
+
+        .dark .queue-btn {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+        }
+
+        .queue-btn:hover {
+            background: rgba(107, 114, 128, 0.3);
+            transform: scale(1.1);
+        }
+
+        .queue-btn.play {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .queue-btn.remove {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .queue-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+
+        .dark .queue-empty {
+            color: #9ca3af;
+        }
+
+        .queue-count {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
+        .dark .queue-count {
+            border-color: #374151;
+        }
+
+        /* Play Options Dialog Styles */
+        .play-options-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            z-index: 10000;
+            min-width: 320px;
+            max-width: 90vw;
+        }
+
+        .dark .play-options-dialog {
+            background: #374151;
+        }
+
+        .play-option-btn {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            color: #374151;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dark .play-option-btn {
+            background: #4b5563;
+            border-color: #6b7280;
+            color: #f9fafb;
+        }
+
+        .play-option-btn:hover {
+            background: #f3f4f6;
+            border-color: #5D5CDE;
+            transform: translateY(-1px);
+        }
+
+        .dark .play-option-btn:hover {
+            background: #6b7280;
+        }
+
+        .play-option-icon {
+            font-size: 1.25rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .play-option-content {
+            flex: 1;
+        }
+
+        .play-option-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .play-option-desc {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .dark .play-option-desc {
+            color: #9ca3af;
         }
     </style>
 </head>
@@ -662,6 +991,41 @@
         </div>
     </div>
 
+    <!-- Queue FAB -->
+    <button id="queueFab" class="queue-fab" onclick="toggleQueuePanel()" title="Queue">
+        <svg width="20" height="20" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.022,23.997l-0.002,-0c-1.104,-0 -2.001,0.897 -2.001,2.001c-0,1.105 0.897,2.002 2.001,2.002c1.105,0 2.002,-0.897 2.002,-2.002l0,-7.122c0,-0 6.001,-0.75 6.001,-0.75l0.003,3.867c-1.105,0 -2.002,0.897 -2.002,2.002c-0,1.105 0.897,2.002 2.002,2.002c1.104,-0 2.001,-0.897 2.001,-2.002l-0.005,-7.003c-0,-0.286 -0.123,-0.559 -0.338,-0.749c-0.215,-0.189 -0.501,-0.278 -0.786,-0.242l-8,1c-0.5,0.062 -0.876,0.488 -0.876,0.992l0,6.004Z"/>
+            <path d="M8.951,14.98c1.811,-1.82 4.318,-2.947 7.086,-2.947c2.755,0 5.251,1.117 7.06,2.921c0.391,0.39 1.025,0.39 1.414,-0.001c0.39,-0.391 0.389,-1.025 -0.001,-1.414c-2.171,-2.166 -5.167,-3.506 -8.473,-3.506c-3.322,0 -6.33,1.352 -8.503,3.536c-0.39,0.391 -0.388,1.025 0.003,1.414c0.391,0.389 1.025,0.388 1.414,-0.003Z"/>
+            <path d="M4.975,10.074c2.972,-2.545 6.832,-4.083 11.048,-4.083c4.203,-0 8.052,1.528 11.02,4.059c0.42,0.358 1.051,0.308 1.409,-0.112c0.359,-0.42 0.308,-1.052 -0.112,-1.41c-3.317,-2.829 -7.619,-4.537 -12.317,-4.537c-4.713,-0 -9.027,1.719 -12.349,4.564c-0.419,0.359 -0.468,0.99 -0.109,1.41c0.359,0.419 0.991,0.468 1.41,0.109Z"/>
+        </svg>
+        <span id="queueCount" class="queue-count hidden">0</span>
+    </button>
+
+    <!-- Queue Panel -->
+    <div id="queuePanel" class="queue-panel">
+        <div class="queue-header">
+            <div class="flex items-center gap-3">
+                <span class="text-lg font-semibold text-gray-900 dark:text-white">Queue</span>
+                <span id="queueStatusText" class="text-sm text-gray-600 dark:text-gray-400">No videos</span>
+            </div>
+            <button onclick="closeQueuePanel()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-xl">
+                ✕
+            </button>
+        </div>
+        
+        <div class="queue-content">
+            <div id="queueEmpty" class="queue-empty">
+                <div class="text-4xl mb-3">🎵</div>
+                <div class="font-medium mb-1">Queue is empty</div>
+                <div class="text-sm">Add videos from search results or playlists</div>
+            </div>
+            
+            <div id="queueList" class="hidden">
+                <!-- Queue items will be rendered here -->
+            </div>
+        </div>
+    </div>
+
     <!-- YouTube Player API -->
     <script src="https://www.youtube.com/iframe_api"></script>
     
@@ -925,8 +1289,15 @@
             }
         }
 
-        // Handle video end - auto advance to next video
+        // Handle video end - auto advance to next video (updated for queue system)
         function handleVideoEnd() {
+            // Use queue system if queue has videos
+            if (playQueue.length > 0) {
+                handleVideoEndWithQueue();
+                return;
+            }
+            
+            // Fallback to old playlist system if no queue
             if (!currentPlaylist) return;
             
             const videos = playlists[currentPlaylist].videos;
@@ -989,6 +1360,11 @@
         let searchType = 'video'; // 'video' or 'channel'
         let currentChannelId = null;
         let navigationStack = [];
+        
+        // Queue System Variables
+        let playQueue = [];
+        let currentQueueIndex = 0;
+        let isQueuePanelOpen = false;
         
         // Media Session variables
         let currentVideoInfo = {
@@ -1202,7 +1578,7 @@
                         </p>
                         <div class="flex gap-2">
                             <button 
-                                onclick="playVideo('${video.id.videoId}', '${escapeHtml(video.snippet.title)}', '${escapeHtml(video.snippet.channelTitle)}')" 
+                                onclick="handleVideoPlay('${video.id.videoId}', '${escapeHtml(video.snippet.title)}', '${escapeHtml(video.snippet.channelTitle)}', '${video.snippet.thumbnails.default.url}')" 
                                 class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-xs"
                             >
                                 ▶️ Play
@@ -1340,6 +1716,7 @@
             document.getElementById('searchResults').innerHTML = '';
             document.getElementById('noResults').classList.add('hidden');
             document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('searchInput').value = ''; // Clear search input text
             currentChannelId = null;
             currentSearchData = null;
             hideNavigationBar();
@@ -1946,9 +2323,10 @@
             
             document.getElementById('videoStats').classList.remove('hidden');
             
-            // Show video description
+            // Show video description with clickable @ mentions and # hashtags
             const description = video.snippet.description || 'No description available.';
-            document.getElementById('descriptionText').textContent = description;
+            const processedDescription = processDescriptionLinks(description);
+            document.getElementById('descriptionText').innerHTML = processedDescription;
             
             // Show expand button if description is long
             const expandBtn = document.getElementById('expandDescription');
@@ -2043,16 +2421,144 @@
             viewChannelVideos(channel.id, channel.snippet.title);
         }
 
+        // Main video handling function for the new queue system
+        function handleVideoPlay(videoId, title, channel, thumbnail) {
+            const video = { id: videoId, title, channel, thumbnail };
+            
+            // Show play options dialog if queue has videos
+            if (playQueue.length > 0) {
+                showPlayOptionsDialog(video, 'search');
+            } else {
+                // Queue is empty, add and play immediately
+                addToQueue(video, 'current');
+            }
+        }
+
+        // Modified playlist handling to integrate with queue system
+        function handlePlaylistVideoClick(playlistName, index) {
+            if (!playlists[playlistName]) return;
+            
+            const videos = playlists[playlistName].videos;
+            if (index < 0 || index >= videos.length) return;
+            
+            // Show play options dialog if queue has videos
+            if (playQueue.length > 0) {
+                // Show dialog with playlist option
+                showPlaylistPlayOptionsDialog(playlistName, index);
+            } else {
+                // Queue is empty, load playlist into queue and play
+                addPlaylistToQueue(playlistName, index);
+                playFromQueue(0);
+            }
+        }
+
+        function showPlaylistPlayOptionsDialog(playlistName, videoIndex) {
+            const video = playlists[playlistName].videos[videoIndex];
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'playlistOptionsOverlay';
+            
+            const dialog = document.createElement('div');
+            dialog.className = 'play-options-dialog';
+            
+            dialog.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎵 Add to Queue</h3>
+                
+                <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="font-medium text-sm line-clamp-2 mb-1">${video.title}</div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400">${video.channel}</div>
+                    <div class="text-xs text-blue-600 dark:text-blue-400 mt-1">From playlist: ${playlistName}</div>
+                </div>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Queue has ${playQueue.length} videos. How would you like to add this content?
+                </p>
+                
+                <div class="space-y-2 mb-6">
+                    <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'current'); hidePlaylistOptionsDialog()" class="play-option-btn">
+                        <div class="play-option-icon">▶️</div>
+                        <div class="play-option-content">
+                            <div class="play-option-title">Play This Video Now</div>
+                            <div class="play-option-desc">Stop current video and play this one immediately</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="clearQueueAndLoadPlaylist('${escapeHtml(playlistName)}', ${videoIndex}); hidePlaylistOptionsDialog()" class="play-option-btn">
+                        <div class="play-option-icon">📋</div>
+                        <div class="play-option-content">
+                            <div class="play-option-title">Play Entire Playlist</div>
+                            <div class="play-option-desc">Replace queue with this playlist, starting from this video</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'next'); hidePlaylistOptionsDialog()" class="play-option-btn">
+                        <div class="play-option-icon">⏭️</div>
+                        <div class="play-option-content">
+                            <div class="play-option-title">Play Next</div>
+                            <div class="play-option-desc">Add this video after current video</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'end'); hidePlaylistOptionsDialog()" class="play-option-btn">
+                        <div class="play-option-icon">📝</div>
+                        <div class="play-option-content">
+                            <div class="play-option-title">Add to End</div>
+                            <div class="play-option-desc">Add this video to the end of the queue</div>
+                        </div>
+                    </button>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button onclick="hidePlaylistOptionsDialog()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hidePlaylistOptionsDialog();
+                }
+            });
+        }
+
+        function hidePlaylistOptionsDialog() {
+            const overlay = document.getElementById('playlistOptionsOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function clearQueueAndLoadPlaylist(playlistName, startIndex = 0) {
+            // Clear current queue
+            playQueue = [];
+            currentQueueIndex = 0;
+            
+            // Load playlist into queue
+            addPlaylistToQueue(playlistName, startIndex);
+            
+            // Start playing
+            if (playQueue.length > 0) {
+                playFromQueue(0);
+            }
+        }
+
         function playVideoFromPlaylist(index) {
             if (!currentPlaylist) return;
             
             const videos = playlists[currentPlaylist].videos;
             if (index < 0 || index >= videos.length) return;
             
-            currentVideoIndex = index;
-            const video = videos[index];
+            // Use new queue-based system
+            handlePlaylistVideoClick(currentPlaylist, index);
             
-            playVideo(video.id, video.title, video.channel);
+            // Update UI to show current selection
+            currentVideoIndex = index;
             renderCurrentPlaylist(); // Update active indicator
         }
 
@@ -2102,6 +2608,32 @@
         }
 
         function playNext() {
+            // Use queue system if queue has videos
+            if (playQueue.length > 0) {
+                let nextIndex;
+                
+                if (playbackSettings.shuffle) {
+                    // Shuffle mode: pick random video from queue
+                    nextIndex = Math.floor(Math.random() * playQueue.length);
+                } else {
+                    // Normal mode: next video in queue
+                    nextIndex = currentQueueIndex + 1;
+                    
+                    // If at end of queue
+                    if (nextIndex >= playQueue.length) {
+                        if (playbackSettings.repeat === 'all') {
+                            nextIndex = 0; // Loop back to start
+                        } else {
+                            return; // Stop playing
+                        }
+                    }
+                }
+                
+                playFromQueue(nextIndex);
+                return;
+            }
+            
+            // Fallback to old playlist system if no queue
             if (!currentPlaylist) return;
             
             const videos = playlists[currentPlaylist].videos;
@@ -2119,6 +2651,32 @@
         }
 
         function playPrevious() {
+            // Use queue system if queue has videos
+            if (playQueue.length > 0) {
+                let prevIndex;
+                
+                if (playbackSettings.shuffle) {
+                    // Shuffle mode: pick random video from queue
+                    prevIndex = Math.floor(Math.random() * playQueue.length);
+                } else {
+                    // Normal mode: previous video in queue
+                    prevIndex = currentQueueIndex - 1;
+                    
+                    // If at beginning of queue
+                    if (prevIndex < 0) {
+                        if (playbackSettings.repeat === 'all') {
+                            prevIndex = playQueue.length - 1; // Loop to end
+                        } else {
+                            return; // Stop playing
+                        }
+                    }
+                }
+                
+                playFromQueue(prevIndex);
+                return;
+            }
+            
+            // Fallback to old playlist system if no queue
             if (!currentPlaylist) return;
             
             const videos = playlists[currentPlaylist].videos;
@@ -5014,6 +5572,477 @@
             const overlay = document.getElementById('shareUrlOverlay');
             if (overlay) {
                 overlay.remove();
+            }
+        }
+
+        // Process Description Links Function
+        function processDescriptionLinks(description) {
+            if (!description) return description;
+            
+            // Escape HTML first to prevent XSS
+            const escapeHtml = (text) => {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            };
+            
+            let processedText = escapeHtml(description);
+            
+            // Process @ mentions (channel mentions)
+            processedText = processedText.replace(
+                /@([a-zA-Z0-9_.-]+)/g,
+                '<span class="mention-link cursor-pointer text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 underline" onclick="searchChannelFromMention(\'$1\')">@$1</span>'
+            );
+            
+            // Process # hashtags
+            processedText = processedText.replace(
+                /#([a-zA-Z0-9_]+)/g,
+                '<span class="hashtag-link cursor-pointer text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200 underline" onclick="searchHashtagFromDescription(\'$1\')">#$1</span>'
+            );
+            
+            // Convert line breaks to HTML line breaks
+            processedText = processedText.replace(/\n/g, '<br>');
+            
+            return processedText;
+        }
+
+        // Search Channel from @ Mention
+        function searchChannelFromMention(channelName) {
+            // Set search type to channel
+            setSearchType('channel');
+            
+            // Set search input
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = channelName;
+            
+            // Perform the search
+            searchChannels();
+            
+            // Show feedback
+            showSuccessMessage(`🔍 Searching for channel: @${channelName}`);
+        }
+
+        // Search Videos with Hashtag
+        function searchHashtagFromDescription(hashtag) {
+            // Set search type to video
+            setSearchType('video');
+            
+            // Set search input with hashtag
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = `#${hashtag}`;
+            
+            // Perform the search
+            searchVideos();
+            
+            // Show feedback
+            showSuccessMessage(`🔍 Searching videos with hashtag: #${hashtag}`);
+        }
+
+        // ========================================
+        // QUEUE SYSTEM FUNCTIONS
+        // ========================================
+
+        // Queue Management Functions
+        function addToQueue(video, position = 'end') {
+            if (!video || !video.id) return;
+            
+            // Check if video already exists in queue
+            const existingIndex = playQueue.findIndex(queueVideo => queueVideo.id === video.id);
+            if (existingIndex !== -1) {
+                showSuccessMessage(`🎵 Video already in queue at position ${existingIndex + 1}`);
+                return;
+            }
+            
+            // Add video to specified position
+            switch (position) {
+                case 'next':
+                    playQueue.splice(currentQueueIndex + 1, 0, video);
+                    break;
+                case 'current':
+                    // Stop current playback and insert at current position
+                    playQueue.splice(currentQueueIndex, 0, video);
+                    playFromQueue(currentQueueIndex);
+                    break;
+                default: // 'end'
+                    playQueue.push(video);
+                    break;
+            }
+            
+            updateQueueUI();
+            
+            // Show success message
+            const positionText = position === 'next' ? 'next' : position === 'current' ? 'now' : 'end of queue';
+            showSuccessMessage(`🎵 Added "${video.title}" to ${positionText}`);
+        }
+
+        function addPlaylistToQueue(playlistName, startIndex = 0) {
+            if (!playlists[playlistName]) return;
+            
+            const videos = playlists[playlistName].videos;
+            if (videos.length === 0) return;
+            
+            // Apply shuffle if enabled
+            let videosToAdd = [...videos];
+            if (playbackSettings.shuffle) {
+                videosToAdd = shuffleArray(videosToAdd);
+                // Ensure the selected video comes first
+                if (startIndex !== 0 && startIndex < videos.length) {
+                    const selectedVideo = videos[startIndex];
+                    videosToAdd = videosToAdd.filter(v => v.id !== selectedVideo.id);
+                    videosToAdd.unshift(selectedVideo);
+                }
+            } else if (startIndex !== 0) {
+                // Reorder to start from selected video
+                videosToAdd = videos.slice(startIndex).concat(videos.slice(0, startIndex));
+            }
+            
+            // Clear queue and add new videos
+            playQueue = [...videosToAdd];
+            currentQueueIndex = 0;
+            
+            updateQueueUI();
+            showSuccessMessage(`🎵 Added ${playlistName} to queue (${videos.length} videos)`);
+        }
+
+        function removeFromQueue(index) {
+            if (index < 0 || index >= playQueue.length) return;
+            
+            const removedVideo = playQueue[index];
+            playQueue.splice(index, 1);
+            
+            // Adjust current index if needed
+            if (index < currentQueueIndex) {
+                currentQueueIndex--;
+            } else if (index === currentQueueIndex && index >= playQueue.length) {
+                currentQueueIndex = Math.max(0, playQueue.length - 1);
+            }
+            
+            updateQueueUI();
+            
+            // If we removed the currently playing video, play next or stop
+            if (index === currentQueueIndex && player) {
+                if (playQueue.length > 0) {
+                    playFromQueue(currentQueueIndex);
+                } else {
+                    clearVideo();
+                }
+            }
+            
+            showSuccessMessage(`🗑️ Removed "${removedVideo.title}" from queue`);
+        }
+
+        function clearQueue() {
+            playQueue = [];
+            currentQueueIndex = 0;
+            updateQueueUI();
+            clearVideo();
+            showSuccessMessage('🧹 Queue cleared');
+        }
+
+        function playFromQueue(index) {
+            if (index < 0 || index >= playQueue.length) return;
+            
+            currentQueueIndex = index;
+            const video = playQueue[index];
+            
+            // Play the video using existing function
+            playVideo(video.id, video.title, video.channel);
+            
+            updateQueueUI();
+        }
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Queue UI Functions
+        function updateQueueUI() {
+            updateQueueFAB();
+            updateQueuePanel();
+        }
+
+        function updateQueueFAB() {
+            const fab = document.getElementById('queueFab');
+            const count = document.getElementById('queueCount');
+            
+            if (playQueue.length > 0) {
+                fab.classList.add('has-queue');
+                count.textContent = playQueue.length;
+                count.classList.remove('hidden');
+                fab.title = `Queue (${playQueue.length} videos)`;
+            } else {
+                fab.classList.remove('has-queue');
+                count.classList.add('hidden');
+                fab.title = 'Queue';
+            }
+        }
+
+        function updateQueuePanel() {
+            const statusText = document.getElementById('queueStatusText');
+            const emptyState = document.getElementById('queueEmpty');
+            const queueList = document.getElementById('queueList');
+            
+            if (playQueue.length === 0) {
+                statusText.textContent = 'No videos';
+                emptyState.classList.remove('hidden');
+                queueList.classList.add('hidden');
+                queueList.innerHTML = '';
+                return;
+            }
+            
+            const nowPlaying = playQueue[currentQueueIndex];
+            const nextVideo = playQueue[currentQueueIndex + 1];
+            
+            let statusMsg = `${playQueue.length} videos`;
+            if (nowPlaying) {
+                statusMsg += ` • Now: ${nowPlaying.title.substring(0, 30)}${nowPlaying.title.length > 30 ? '...' : ''}`;
+            }
+            
+            statusText.textContent = statusMsg;
+            emptyState.classList.add('hidden');
+            queueList.classList.remove('hidden');
+            
+            // Render queue items
+            queueList.innerHTML = playQueue.map((video, index) => `
+                <div class="queue-item ${index === currentQueueIndex ? 'active' : ''}" 
+                     data-queue-index="${index}"
+                     draggable="true"
+                     ondragstart="handleQueueDragStart(event, ${index})"
+                     ondragover="handleQueueDragOver(event)"
+                     ondrop="handleQueueDrop(event, ${index})"
+                     ondragend="handleQueueDragEnd(event)">
+                    <img src="${video.thumbnail}" alt="${video.title}" class="queue-thumbnail">
+                    <div class="queue-info">
+                        <div class="queue-title">${video.title}</div>
+                        <div class="queue-channel">${video.channel}</div>
+                    </div>
+                    <div class="queue-actions">
+                        ${index !== currentQueueIndex ? `
+                            <button class="queue-btn play" onclick="playFromQueue(${index})" title="Play now">
+                                ▶️
+                            </button>
+                        ` : `
+                            <div class="queue-btn" style="background: rgba(16, 185, 129, 0.3); color: #10b981;" title="Currently playing">
+                                🎵
+                            </div>
+                        `}
+                        <button class="queue-btn remove" onclick="removeFromQueue(${index})" title="Remove from queue">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleQueuePanel() {
+            const panel = document.getElementById('queuePanel');
+            
+            if (isQueuePanelOpen) {
+                closeQueuePanel();
+            } else {
+                openQueuePanel();
+            }
+        }
+
+        function openQueuePanel() {
+            const panel = document.getElementById('queuePanel');
+            panel.classList.add('open');
+            isQueuePanelOpen = true;
+            updateQueuePanel(); // Refresh content when opening
+        }
+
+        function closeQueuePanel() {
+            const panel = document.getElementById('queuePanel');
+            panel.classList.remove('open');
+            isQueuePanelOpen = false;
+        }
+
+        // Queue Drag and Drop
+        let queueDragData = {
+            draggedIndex: null,
+            draggedElement: null
+        };
+
+        function handleQueueDragStart(event, index) {
+            queueDragData.draggedIndex = index;
+            queueDragData.draggedElement = event.target;
+            
+            event.target.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/html', event.target.outerHTML);
+        }
+
+        function handleQueueDragOver(event) {
+            if (queueDragData.draggedIndex === null) return;
+            
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            
+            const rect = event.currentTarget.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            if (event.clientY < midpoint) {
+                event.currentTarget.classList.add('drag-over');
+            } else {
+                event.currentTarget.classList.remove('drag-over');
+            }
+        }
+
+        function handleQueueDrop(event, dropIndex) {
+            if (queueDragData.draggedIndex === null) return;
+            
+            event.preventDefault();
+            
+            const draggedIndex = queueDragData.draggedIndex;
+            if (draggedIndex === dropIndex) return;
+            
+            // Reorder queue
+            const draggedVideo = playQueue[draggedIndex];
+            playQueue.splice(draggedIndex, 1);
+            
+            // Adjust drop index if needed
+            if (draggedIndex < dropIndex) {
+                dropIndex--;
+            }
+            
+            playQueue.splice(dropIndex, 0, draggedVideo);
+            
+            // Update current index if needed
+            if (currentQueueIndex === draggedIndex) {
+                currentQueueIndex = dropIndex;
+            } else if (currentQueueIndex > draggedIndex && currentQueueIndex <= dropIndex) {
+                currentQueueIndex--;
+            } else if (currentQueueIndex < draggedIndex && currentQueueIndex >= dropIndex) {
+                currentQueueIndex++;
+            }
+            
+            updateQueueUI();
+        }
+
+        function handleQueueDragEnd(event) {
+            if (queueDragData.draggedElement) {
+                queueDragData.draggedElement.classList.remove('dragging');
+            }
+            
+            // Remove all drag-over classes
+            document.querySelectorAll('.queue-item').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            
+            queueDragData.draggedIndex = null;
+            queueDragData.draggedElement = null;
+        }
+
+        // Play Options Dialog
+        function showPlayOptionsDialog(video, sourceType = 'search') {
+            // Check if queue is empty - if so, just add and play immediately
+            if (playQueue.length === 0) {
+                addToQueue(video, 'current');
+                return;
+            }
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'playOptionsOverlay';
+            
+            const dialog = document.createElement('div');
+            dialog.className = 'play-options-dialog';
+            
+            dialog.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎵 Add to Queue</h3>
+                
+                <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="font-medium text-sm line-clamp-2 mb-1">${video.title}</div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400">${video.channel}</div>
+                </div>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Queue has ${playQueue.length} videos. Where would you like to add this video?
+                </p>
+                
+                <div class="space-y-2 mb-6">
+                    <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'current'); hidePlayOptionsDialog()" class="play-option-btn">
+                        <div class="play-option-icon">▶️</div>
+                        <div class="play-option-content">
+                            <div class="play-option-title">Play Now</div>
+                            <div class="play-option-desc">Stop current video and play this immediately</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'next'); hidePlayOptionsDialog()" class="play-option-btn">
+                        <div class="play-option-icon">⏭️</div>
+                        <div class="play-option-content">
+                            <div class="play-option-title">Play Next</div>
+                            <div class="play-option-desc">Add after current video (next in queue)</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'end'); hidePlayOptionsDialog()" class="play-option-btn">
+                        <div class="play-option-icon">📝</div>
+                        <div class="play-option-content">
+                            <div class="play-option-title">Add to End</div>
+                            <div class="play-option-desc">Add to the end of the queue</div>
+                        </div>
+                    </button>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button onclick="hidePlayOptionsDialog()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hidePlayOptionsDialog();
+                }
+            });
+        }
+
+        function hidePlayOptionsDialog() {
+            const overlay = document.getElementById('playOptionsOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // Modified video end handler for queue system
+        function handleVideoEndWithQueue() {
+            // Remove current video if not in repeat mode
+            if (playbackSettings.repeat === 'off') {
+                if (playQueue.length > currentQueueIndex) {
+                    playQueue.splice(currentQueueIndex, 1);
+                    // Don't increment currentQueueIndex as we removed current item
+                }
+            } else if (playbackSettings.repeat === 'one') {
+                // Replay same video
+                playFromQueue(currentQueueIndex);
+                return;
+            } else if (playbackSettings.repeat === 'all') {
+                // Move to next video, loop to start if at end
+                currentQueueIndex++;
+                if (currentQueueIndex >= playQueue.length) {
+                    currentQueueIndex = 0;
+                }
+            }
+            
+            // Play next video if available
+            if (playQueue.length > currentQueueIndex) {
+                playFromQueue(currentQueueIndex);
+            } else {
+                // Queue is empty
+                clearVideo();
+                updateQueueUI();
             }
         }
     </script>
