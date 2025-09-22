@@ -401,6 +401,26 @@
             backdrop-filter: blur(10px);
         }
 
+        .queue-selection-controls {
+            padding: 12px 16px;
+            background: #f3f4f6;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+            border-radius: 0;
+        }
+
+        .dark .queue-selection-controls {
+            background: #4b5563;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.5);
+        }
+
+        .queue-item.selection-mode {
+            cursor: default;
+        }
+
+        .queue-checkbox {
+            margin-right: 8px;
+        }
+
         .dark .queue-header {
             background: rgba(31, 41, 55, 0.8);
             border-bottom: 1px solid rgba(75, 85, 99, 0.5);
@@ -963,6 +983,12 @@
                             </div>
                             <div class="flex flex-wrap gap-2 mt-2">
                                 <button 
+                                    onclick="addSelectedVideosToQueue()" 
+                                    class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-xs"
+                                >
+                                    🎵 Add to Queue
+                                </button>
+                                <button 
                                     onclick="moveSelectedVideos()" 
                                     class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
                                 >
@@ -993,7 +1019,7 @@
 
     <!-- Queue FAB -->
     <button id="queueFab" class="queue-fab" onclick="toggleQueuePanel()" title="Queue">
-        <svg width="20" height="20" viewBox="0 0 32 32" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <svg width="20" height="20" viewBox="0 0 32 32" fill="black" xmlns="http://www.w3.org/2000/svg">
             <path d="M12.022,23.997l-0.002,-0c-1.104,-0 -2.001,0.897 -2.001,2.001c-0,1.105 0.897,2.002 2.001,2.002c1.105,0 2.002,-0.897 2.002,-2.002l0,-7.122c0,-0 6.001,-0.75 6.001,-0.75l0.003,3.867c-1.105,0 -2.002,0.897 -2.002,2.002c-0,1.105 0.897,2.002 2.002,2.002c1.104,-0 2.001,-0.897 2.001,-2.002l-0.005,-7.003c-0,-0.286 -0.123,-0.559 -0.338,-0.749c-0.215,-0.189 -0.501,-0.278 -0.786,-0.242l-8,1c-0.5,0.062 -0.876,0.488 -0.876,0.992l0,6.004Z"/>
             <path d="M8.951,14.98c1.811,-1.82 4.318,-2.947 7.086,-2.947c2.755,0 5.251,1.117 7.06,2.921c0.391,0.39 1.025,0.39 1.414,-0.001c0.39,-0.391 0.389,-1.025 -0.001,-1.414c-2.171,-2.166 -5.167,-3.506 -8.473,-3.506c-3.322,0 -6.33,1.352 -8.503,3.536c-0.39,0.391 -0.388,1.025 0.003,1.414c0.391,0.389 1.025,0.388 1.414,-0.003Z"/>
             <path d="M4.975,10.074c2.972,-2.545 6.832,-4.083 11.048,-4.083c4.203,-0 8.052,1.528 11.02,4.059c0.42,0.358 1.051,0.308 1.409,-0.112c0.359,-0.42 0.308,-1.052 -0.112,-1.41c-3.317,-2.829 -7.619,-4.537 -12.317,-4.537c-4.713,-0 -9.027,1.719 -12.349,4.564c-0.419,0.359 -0.468,0.99 -0.109,1.41c0.359,0.419 0.991,0.468 1.41,0.109Z"/>
@@ -1008,9 +1034,44 @@
                 <span class="text-lg font-semibold text-gray-900 dark:text-white">Queue</span>
                 <span id="queueStatusText" class="text-sm text-gray-600 dark:text-gray-400">No videos</span>
             </div>
-            <button onclick="closeQueuePanel()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-xl">
-                ✕
-            </button>
+            <div class="flex items-center gap-2">
+                <button 
+                    id="queueSelectButton"
+                    onclick="toggleQueueSelectionMode()" 
+                    class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
+                >
+                    Select
+                </button>
+                <button 
+                    onclick="showImportQueueDialog()" 
+                    class="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
+                    title="Import queue to playlist"
+                >
+                    📥
+                </button>
+                <button onclick="closeQueuePanel()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-xl">
+                    ✕
+                </button>
+            </div>
+        </div>
+        
+        <!-- Queue Selection Controls -->
+        <div id="queueSelectionControls" class="queue-selection-controls hidden">
+            <div class="flex flex-wrap gap-2 text-sm">
+                <span class="font-medium text-gray-700 dark:text-gray-300">
+                    Selected: <span id="queueSelectedCount">0</span>
+                </span>
+                <button onclick="selectAllQueueVideos()" class="text-blue-600 hover:text-blue-800">Select All</button>
+                <button onclick="deselectAllQueueVideos()" class="text-blue-600 hover:text-blue-800">Deselect All</button>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-2">
+                <button 
+                    onclick="deleteSelectedFromQueue()" 
+                    class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs"
+                >
+                    🗑️ Delete Selected
+                </button>
+            </div>
         </div>
         
         <div class="queue-content">
@@ -1412,7 +1473,23 @@
             
             // Check for URL parameter to auto-play video
             checkForAutoPlayURL();
+            
+            // Set up page unload warning for active queue
+            setupQueueUnloadWarning();
         });
+
+        // Queue unload warning
+        function setupQueueUnloadWarning() {
+            window.addEventListener('beforeunload', (event) => {
+                // Only show warning if queue has videos
+                if (playQueue.length > 0) {
+                    const message = 'Are you sure you want to leave? Your queue will be reset.';
+                    event.preventDefault();
+                    event.returnValue = message;
+                    return message;
+                }
+            });
+        }
 
         // Load settings from localStorage
         function loadSettings() {
@@ -1850,7 +1927,7 @@
             currentPlaylist = null;
             currentVideoIndex = 0;
             document.getElementById('currentPlaylistSection').classList.add('hidden');
-            clearVideo();
+            // Don't call clearVideo() - keep player running
         }
 
         function renderCurrentPlaylist() {
@@ -5800,7 +5877,13 @@
             
             let statusMsg = `${playQueue.length} videos`;
             if (nowPlaying) {
-                statusMsg += ` • Now: ${nowPlaying.title.substring(0, 30)}${nowPlaying.title.length > 30 ? '...' : ''}`;
+                const nowPlayingText = nowPlaying.title.length > 15 ? nowPlaying.title.substring(0, 15) + '...' : nowPlaying.title;
+                statusMsg += ` • now playing: ${nowPlayingText}`;
+                
+                if (nextVideo) {
+                    const nextText = nextVideo.title.length > 15 ? nextVideo.title.substring(0, 15) + '...' : nextVideo.title;
+                    statusMsg += ` • next: ${nextText}`;
+                }
             }
             
             statusText.textContent = statusMsg;
@@ -5809,31 +5892,37 @@
             
             // Render queue items
             queueList.innerHTML = playQueue.map((video, index) => `
-                <div class="queue-item ${index === currentQueueIndex ? 'active' : ''}" 
+                <div class="queue-item ${index === currentQueueIndex ? 'active' : ''} ${isQueueSelectionMode ? 'selection-mode' : ''}" 
                      data-queue-index="${index}"
-                     draggable="true"
+                     draggable="${!isQueueSelectionMode}"
+                     onclick="${isQueueSelectionMode ? `toggleQueueVideoSelection(${index})` : ''}"
                      ondragstart="handleQueueDragStart(event, ${index})"
                      ondragover="handleQueueDragOver(event)"
                      ondrop="handleQueueDrop(event, ${index})"
                      ondragend="handleQueueDragEnd(event)">
+                    ${isQueueSelectionMode ? `
+                        <input type="checkbox" class="queue-checkbox" data-queue-index="${index}" onchange="updateQueueSelectedCount()">
+                    ` : ''}
                     <img src="${video.thumbnail}" alt="${video.title}" class="queue-thumbnail">
                     <div class="queue-info">
                         <div class="queue-title">${video.title}</div>
                         <div class="queue-channel">${video.channel}</div>
                     </div>
                     <div class="queue-actions">
-                        ${index !== currentQueueIndex ? `
-                            <button class="queue-btn play" onclick="playFromQueue(${index})" title="Play now">
-                                ▶️
+                        ${!isQueueSelectionMode ? `
+                            ${index !== currentQueueIndex ? `
+                                <button class="queue-btn play" onclick="playFromQueue(${index})" title="Play now">
+                                    ▶️
+                                </button>
+                            ` : `
+                                <div class="queue-btn" style="background: rgba(16, 185, 129, 0.3); color: #10b981;" title="Currently playing">
+                                    🎵
+                                </div>
+                            `}
+                            <button class="queue-btn remove" onclick="removeFromQueue(${index})" title="Remove from queue">
+                                ✕
                             </button>
-                        ` : `
-                            <div class="queue-btn" style="background: rgba(16, 185, 129, 0.3); color: #10b981;" title="Currently playing">
-                                🎵
-                            </div>
-                        `}
-                        <button class="queue-btn remove" onclick="removeFromQueue(${index})" title="Remove from queue">
-                            ✕
-                        </button>
+                        ` : ''}
                     </div>
                 </div>
             `).join('');
@@ -6043,6 +6132,727 @@
                 // Queue is empty
                 clearVideo();
                 updateQueueUI();
+            }
+        }
+
+        // ========================================
+        // NEW QUEUE FEATURES
+        // ========================================
+
+        // Queue Selection Mode Variables
+        let isQueueSelectionMode = false;
+        let selectedQueueVideos = new Set();
+
+        // Queue Selection Mode Functions
+        function toggleQueueSelectionMode() {
+            isQueueSelectionMode = !isQueueSelectionMode;
+            selectedQueueVideos.clear();
+            
+            const button = document.getElementById('queueSelectButton');
+            const controls = document.getElementById('queueSelectionControls');
+            
+            if (isQueueSelectionMode) {
+                button.textContent = 'Done';
+                button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                button.classList.add('bg-red-600', 'hover:bg-red-700');
+                controls.classList.remove('hidden');
+            } else {
+                button.textContent = 'Select';
+                button.classList.remove('bg-red-600', 'hover:bg-red-700');
+                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                controls.classList.add('hidden');
+            }
+            
+            updateQueuePanel();
+            updateQueueSelectedCount();
+        }
+
+        function toggleQueueVideoSelection(index) {
+            if (!isQueueSelectionMode) return;
+            
+            const checkbox = document.querySelector(`input[data-queue-index="${index}"]`);
+            if (checkbox) {
+                checkbox.checked = !checkbox.checked;
+                updateQueueSelectedCount();
+            }
+        }
+
+        function updateQueueSelectedCount() {
+            if (!isQueueSelectionMode) return;
+            
+            const checkboxes = document.querySelectorAll('.queue-checkbox:checked');
+            selectedQueueVideos = new Set(Array.from(checkboxes).map(cb => parseInt(cb.dataset.queueIndex)));
+            
+            const countElement = document.getElementById('queueSelectedCount');
+            if (countElement) {
+                countElement.textContent = selectedQueueVideos.size;
+            }
+        }
+
+        function selectAllQueueVideos() {
+            const checkboxes = document.querySelectorAll('.queue-checkbox');
+            checkboxes.forEach(cb => cb.checked = true);
+            updateQueueSelectedCount();
+        }
+
+        function deselectAllQueueVideos() {
+            const checkboxes = document.querySelectorAll('.queue-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+            updateQueueSelectedCount();
+        }
+
+        function deleteSelectedFromQueue() {
+            if (selectedQueueVideos.size === 0) {
+                showCustomAlert('Please select videos to delete', 'warning');
+                return;
+            }
+            
+            showCustomConfirm(
+                `Delete ${selectedQueueVideos.size} selected videos from queue?`,
+                () => {
+                    const selectedIndices = Array.from(selectedQueueVideos).sort((a, b) => b - a); // Sort descending
+                    let removedCount = 0;
+                    
+                    // Remove selected videos (in reverse order to maintain indices)
+                    selectedIndices.forEach(index => {
+                        if (index >= 0 && index < playQueue.length) {
+                            playQueue.splice(index, 1);
+                            removedCount++;
+                            
+                            // Adjust current index if needed
+                            if (index < currentQueueIndex) {
+                                currentQueueIndex--;
+                            } else if (index === currentQueueIndex) {
+                                // Currently playing video was removed
+                                if (playQueue.length > 0) {
+                                    // Adjust current index to stay in bounds
+                                    currentQueueIndex = Math.min(currentQueueIndex, playQueue.length - 1);
+                                    // Play the video at the new current position
+                                    if (player) {
+                                        playFromQueue(currentQueueIndex);
+                                    }
+                                } else {
+                                    // Queue is empty
+                                    clearVideo();
+                                }
+                            }
+                        }
+                    });
+                    
+                    selectedQueueVideos.clear();
+                    updateQueueUI();
+                    updateQueueSelectedCount();
+                    
+                    showSuccessMessage(`🗑️ Removed ${removedCount} videos from queue`);
+                }
+            );
+        }
+
+        // Import Queue to Playlist Functions
+        function showImportQueueDialog() {
+            if (playQueue.length === 0) {
+                showCustomAlert('Queue is empty. Add some videos first!', 'info');
+                return;
+            }
+            
+            const playlistNames = Object.keys(playlists);
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'importQueueOverlay';
+            
+            const form = document.createElement('div');
+            form.className = 'rename-form';
+            form.style.minWidth = '400px';
+            form.style.maxWidth = '500px';
+            
+            form.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📥 Import Queue to Playlist</h3>
+                
+                <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                    <div class="font-medium text-blue-900 dark:text-blue-100">Current Queue</div>
+                    <div class="text-sm text-blue-700 dark:text-blue-300">${playQueue.length} videos</div>
+                </div>
+                
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Choose an option:</h4>
+                    
+                    <div class="space-y-3">
+                        <button 
+                            onclick="showCreatePlaylistForQueue()" 
+                            class="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-left flex items-center gap-3"
+                        >
+                            <span class="text-xl">✨</span>
+                            <div>
+                                <div class="font-medium">Create New Playlist</div>
+                                <div class="text-sm opacity-90">Create a new playlist with these ${playQueue.length} videos</div>
+                            </div>
+                        </button>
+                        
+                        ${playlistNames.length > 0 ? `
+                            <button 
+                                onclick="showAddToExistingPlaylistDialog()" 
+                                class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-left flex items-center gap-3"
+                            >
+                                <span class="text-xl">📋</span>
+                                <div>
+                                    <div class="font-medium">Add to Existing Playlist</div>
+                                    <div class="text-sm opacity-90">Choose from ${playlistNames.length} existing playlists</div>
+                                </div>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideImportQueueDialog()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideImportQueueDialog();
+                }
+            });
+        }
+
+        function hideImportQueueDialog() {
+            const overlay = document.getElementById('importQueueOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function showCreatePlaylistForQueue() {
+            hideImportQueueDialog();
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'createQueuePlaylistOverlay';
+            
+            const form = document.createElement('div');
+            form.className = 'rename-form';
+            
+            form.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">✨ Create New Playlist from Queue</h3>
+                
+                <div class="mb-4">
+                    <label class="block font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Playlist Name:
+                    </label>
+                    <input 
+                        type="text" 
+                        id="queuePlaylistNameInput" 
+                        placeholder="Enter playlist name..."
+                        class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                        value="Queue Playlist ${new Date().toLocaleDateString()}"
+                    >
+                </div>
+                
+                <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                        This will create a new playlist with all ${playQueue.length} videos from your current queue.
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideCreateQueuePlaylistDialog()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="confirmCreatePlaylistFromQueue()" 
+                        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    >
+                        ✨ Create Playlist
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            
+            // Focus input and select text
+            const input = document.getElementById('queuePlaylistNameInput');
+            input.focus();
+            input.select();
+            
+            // Handle Enter key
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    confirmCreatePlaylistFromQueue();
+                }
+            });
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideCreateQueuePlaylistDialog();
+                }
+            });
+        }
+
+        function hideCreateQueuePlaylistDialog() {
+            const overlay = document.getElementById('createQueuePlaylistOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function confirmCreatePlaylistFromQueue() {
+            const input = document.getElementById('queuePlaylistNameInput');
+            const name = input.value.trim();
+            
+            if (!name) {
+                showCustomAlert('Please enter a valid playlist name', 'warning');
+                return;
+            }
+            
+            if (playlists[name]) {
+                showCustomAlert('A playlist with this name already exists', 'warning');
+                return;
+            }
+            
+            // Create new playlist with queue videos
+            playlists[name] = {
+                name: name,
+                videos: [...playQueue], // Copy all queue videos
+                created: new Date().toISOString(),
+                importedFromQueue: true
+            };
+            
+            saveSettings();
+            renderPlaylists();
+            hideCreateQueuePlaylistDialog();
+            
+            // Show success message
+            showSuccessMessage(`✅ Created "${name}" with ${playQueue.length} videos from queue!`);
+            
+            // Auto-load the new playlist
+            setTimeout(() => {
+                loadPlaylist(name);
+            }, 500);
+        }
+
+        function showAddToExistingPlaylistDialog() {
+            hideImportQueueDialog();
+            
+            const playlistNames = Object.keys(playlists);
+            
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'addQueueToPlaylistOverlay';
+            
+            const form = document.createElement('div');
+            form.className = 'rename-form';
+            form.style.minWidth = '400px';
+            
+            form.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📋 Add Queue to Existing Playlist</h3>
+                
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Select a playlist to add all ${playQueue.length} videos from your queue:
+                </p>
+                
+                <div class="max-h-64 overflow-y-auto mb-4 space-y-2">
+                    ${playlistNames.map(name => `
+                        <label class="flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-600 rounded cursor-pointer border border-gray-200 dark:border-gray-600">
+                            <input type="radio" name="targetQueuePlaylist" value="${escapeHtml(name)}" class="queue-playlist-radio">
+                            <div class="flex-1">
+                                <div class="font-medium">${name}</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length} videos</div>
+                            </div>
+                        </label>
+                    `).join('')}
+                </div>
+                
+                <div class="flex gap-3 justify-end">
+                    <button 
+                        onclick="hideAddQueueToPlaylistDialog()" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="confirmAddQueueToPlaylist()" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                        📋 Add to Playlist
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(form);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideAddQueueToPlaylistDialog();
+                }
+            });
+        }
+
+        function hideAddQueueToPlaylistDialog() {
+            const overlay = document.getElementById('addQueueToPlaylistOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function confirmAddQueueToPlaylist() {
+            const selectedRadio = document.querySelector('input[name="targetQueuePlaylist"]:checked');
+            
+            if (!selectedRadio) {
+                showCustomAlert('Please select a playlist', 'warning');
+                return;
+            }
+            
+            const targetPlaylist = selectedRadio.value;
+            
+            // Add queue videos to target playlist (filter duplicates)
+            const existingIds = new Set(playlists[targetPlaylist].videos.map(v => v.id));
+            const newVideos = playQueue.filter(video => !existingIds.has(video.id));
+            
+            playlists[targetPlaylist].videos.push(...newVideos);
+            
+            saveSettings();
+            renderPlaylists();
+            renderCurrentPlaylist();
+            hideAddQueueToPlaylistDialog();
+            
+            if (newVideos.length < playQueue.length) {
+                showSuccessMessage(`📋 Added ${newVideos.length} videos to "${targetPlaylist}" (${playQueue.length - newVideos.length} duplicates skipped)`);
+            } else {
+                showSuccessMessage(`📋 Added ${newVideos.length} videos to "${targetPlaylist}"`);
+            }
+        }
+
+        // Add Selected Videos from Playlist to Queue Function
+        function addSelectedVideosToQueue() {
+            if (selectedVideos.size === 0) {
+                showCustomAlert('Please select videos to add to queue', 'warning');
+                return;
+            }
+            
+            if (!currentPlaylist) return;
+            
+            const currentVideos = playlists[currentPlaylist].videos;
+            const videosToAdd = Array.from(selectedVideos).map(index => currentVideos[index]).filter(Boolean);
+            
+            if (videosToAdd.length === 0) {
+                showCustomAlert('No valid videos selected', 'warning');
+                return;
+            }
+            
+            // Show options for how to add to queue
+            showAddSelectedToQueueDialog(videosToAdd);
+        }
+
+        function showAddSelectedToQueueDialog(videos) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'addSelectedToQueueOverlay';
+            
+            const dialog = document.createElement('div');
+            dialog.className = 'play-options-dialog';
+            
+            dialog.innerHTML = `
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎵 Add Selected Videos to Queue</h3>
+                
+                <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="font-medium text-sm mb-1">${videos.length} videos selected</div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400">From playlist: ${currentPlaylist}</div>
+                </div>
+                
+                ${playQueue.length > 0 ? `
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Queue has ${playQueue.length} videos. Where would you like to add these videos?
+                    </p>
+                    
+                    <div class="space-y-2 mb-6">
+                        <button onclick="addMultipleToQueue(${JSON.stringify(videos).replace(/"/g, '&quot;')}, 'current'); hideAddSelectedToQueueDialog()" class="play-option-btn">
+                            <div class="play-option-icon">▶️</div>
+                            <div class="play-option-content">
+                                <div class="play-option-title">Replace Queue & Play</div>
+                                <div class="play-option-desc">Clear current queue and play these videos</div>
+                            </div>
+                        </button>
+                        
+                        <button onclick="addMultipleToQueue(${JSON.stringify(videos).replace(/"/g, '&quot;')}, 'next'); hideAddSelectedToQueueDialog()" class="play-option-btn">
+                            <div class="play-option-icon">⏭️</div>
+                            <div class="play-option-content">
+                                <div class="play-option-title">Play Next</div>
+                                <div class="play-option-desc">Add after current video (next in queue)</div>
+                            </div>
+                        </button>
+                        
+                        <button onclick="addMultipleToQueue(${JSON.stringify(videos).replace(/"/g, '&quot;')}, 'end'); hideAddSelectedToQueueDialog()" class="play-option-btn">
+                            <div class="play-option-icon">📝</div>
+                            <div class="play-option-content">
+                                <div class="play-option-title">Add to End</div>
+                                <div class="play-option-desc">Add to the end of the current queue</div>
+                            </div>
+                        </button>
+                    </div>
+                ` : `
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Queue is empty. These videos will be added and start playing.
+                    </p>
+                    
+                    <div class="space-y-2 mb-6">
+                        <button onclick="addMultipleToQueue(${JSON.stringify(videos).replace(/"/g, '&quot;')}, 'current'); hideAddSelectedToQueueDialog()" class="play-option-btn">
+                            <div class="play-option-icon">▶️</div>
+                            <div class="play-option-content">
+                                <div class="play-option-title">Add to Queue & Play</div>
+                                <div class="play-option-desc">Add these ${videos.length} videos and start playing</div>
+                            </div>
+                        </button>
+                    </div>
+                `}
+                
+                <div class="flex gap-3 justify-end">
+                    <button onclick="hideAddSelectedToQueueDialog()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideAddSelectedToQueueDialog();
+                }
+            });
+        }
+
+        function hideAddSelectedToQueueDialog() {
+            const overlay = document.getElementById('addSelectedToQueueOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function addMultipleToQueue(videos, position = 'end') {
+            if (!Array.isArray(videos) || videos.length === 0) return;
+            
+            // Filter out duplicates
+            const existingIds = new Set(playQueue.map(v => v.id));
+            const newVideos = videos.filter(video => !existingIds.has(video.id));
+            
+            if (newVideos.length === 0) {
+                showSuccessMessage('🎵 All selected videos are already in queue');
+                return;
+            }
+            
+            // Add videos based on position
+            switch (position) {
+                case 'next':
+                    // Add after current video
+                    playQueue.splice(currentQueueIndex + 1, 0, ...newVideos);
+                    break;
+                case 'current':
+                    // Replace entire queue
+                    playQueue = [...newVideos];
+                    currentQueueIndex = 0;
+                    playFromQueue(0);
+                    break;
+                default: // 'end'
+                    playQueue.push(...newVideos);
+                    break;
+            }
+            
+            updateQueueUI();
+            
+            // Clear selection in playlist
+            selectedVideos.clear();
+            updateSelectedCount();
+            
+            // Show success message
+            const positionText = position === 'next' ? 'next in queue' : position === 'current' ? 'queue (playing now)' : 'end of queue';
+            const duplicateMsg = newVideos.length < videos.length ? ` (${videos.length - newVideos.length} duplicates skipped)` : '';
+            showSuccessMessage(`🎵 Added ${newVideos.length} videos to ${positionText}${duplicateMsg}`);
+        }
+
+        // Custom Modal Dialog Functions (replacing alert/confirm)
+        function showCustomAlert(message, type = 'info') {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'customAlertOverlay';
+            
+            const iconMap = {
+                'info': '📋',
+                'warning': '⚠️',
+                'success': '✅',
+                'error': '❌'
+            };
+            
+            const colorMap = {
+                'info': 'bg-blue-600',
+                'warning': 'bg-yellow-600',
+                'success': 'bg-green-600',
+                'error': 'bg-red-600'
+            };
+            
+            const modal = document.createElement('div');
+            modal.className = 'rename-form';
+            modal.style.minWidth = '300px';
+            modal.style.maxWidth = '400px';
+            
+            modal.innerHTML = `
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-2xl">${iconMap[type]}</span>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Information</h3>
+                </div>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">${message}</p>
+                
+                <div class="flex justify-end">
+                    <button 
+                        onclick="hideCustomAlert()" 
+                        class="px-6 py-2 ${colorMap[type]} text-white rounded hover:opacity-90 transition-colors"
+                    >
+                        OK
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // Auto-focus the OK button
+            setTimeout(() => {
+                const okButton = modal.querySelector('button');
+                okButton.focus();
+            }, 100);
+            
+            // Handle keyboard shortcuts
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter' || e.key === 'Escape') {
+                    hideCustomAlert();
+                }
+            };
+            document.addEventListener('keydown', handleKeyDown);
+            
+            // Store the cleanup function
+            overlay.cleanup = () => {
+                document.removeEventListener('keydown', handleKeyDown);
+            };
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideCustomAlert();
+                }
+            });
+        }
+
+        function hideCustomAlert() {
+            const overlay = document.getElementById('customAlertOverlay');
+            if (overlay) {
+                if (overlay.cleanup) overlay.cleanup();
+                overlay.remove();
+            }
+        }
+
+        function showCustomConfirm(message, onConfirm, onCancel = null) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'customConfirmOverlay';
+            
+            const modal = document.createElement('div');
+            modal.className = 'rename-form';
+            modal.style.minWidth = '350px';
+            modal.style.maxWidth = '450px';
+            
+            modal.innerHTML = `
+                <div class="flex items-center gap-3 mb-4">
+                    <span class="text-2xl">❓</span>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Confirm Action</h3>
+                </div>
+                
+                <p class="text-gray-700 dark:text-gray-300 mb-6">${message}</p>
+                
+                <div class="flex justify-end gap-3">
+                    <button 
+                        onclick="hideCustomConfirm(false)" 
+                        class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        onclick="hideCustomConfirm(true)" 
+                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                        id="confirmButton"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // Store callbacks
+            overlay.onConfirm = onConfirm;
+            overlay.onCancel = onCancel;
+            
+            // Auto-focus the confirm button
+            setTimeout(() => {
+                const confirmButton = document.getElementById('confirmButton');
+                confirmButton.focus();
+            }, 100);
+            
+            // Handle keyboard shortcuts
+            const handleKeyDown = (e) => {
+                if (e.key === 'Enter') {
+                    hideCustomConfirm(true);
+                } else if (e.key === 'Escape') {
+                    hideCustomConfirm(false);
+                }
+            };
+            document.addEventListener('keydown', handleKeyDown);
+            
+            // Store the cleanup function
+            overlay.cleanup = () => {
+                document.removeEventListener('keydown', handleKeyDown);
+            };
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    hideCustomConfirm(false);
+                }
+            });
+        }
+
+        function hideCustomConfirm(confirmed = false) {
+            const overlay = document.getElementById('customConfirmOverlay');
+            if (overlay) {
+                if (overlay.cleanup) overlay.cleanup();
+                
+                // Execute appropriate callback
+                if (confirmed && overlay.onConfirm) {
+                    overlay.onConfirm();
+                } else if (!confirmed && overlay.onCancel) {
+                    overlay.onCancel();
+                }
+                
+                overlay.remove();
             }
         }
     </script>
