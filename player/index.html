@@ -3455,7 +3455,15 @@
             
             const form = document.createElement('div');
             form.className = 'rename-form';
-            form.style.minWidth = '400px';
+            
+            // Responsive width handling
+            if (window.innerWidth <= 640) {
+                form.style.minWidth = 'calc(100vw - 32px)';
+                form.style.maxWidth = 'calc(100vw - 32px)';
+                form.style.width = 'calc(100vw - 32px)';
+            } else {
+                form.style.minWidth = '400px';
+            }
             
             form.innerHTML = `
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Merge Playlists</h3>
@@ -3580,8 +3588,16 @@
             
             const form = document.createElement('div');
             form.className = 'rename-form';
-            form.style.minWidth = '400px';
-            form.style.maxWidth = '500px';
+            
+            // Responsive width handling
+            if (window.innerWidth <= 640) {
+                form.style.minWidth = 'calc(100vw - 32px)';
+                form.style.maxWidth = 'calc(100vw - 32px)';
+                form.style.width = 'calc(100vw - 32px)';
+            } else {
+                form.style.minWidth = '400px';
+                form.style.maxWidth = '500px';
+            }
             
             form.innerHTML = `
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📊 Playlist Info</h3>
@@ -4753,11 +4769,19 @@
             
             const modal = document.createElement('div');
             modal.className = 'rename-form';
-            modal.style.minWidth = '500px';
-            modal.style.maxWidth = '600px';
             modal.style.maxHeight = '80vh';
             modal.style.display = 'flex';
             modal.style.flexDirection = 'column';
+            
+            // Responsive width handling
+            if (window.innerWidth <= 640) {
+                modal.style.minWidth = 'calc(100vw - 32px)';
+                modal.style.maxWidth = 'calc(100vw - 32px)';
+                modal.style.width = 'calc(100vw - 32px)';
+            } else {
+                modal.style.minWidth = '500px';
+                modal.style.maxWidth = '600px';
+            }
             
             modal.innerHTML = `
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🔍 Search Videos in "${playlistName}"</h3>
@@ -5895,13 +5919,13 @@
                 <div class="queue-item ${index === currentQueueIndex ? 'active' : ''} ${isQueueSelectionMode ? 'selection-mode' : ''}" 
                      data-queue-index="${index}"
                      draggable="${!isQueueSelectionMode}"
-                     onclick="${isQueueSelectionMode ? `toggleQueueVideoSelection(${index})` : ''}"
+                     onclick="${isQueueSelectionMode ? `toggleQueueVideoSelection(${index}, event)` : ''}"
                      ondragstart="handleQueueDragStart(event, ${index})"
                      ondragover="handleQueueDragOver(event)"
                      ondrop="handleQueueDrop(event, ${index})"
                      ondragend="handleQueueDragEnd(event)">
                     ${isQueueSelectionMode ? `
-                        <input type="checkbox" class="queue-checkbox" data-queue-index="${index}" onchange="updateQueueSelectedCount()">
+                        <input type="checkbox" class="queue-checkbox" data-queue-index="${index}" onchange="updateQueueSelectedCount()" onclick="event.stopPropagation()">
                     ` : ''}
                     <img src="${video.thumbnail}" alt="${video.title}" class="queue-thumbnail">
                     <div class="queue-info">
@@ -6167,16 +6191,25 @@
             updateQueueSelectedCount();
         }
 
-        function toggleQueueVideoSelection(index) {
+        function toggleQueueVideoSelection(index, event) {
             if (!isQueueSelectionMode) return;
+            
+            // Prevent event bubbling if this was called from a click event
+            if (event) {
+                event.stopPropagation();
+            }
             
             const checkbox = document.querySelector(`input[data-queue-index="${index}"]`);
             if (checkbox) {
                 checkbox.checked = !checkbox.checked;
+                
+                // Trigger change event to ensure all handlers are called
+                const changeEvent = new Event('change', { bubbles: true });
+                checkbox.dispatchEvent(changeEvent);
+                
                 updateQueueSelectedCount();
             }
         }
-
         function updateQueueSelectedCount() {
             if (!isQueueSelectionMode) return;
             
@@ -6263,8 +6296,17 @@
             
             const form = document.createElement('div');
             form.className = 'rename-form';
-            form.style.minWidth = '400px';
-            form.style.maxWidth = '500px';
+            // Responsive width handling
+            if (window.innerWidth <= 640) {
+                form.style.minWidth = 'calc(100vw - 32px)';
+                form.style.maxWidth = 'calc(100vw - 32px)';
+                form.style.width = 'calc(100vw - 32px)';
+                form.style.margin = '16px';
+            } else {
+                form.style.minWidth = '400px';
+                form.style.maxWidth = '500px';
+                form.style.width = '100%';
+            }
             
             form.innerHTML = `
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📥 Import Queue to Playlist</h3>
