@@ -865,7 +865,7 @@
                         <input 
                             type="text" 
                             id="searchInput" 
-                            placeholder="Search for videos..."
+                            placeholder="Search on YouTube or paste a url"
                             class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         >
                         <button 
@@ -1536,6 +1536,17 @@
         }
 
         function performSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const query = searchInput.value.trim();
+            
+            // Check if the input is a URL
+            if (isYouTubeURL(query)) {
+                console.log('URL detected in search input:', query);
+                handleURLFromSearch(query);
+                return;
+            }
+            
+            // Regular search functionality
             if (searchType === 'video') {
                 searchVideos();
             } else {
@@ -1785,8 +1796,54 @@
             document.getElementById('channelSearchBtn').classList.toggle('bg-primary', type === 'channel');
             document.getElementById('channelSearchBtn').classList.toggle('bg-gray-600', type !== 'channel');
             
-            const placeholder = type === 'video' ? 'Search for videos...' : 'Search for channels...';
+            const placeholder = type === 'video' ? 'Search on YouTube or paste a url' : 'Search for channels...';
             document.getElementById('searchInput').placeholder = placeholder;
+        }
+
+        // URL Detection Functions
+        function isYouTubeURL(input) {
+            if (!input || typeof input !== 'string') return false;
+            
+            // Check if input contains YouTube domain patterns
+            const youtubePatterns = [
+                /^https?:\/\/(www\.|m\.)?youtube\.com/i,
+                /^https?:\/\/youtu\.be/i,
+                /^https?:\/\/gaming\.youtube\.com/i,
+                /youtube\.com/i,
+                /youtu\.be/i
+            ];
+            
+            return youtubePatterns.some(pattern => pattern.test(input));
+        }
+
+        function handleURLFromSearch(url) {
+            console.log('Handling URL from search:', url);
+            
+            // Show URL processing feedback
+            const feedback = document.createElement('div');
+            feedback.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 bg-primary text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-3';
+            feedback.innerHTML = `
+                <div class="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
+                <span>Processing YouTube URL...</span>
+            `;
+            document.body.appendChild(feedback);
+            
+            // Use existing URL handling function
+            setTimeout(() => {
+                try {
+                    handleAutoPlayURL(url);
+                } catch (error) {
+                    console.error('Error processing URL from search:', error);
+                    showAutoPlayError('Error processing the provided URL');
+                }
+                
+                // Remove processing feedback
+                feedback.remove();
+                
+                // Clear the search input after processing
+                document.getElementById('searchInput').value = '';
+                
+            }, 500); // Small delay to show processing feedback
         }
 
         function clearSearchResults() {
