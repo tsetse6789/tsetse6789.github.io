@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LRC Lyric Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .drag-active {
+            @apply border-primary bg-primary bg-opacity-10;
+        }
+        
+        .lyric-button {
+            transition: all 0.2s ease;
+        }
+        
+        .lyric-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(93, 92, 222, 0.3);
+        }
+        
+        .lyric-button.recorded {
+            @apply bg-green-500 text-white;
+        }
+        
+        .recording-active .lyric-button {
+            @apply cursor-pointer;
+        }
+        
+        .waveform {
+            background: linear-gradient(90deg, #5D5CDE 0%, #8B5CF6 100%);
+            height: 4px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 min-h-screen transition-colors">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">🎵 LRC Lyric Maker by Nut</h1>
+            <p class="text-gray-600 dark:text-gray-400">Create synchronized lyric files with precise timing</p>
+        </div>
+
+        <!-- Audio Upload Section -->
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">📁 Upload Audio File</h2>
+            
+            <div id="dropZone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors">
+                <div id="dropContent">
+                    <div class="text-6xl mb-4">🎧</div>
+                    <p class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Drop your audio file here</p>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4">or click to browse</p>
+                    <button class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors">
+                        Choose File
+                    </button>
+                </div>
+                <div id="fileInfo" class="hidden">
+                    <div class="text-4xl mb-2">🎵</div>
+                    <p id="fileName" class="font-medium text-gray-900 dark:text-white"></p>
+                    <p id="fileSize" class="text-gray-500 dark:text-gray-400"></p>
+                </div>
+            </div>
+            
+            <input type="file" id="audioFile" accept="audio/*" class="hidden">
+            
+            <!-- Audio Player -->
+            <audio id="audioPlayer" class="w-full mt-4 hidden" controls>
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+
+        <!-- Song Information -->
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">ℹ️ Song Information</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Song Title</label>
+                    <input type="text" id="songTitle" placeholder="Enter song title" 
+                           class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Artist</label>
+                    <input type="text" id="artist" placeholder="Enter artist name" 
+                           class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+            </div>
+        </div>
+
+        <!-- Lyrics Input -->
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">📝 Lyrics</h2>
+            <textarea id="lyricsInput" placeholder="Paste your lyrics here, one line per lyric..." 
+                      class="w-full h-40 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
+                      style="font-family: inherit;"></textarea>
+            <button id="parseLyrics" class="mt-3 bg-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors">
+                📋 Parse Lyrics
+            </button>
+        </div>
+
+        <!-- Recording Section -->
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2 sm:mb-0">⏱️ Timing Recording</h2>
+                <div class="flex items-center space-x-3">
+                    <div id="currentTime" class="text-sm font-mono text-gray-600 dark:text-gray-400">00:00</div>
+                    <button id="recordButton" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        🔴 Start Recording
+                    </button>
+                    <button id="clearTimings" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                        🗑️ Clear
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div id="progressBar" class="waveform h-2 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div id="lyricsContainer" class="space-y-2">
+                    <p class="text-gray-500 dark:text-gray-400 text-center py-8">Parse lyrics first to start timing</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview & Download -->
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">📄 LRC Preview</h2>
+            <pre id="lrcPreview" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap max-h-60 overflow-y-auto mb-4">No lyrics timed yet...</pre>
+            <button id="downloadLrc" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                💾 Download LRC File
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Global variables
+        let audioFile = null;
+        let lyrics = [];
+        let lyricTimings = {}; // { lyricIndex: [timestamp1, timestamp2, ...] }
+        let isRecording = false;
+        let startTime = 0;
+
+        // DOM elements
+        const dropZone = document.getElementById('dropZone');
+        const audioFileInput = document.getElementById('audioFile');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const dropContent = document.getElementById('dropContent');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const songTitle = document.getElementById('songTitle');
+        const artist = document.getElementById('artist');
+        const lyricsInput = document.getElementById('lyricsInput');
+        const parseLyrics = document.getElementById('parseLyrics');
+        const lyricsContainer = document.getElementById('lyricsContainer');
+        const recordButton = document.getElementById('recordButton');
+        const clearTimings = document.getElementById('clearTimings');
+        const currentTime = document.getElementById('currentTime');
+        const progressBar = document.getElementById('progressBar');
+        const lrcPreview = document.getElementById('lrcPreview');
+        const downloadLrc = document.getElementById('downloadLrc');
+
+        // File upload handlers
+        dropZone.addEventListener('click', () => audioFileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-active');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-active');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-active');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        audioFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('audio/')) {
+                showAlert('Please select a valid audio file.');
+                return;
+            }
+
+            audioFile = file;
+            const url = URL.createObjectURL(file);
+            audioPlayer.src = url;
+            audioPlayer.classList.remove('hidden');
+
+            // Update file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            dropContent.classList.add('hidden');
+            fileInfo.classList.remove('hidden');
+
+            // Auto-fill song title if possible
+            if (!songTitle.value) {
+                songTitle.value = file.name.replace(/\.[^/.]+$/, "");
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Lyrics parsing
+        parseLyrics.addEventListener('click', () => {
+            const text = lyricsInput.value.trim();
+            if (!text) {
+                showAlert('Please enter some lyrics first.');
+                return;
+            }
+
+            lyrics = text.split('\n').filter(line => line.trim() !== '');
+            lyricTimings = {};
+            renderLyricButtons();
+            updatePreview();
+        });
+
+        function renderLyricButtons() {
+            lyricsContainer.innerHTML = '';
+            
+            lyrics.forEach((lyric, index) => {
+                const button = document.createElement('button');
+                button.className = 'lyric-button w-full text-left p-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors';
+                button.textContent = lyric;
+                button.dataset.index = index;
+                
+                const timingInfo = document.createElement('div');
+                timingInfo.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1';
+                timingInfo.id = `timing-${index}`;
+                updateTimingDisplay(index);
+                
+                const wrapper = document.createElement('div');
+                wrapper.appendChild(button);
+                wrapper.appendChild(timingInfo);
+                
+                button.addEventListener('click', () => {
+                    if (isRecording) {
+                        recordTiming(index);
+                    }
+                });
+                
+                lyricsContainer.appendChild(wrapper);
+            });
+        }
+
+        function updateTimingDisplay(index) {
+            const timingInfo = document.getElementById(`timing-${index}`);
+            if (timingInfo) {
+                const timings = lyricTimings[index] || [];
+                if (timings.length > 0) {
+                    timingInfo.textContent = timings.map(formatTime).join(', ');
+                } else {
+                    timingInfo.textContent = 'No timing recorded';
+                }
+            }
+        }
+
+        // Recording functionality
+        recordButton.addEventListener('click', () => {
+            if (!audioFile) {
+                showAlert('Please upload an audio file first.');
+                return;
+            }
+
+            if (!lyrics.length) {
+                showAlert('Please parse lyrics first.');
+                return;
+            }
+
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        function startRecording() {
+            isRecording = true;
+            recordButton.textContent = '⏹️ Stop Recording';
+            recordButton.className = 'bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors';
+            lyricsContainer.classList.add('recording-active');
+            
+            audioPlayer.currentTime = 0;
+            audioPlayer.play();
+            startTime = Date.now();
+            updateTimer();
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            recordButton.textContent = '🔴 Start Recording';
+            recordButton.className = 'bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors';
+            lyricsContainer.classList.remove('recording-active');
+            audioPlayer.pause();
+        }
+
+        function updateTimer() {
+            if (!isRecording) return;
+            
+            const elapsed = audioPlayer.currentTime;
+            currentTime.textContent = formatTime(elapsed);
+            
+            if (audioPlayer.duration) {
+                const progress = (elapsed / audioPlayer.duration) * 100;
+                progressBar.style.width = `${Math.min(progress, 100)}%`;
+            }
+            
+            requestAnimationFrame(updateTimer);
+        }
+
+        function recordTiming(lyricIndex) {
+            const currentAudioTime = audioPlayer.currentTime;
+            
+            if (!lyricTimings[lyricIndex]) {
+                lyricTimings[lyricIndex] = [];
+            }
+            
+            lyricTimings[lyricIndex].push(currentAudioTime);
+            updateTimingDisplay(lyricIndex);
+            updatePreview();
+            
+            // Visual feedback
+            const button = document.querySelector(`[data-index="${lyricIndex}"]`);
+            button.classList.add('recorded');
+            setTimeout(() => button.classList.remove('recorded'), 500);
+        }
+
+        clearTimings.addEventListener('click', () => {
+            lyricTimings = {};
+            lyrics.forEach((_, index) => updateTimingDisplay(index));
+            updatePreview();
+        });
+
+        // LRC generation and preview
+        function updatePreview() {
+            const lrcContent = generateLrcContent();
+            lrcPreview.textContent = lrcContent;
+            downloadLrc.disabled = !lrcContent.includes('[');
+        }
+
+        function generateLrcContent() {
+            let lrc = '';
+            
+            // Add metadata
+            if (songTitle.value.trim()) {
+                lrc += `[ti:${songTitle.value.trim()}]\n`;
+            }
+            if (artist.value.trim()) {
+                lrc += `[ar:${artist.value.trim()}]\n`;
+            }
+            
+            // Add lyrics with timing
+            lyrics.forEach((lyric, index) => {
+                const timings = lyricTimings[index];
+                if (timings && timings.length > 0) {
+                    const sortedTimings = [...timings].sort((a, b) => a - b);
+                    const timeStamps = sortedTimings.map(formatTimeForLrc).join('');
+                    lrc += `${timeStamps}${lyric}\n`;
+                }
+            });
+            
+            return lrc || 'No lyrics timed yet...';
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function formatTimeForLrc(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = (seconds % 60).toFixed(2);
+            return `[${mins.toString().padStart(2, '0')}:${secs.padStart(5, '0')}]`;
+        }
+
+        // Download functionality
+        downloadLrc.addEventListener('click', () => {
+            const lrcContent = generateLrcContent();
+            if (!lrcContent.includes('[')) {
+                showAlert('No timed lyrics to download.');
+                return;
+            }
+            
+            const blob = new Blob([lrcContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${songTitle.value || 'lyrics'}.lrc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Custom alert function
+        function showAlert(message) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                    <div class="flex items-center mb-4">
+                        <div class="text-2xl mr-3">⚠️</div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Notice</h3>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">${message}</p>
+                    <div class="flex justify-end">
+                        <button class="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded transition-colors" onclick="this.closest('.fixed').remove()">OK</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Auto-update preview when song info changes
+        songTitle.addEventListener('input', updatePreview);
+        artist.addEventListener('input', updatePreview);
+    </script>
+</body>
+</html>
