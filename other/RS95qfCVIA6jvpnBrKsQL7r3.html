@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery by Nut</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 640px) {
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+        
+        .image-preview {
+            max-width: 90vw;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+        
+        .zoom-controls button {
+            transition: all 0.2s ease;
+        }
+        
+        .zoom-controls button:hover {
+            transform: scale(1.1);
+        }
+        
+        .nav-button {
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+        
+        .nav-button:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        .album-card {
+            transition: all 0.3s ease;
+        }
+        
+        .album-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .dark .album-card:hover {
+            box-shadow: 0 10px 25px rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Title -->
+                <h1 class="text-xl sm:text-2xl font-bold text-primary">Gallery by Nut</h1>
+                
+                <!-- Desktop Search & Filter -->
+                <div class="hidden md:flex items-center space-x-4 flex-1 max-w-md ml-8">
+                    <div class="relative flex-1">
+                        <input 
+                            type="text" 
+                            id="searchInput"
+                            placeholder="Search albums..." 
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                        <svg class="absolute right-3 top-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <select 
+                        id="filterSelect" 
+                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                        <option value="">All Types</option>
+                        <option value="nature">Nature</option>
+                        <option value="portrait">Portrait</option>
+                        <option value="travel">Travel</option>
+                        <option value="street">Street</option>
+                    </select>
+                </div>
+                
+                <!-- Mobile Search & Filter Buttons -->
+                <div class="md:hidden flex items-center space-x-2">
+                    <button id="mobileSearchBtn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </button>
+                    <button id="mobileFilterBtn" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mobile Search Bar -->
+            <div id="mobileSearch" class="hidden md:hidden pb-4">
+                <input 
+                    type="text" 
+                    id="mobileSearchInput"
+                    placeholder="Search albums..." 
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+            </div>
+            
+            <!-- Mobile Filter -->
+            <div id="mobileFilter" class="hidden md:hidden pb-4">
+                <select 
+                    id="mobileFilterSelect" 
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                    <option value="">All Types</option>
+                    <option value="nature">Nature</option>
+                    <option value="portrait">Portrait</option>
+                    <option value="travel">Travel</option>
+                    <option value="street">Street</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Albums Grid -->
+        <div id="albumsGrid" class="gallery-grid">
+            <!-- Albums will be populated by JavaScript -->
+        </div>
+        
+        <!-- No Results Message -->
+        <div id="noResults" class="hidden text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No albums found</h3>
+            <p class="text-gray-500 dark:text-gray-400">Try adjusting your search or filter criteria.</p>
+        </div>
+    </main>
+
+    <!-- Image Preview Modal -->
+    <div id="imageModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-90">
+        <!-- Close Button -->
+        <button id="closeModal" class="absolute top-4 right-4 z-50 text-white hover:text-gray-300 transition-colors">
+            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <!-- Download & Share Buttons -->
+        <div class="absolute top-4 left-4 z-50 flex items-center space-x-2">
+            <div class="relative">
+                <button id="downloadBtn" class="text-white hover:text-gray-300 transition-colors">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                </button>
+                <div id="downloadMenu" class="hidden absolute top-8 left-0 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-2 min-w-[160px]">
+                    <button id="downloadCurrent" class="block w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Current Image</button>
+                    <button id="downloadAll" class="block w-full px-4 py-2 text-left text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">All Images (ZIP)</button>
+                </div>
+            </div>
+            <button id="shareBtn" class="text-white hover:text-gray-300 transition-colors">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Navigation Arrows -->
+        <button id="prevBtn" class="nav-button absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-40">
+            <svg class="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+        </button>
+        
+        <button id="nextBtn" class="nav-button absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-40">
+            <svg class="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+        </button>
+        
+        <!-- Image Container -->
+        <div class="flex items-center justify-center h-full p-4 pb-20">
+            <img id="modalImage" src="" alt="" class="image-preview" style="transform: scale(1);">
+        </div>
+        
+        <!-- Bottom Dock -->
+        <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 rounded-lg px-6 py-3 flex items-center space-x-4">
+            <!-- Zoom Out -->
+            <button id="zoomOut" class="zoom-controls text-white hover:text-gray-300">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM15 11H9"></path>
+                </svg>
+            </button>
+            
+            <!-- Image Counter -->
+            <button id="imageCounter" class="text-white text-sm font-medium hover:text-gray-300 cursor-pointer">1 / 10</button>
+            
+            <!-- Zoom In -->
+            <button id="zoomIn" class="zoom-controls text-white hover:text-gray-300">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM12 8v3m0 0v3m0-3h3m-3 0H9"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Image Grid Modal -->
+    <div id="imageGridModal" class="hidden fixed inset-0 z-[100] bg-black bg-opacity-90">
+        <!-- Close Button -->
+        <button id="closeGridModal" class="absolute top-4 right-4 z-50 text-white hover:text-gray-300 transition-colors">
+            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+        
+        <!-- Modal Content -->
+        <div class="flex flex-col h-full p-4">
+            <!-- Header -->
+            <div class="text-center mb-6 pt-16">
+                <h2 id="gridModalTitle" class="text-white text-2xl font-bold mb-2">Album Images</h2>
+                <p class="text-gray-300">Click on any image to jump to it</p>
+            </div>
+            
+            <!-- Image Grid -->
+            <div class="flex-1 overflow-y-auto">
+                <div id="imageGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 max-w-6xl mx-auto">
+                    <!-- Images will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===========================================
+        // ALBUM DATABASE - EDIT THIS SECTION
+        // ===========================================
+        const albumsDatabase = [
+            {
+                id: 1,
+                name: "金句",
+                type: "金句",
+                date: "2025-10-12",
+                coverImage: "https://drive.google.com/u/0/drive-viewer/AKGpiha03iEEgqboe_NNaYF_UrdueTcBJsvJBExwvNiuKub1yV8lcUeibBYEgA9o8A1BDGwb3EvNROzVVlHGR5FHIhRp61dk4_DNE2E=s1600-rw-v1",
+                images: [
+                    { url: "https://drive.google.com/u/0/drive-viewer/AKGpihbOWNfGH1LUZ0QYwmQeX5HY-092q81BiOWU50D1NN9RhS9_GSMhh8yvJSdmO876Ke7479fKG1wc6gNAA0P0kfgb2JocbNB_mHk=s1600-rw-v1", name: "1.webp" }
+                ]
+            },
+            {
+                id: 2,
+                name: "City Portraits",
+                type: "portrait",
+                date: "2024-01-20",
+                coverImage: "https://picsum.photos/400/300?random=5",
+                images: [
+                    { url: "https://picsum.photos/800/600?random=5", name: "portrait1.jpg" },
+                    { url: "https://picsum.photos/800/600?random=6", name: "portrait2.jpg" },
+                    { url: "https://picsum.photos/800/600?random=7", name: "portrait3.jpg" }
+                ]
+            },
+            {
+                id: 3,
+                name: "European Journey",
+                type: "travel",
+                date: "2024-02-01",
+                coverImage: "https://picsum.photos/400/300?random=8",
+                images: [
+                    { url: "https://picsum.photos/800/600?random=8", name: "europe1.jpg" },
+                    { url: "https://picsum.photos/800/600?random=9", name: "europe2.jpg" },
+                    { url: "https://picsum.photos/800/600?random=10", name: "europe3.jpg" },
+                    { url: "https://picsum.photos/800/600?random=11", name: "europe4.jpg" },
+                    { url: "https://picsum.photos/800/600?random=12", name: "europe5.jpg" }
+                ]
+            },
+            {
+                id: 4,
+                name: "Street Life",
+                type: "street",
+                date: "2024-02-10",
+                coverImage: "https://picsum.photos/400/300?random=13",
+                images: [
+                    { url: "https://picsum.photos/800/600?random=13", name: "street1.jpg" },
+                    { url: "https://picsum.photos/800/600?random=14", name: "street2.jpg" }
+                ]
+            },
+            {
+                id: 5,
+                name: "Ocean Views",
+                type: "nature",
+                date: "2024-02-15",
+                coverImage: "https://picsum.photos/400/300?random=15",
+                images: [
+                    { url: "https://picsum.photos/800/600?random=15", name: "ocean1.jpg" },
+                    { url: "https://picsum.photos/800/600?random=16", name: "ocean2.jpg" },
+                    { url: "https://picsum.photos/800/600?random=17", name: "ocean3.jpg" }
+                ]
+            }
+        ];
+        // ===========================================
+        // END OF DATABASE SECTION
+        // ===========================================
+
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Global variables
+        let currentAlbum = null;
+        let currentImageIndex = 0;
+        let zoomLevel = 1;
+        let filteredAlbums = [...albumsDatabase];
+
+        // DOM elements
+        const albumsGrid = document.getElementById('albumsGrid');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const imageCounter = document.getElementById('imageCounter');
+        const noResults = document.getElementById('noResults');
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            renderAlbums();
+            setupEventListeners();
+            checkURLParams();
+        });
+
+        // Check URL parameters on load
+        function checkURLParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const albumId = urlParams.get('album');
+            
+            if (albumId) {
+                const album = albumsDatabase.find(a => a.id == albumId);
+                if (album) {
+                    openAlbum(album.id);
+                }
+            }
+        }
+
+        // Render albums
+        function renderAlbums() {
+            if (filteredAlbums.length === 0) {
+                albumsGrid.classList.add('hidden');
+                noResults.classList.remove('hidden');
+                return;
+            }
+
+            albumsGrid.classList.remove('hidden');
+            noResults.classList.add('hidden');
+
+            albumsGrid.innerHTML = filteredAlbums.map(album => `
+                <div class="album-card bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer" onclick="openAlbum(${album.id})">
+                    <div class="aspect-w-16 aspect-h-12 overflow-hidden">
+                        <img src="${album.coverImage}" alt="${album.name}" class="w-full h-48 object-cover">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2">${album.name}</h3>
+                        <div class="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+                            <span class="bg-primary text-white px-2 py-1 rounded-full text-xs capitalize">${album.type}</span>
+                            <span>${formatDate(album.date)}</span>
+                        </div>
+                        <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            ${album.images.length} images
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        // Open album
+        function openAlbum(albumId) {
+            currentAlbum = albumsDatabase.find(album => album.id === albumId);
+            currentImageIndex = 0;
+            zoomLevel = 1;
+            showImageModal();
+        }
+
+        // Show image modal
+        function showImageModal() {
+            if (!currentAlbum || !currentAlbum.images.length) return;
+
+            const currentImage = currentAlbum.images[currentImageIndex];
+            modalImage.src = currentImage.url;
+            modalImage.alt = currentImage.name;
+            modalImage.style.transform = `scale(${zoomLevel})`;
+            
+            updateImageCounter();
+            imageModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Close modal
+        function closeModal() {
+            imageModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            currentAlbum = null;
+            zoomLevel = 1;
+        }
+
+        // Update image counter
+        function updateImageCounter() {
+            if (!currentAlbum) return;
+            document.getElementById('imageCounter').textContent = 
+                `${currentImageIndex + 1} / ${currentAlbum.images.length}`;
+        }
+
+        // Navigate images
+        function navigateImage(direction) {
+            if (!currentAlbum) return;
+
+            if (direction === 'next') {
+                currentImageIndex = (currentImageIndex + 1) % currentAlbum.images.length;
+            } else {
+                currentImageIndex = currentImageIndex === 0 
+                    ? currentAlbum.images.length - 1 
+                    : currentImageIndex - 1;
+            }
+
+            zoomLevel = 1;
+            const currentImage = currentAlbum.images[currentImageIndex];
+            modalImage.src = currentImage.url;
+            modalImage.style.transform = `scale(${zoomLevel})`;
+            updateImageCounter();
+        }
+
+        // Zoom functions
+        function zoomIn() {
+            zoomLevel = Math.min(zoomLevel * 1.2, 3);
+            modalImage.style.transform = `scale(${zoomLevel})`;
+        }
+
+        function zoomOut() {
+            zoomLevel = Math.max(zoomLevel / 1.2, 0.5);
+            modalImage.style.transform = `scale(${zoomLevel})`;
+        }
+
+        // Share function
+        function shareAlbum() {
+            if (!currentAlbum) return;
+            
+            const currentURL = new URL(window.location);
+            currentURL.searchParams.set('album', currentAlbum.id);
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(currentURL.toString()).then(() => {
+                    showNotification('Link copied to clipboard!');
+                }).catch(() => {
+                    showShareModal(currentURL.toString());
+                });
+            } else {
+                showShareModal(currentURL.toString());
+            }
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function showShareModal(url) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Share Album</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">Copy this link to share the album:</p>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <input type="text" value="${url}" readonly class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-700 text-sm">
+                        <button onclick="copyToClipboard('${url}')" class="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90">Copy</button>
+                    </div>
+                    <button onclick="this.closest('.fixed').remove()" class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700">Close</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function copyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNotification('Link copied to clipboard!');
+        }
+
+        // Show image grid modal
+        function showImageGrid() {
+            if (!currentAlbum) return;
+            
+            const gridModal = document.getElementById('imageGridModal');
+            const gridTitle = document.getElementById('gridModalTitle');
+            const imageGrid = document.getElementById('imageGrid');
+            
+            gridTitle.textContent = currentAlbum.name;
+            
+            imageGrid.innerHTML = currentAlbum.images.map((image, index) => `
+                <div class="relative cursor-pointer group" onclick="jumpToImage(${index})">
+                    <img src="${image.url}" alt="${image.name}" class="w-full h-24 sm:h-32 object-cover rounded-lg transition-transform group-hover:scale-105">
+                    <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all">
+                        <span class="text-white font-bold text-lg opacity-0 group-hover:opacity-100">${index + 1}</span>
+                    </div>
+                    ${index === currentImageIndex ? '<div class="absolute inset-0 border-3 border-primary rounded-lg"></div>' : ''}
+                </div>
+            `).join('');
+            
+            gridModal.classList.remove('hidden');
+        }
+
+        function closeImageGrid() {
+            document.getElementById('imageGridModal').classList.add('hidden');
+        }
+
+        function jumpToImage(index) {
+            currentImageIndex = index;
+            zoomLevel = 1;
+            const currentImage = currentAlbum.images[currentImageIndex];
+            modalImage.src = currentImage.url;
+            modalImage.style.transform = `scale(${zoomLevel})`;
+            updateImageCounter();
+            closeImageGrid();
+        }
+
+        // Download functions
+        function downloadCurrentImage() {
+            if (!currentAlbum) return;
+            const currentImage = currentAlbum.images[currentImageIndex];
+            downloadImage(currentImage.url, currentImage.name);
+        }
+
+        async function downloadAllImages() {
+            if (!currentAlbum) return;
+            
+            const zip = new JSZip();
+            const promises = currentAlbum.images.map(async (image, index) => {
+                try {
+                    const response = await fetch(image.url);
+                    const blob = await response.blob();
+                    zip.file(image.name, blob);
+                } catch (error) {
+                    console.error(`Failed to download ${image.name}:`, error);
+                }
+            });
+
+            await Promise.all(promises);
+            const content = await zip.generateAsync({type: "blob"});
+            const url = URL.createObjectURL(content);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentAlbum.name}.zip`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadImage(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        // Filter and search functions
+        function filterAlbums() {
+            const searchTerm = (document.getElementById('searchInput').value || 
+                              document.getElementById('mobileSearchInput').value).toLowerCase();
+            const filterType = document.getElementById('filterSelect').value || 
+                              document.getElementById('mobileFilterSelect').value;
+
+            filteredAlbums = albumsDatabase.filter(album => {
+                const matchesSearch = album.name.toLowerCase().includes(searchTerm);
+                const matchesFilter = !filterType || album.type === filterType;
+                return matchesSearch && matchesFilter;
+            });
+
+            renderAlbums();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Modal controls
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('prevBtn').addEventListener('click', () => navigateImage('prev'));
+            document.getElementById('nextBtn').addEventListener('click', () => navigateImage('next'));
+            document.getElementById('zoomIn').addEventListener('click', zoomIn);
+            document.getElementById('zoomOut').addEventListener('click', zoomOut);
+
+            // Download controls
+            const downloadBtn = document.getElementById('downloadBtn');
+            const downloadMenu = document.getElementById('downloadMenu');
+            
+            downloadBtn.addEventListener('click', () => {
+                downloadMenu.classList.toggle('hidden');
+            });
+            
+            document.getElementById('downloadCurrent').addEventListener('click', () => {
+                downloadCurrentImage();
+                downloadMenu.classList.add('hidden');
+            });
+            
+            document.getElementById('downloadAll').addEventListener('click', () => {
+                downloadAllImages();
+                downloadMenu.classList.add('hidden');
+            });
+
+            // Close download menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!downloadBtn.contains(e.target) && !downloadMenu.contains(e.target)) {
+                    downloadMenu.classList.add('hidden');
+                }
+            });
+
+            // Search and filter
+            document.getElementById('searchInput').addEventListener('input', filterAlbums);
+            document.getElementById('mobileSearchInput').addEventListener('input', filterAlbums);
+            document.getElementById('filterSelect').addEventListener('change', filterAlbums);
+            document.getElementById('mobileFilterSelect').addEventListener('change', filterAlbums);
+
+            // Mobile controls
+            document.getElementById('mobileSearchBtn').addEventListener('click', () => {
+                const mobileSearch = document.getElementById('mobileSearch');
+                mobileSearch.classList.toggle('hidden');
+                if (!mobileSearch.classList.contains('hidden')) {
+                    document.getElementById('mobileSearchInput').focus();
+                }
+            });
+
+            document.getElementById('mobileFilterBtn').addEventListener('click', () => {
+                document.getElementById('mobileFilter').classList.toggle('hidden');
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (!imageModal.classList.contains('hidden')) {
+                    switch(e.key) {
+                        case 'Escape':
+                            closeModal();
+                            break;
+                        case 'ArrowLeft':
+                            navigateImage('prev');
+                            break;
+                        case 'ArrowRight':
+                            navigateImage('next');
+                            break;
+                        case '+':
+                        case '=':
+                            zoomIn();
+                            break;
+                        case '-':
+                            zoomOut();
+                            break;
+                    }
+                }
+            });
+
+            // Touch/swipe support for mobile
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            modalImage.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+
+            modalImage.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+
+            function handleSwipe() {
+                if (touchEndX < touchStartX - 50) {
+                    navigateImage('next');
+                }
+                if (touchEndX > touchStartX + 50) {
+                    navigateImage('prev');
+                }
+            }
+
+            // Close modal when clicking outside image
+            imageModal.addEventListener('click', (e) => {
+                if (e.target === imageModal) {
+                    closeModal();
+                }
+            });
+
+            // Share button
+            document.getElementById('shareBtn').addEventListener('click', shareAlbum);
+
+            // Image counter click for grid modal
+            document.getElementById('imageCounter').addEventListener('click', showImageGrid);
+
+            // Image grid modal controls
+            document.getElementById('closeGridModal').addEventListener('click', closeImageGrid);
+
+            // Close grid modal when clicking outside
+            document.getElementById('imageGridModal').addEventListener('click', (e) => {
+                if (e.target.id === 'imageGridModal') {
+                    closeImageGrid();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
