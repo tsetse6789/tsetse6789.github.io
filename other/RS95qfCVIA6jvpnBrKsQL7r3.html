@@ -416,34 +416,126 @@
             showImageModal();
         }
 
-        // Show image modal
-        function showImageModal() {
+        // Show image modal with advanced loading
+        async function showImageModal() {
             if (!currentAlbum || !currentAlbum.images.length) return;
 
             const currentImage = currentAlbum.images[currentImageIndex];
             
-            // Add loading state
-            modalImage.style.opacity = '0.5';
-            modalImage.src = currentImage.url;
-            modalImage.alt = currentImage.name;
-            modalImage.style.transform = `scale(${zoomLevel})`;
-            
-            // Handle image load success
-            modalImage.onload = function() {
-                modalImage.style.opacity = '1';
-                console.log(`Successfully loaded: ${currentImage.url}`);
-            };
-            
-            // Handle image load error
-            modalImage.onerror = function() {
-                modalImage.style.opacity = '1';
-                console.error(`Failed to load image: ${currentImage.url}`);
-                showImageError();
-            };
+            // Show loading state
+            showLoadingState();
             
             updateImageCounter();
             imageModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            
+            // Try to load image with multiple methods
+            await loadImageWithFallback(currentImage);
+        }
+
+        // Show loading state
+        function showLoadingState() {
+            modalImage.style.opacity = '0.3';
+            modalImage.style.transform = `scale(${zoomLevel})`;
+            modalImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+';
+            modalImage.alt = 'Loading...';
+        }
+
+        // Advanced image loading with multiple fallback methods
+        async function loadImageWithFallback(imageObj) {
+            const methods = [
+                () => loadWithFetch(imageObj.url),
+                () => loadWithDirectSrc(imageObj.url),
+                () => loadWithCorsProxy(imageObj.url)
+            ];
+
+            for (let i = 0; i < methods.length; i++) {
+                try {
+                    console.log(`Trying method ${i + 1} for: ${imageObj.url}`);
+                    const result = await methods[i]();
+                    
+                    modalImage.src = result;
+                    modalImage.alt = imageObj.name;
+                    modalImage.style.opacity = '1';
+                    modalImage.style.transform = `scale(${zoomLevel})`;
+                    
+                    console.log(`Successfully loaded with method ${i + 1}: ${imageObj.url}`);
+                    return;
+                } catch (error) {
+                    console.warn(`Method ${i + 1} failed for ${imageObj.url}:`, error);
+                    continue;
+                }
+            }
+            
+            // All methods failed
+            console.error(`All loading methods failed for: ${imageObj.url}`);
+            showImageError();
+        }
+
+        // Method 1: Fetch with blob URL
+        function loadWithFetch(url) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const response = await fetch(url, {
+                        mode: 'cors',
+                        credentials: 'omit',
+                        headers: {
+                            'Accept': 'image/webp,image/avif,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    const blob = await response.blob();
+                    
+                    // Verify it's actually an image
+                    if (!blob.type.startsWith('image/')) {
+                        throw new Error(`Invalid content type: ${blob.type}`);
+                    }
+
+                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    // Test if the blob URL actually works
+                    const testImg = new Image();
+                    testImg.onload = () => {
+                        URL.revokeObjectURL(blobUrl);
+                        resolve(blobUrl);
+                    };
+                    testImg.onerror = () => {
+                        URL.revokeObjectURL(blobUrl);
+                        reject(new Error('Blob URL failed to load'));
+                    };
+                    testImg.src = blobUrl;
+
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        // Method 2: Direct src assignment
+        function loadWithDirectSrc(url) {
+            return new Promise((resolve, reject) => {
+                const testImg = new Image();
+                testImg.crossOrigin = 'anonymous';
+                testImg.onload = () => resolve(url);
+                testImg.onerror = () => reject(new Error('Direct src loading failed'));
+                testImg.src = url;
+            });
+        }
+
+        // Method 3: CORS proxy (fallback)
+        function loadWithCorsProxy(url) {
+            return new Promise((resolve, reject) => {
+                // Try with a CORS proxy as last resort
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                const testImg = new Image();
+                testImg.onload = () => resolve(proxyUrl);
+                testImg.onerror = () => reject(new Error('CORS proxy loading failed'));
+                testImg.src = proxyUrl;
+            });
         }
 
         // Show image error
