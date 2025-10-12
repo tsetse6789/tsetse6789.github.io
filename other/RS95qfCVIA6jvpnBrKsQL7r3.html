@@ -421,13 +421,58 @@
             if (!currentAlbum || !currentAlbum.images.length) return;
 
             const currentImage = currentAlbum.images[currentImageIndex];
+            
+            // Add loading state
+            modalImage.style.opacity = '0.5';
             modalImage.src = currentImage.url;
             modalImage.alt = currentImage.name;
             modalImage.style.transform = `scale(${zoomLevel})`;
             
+            // Handle image load success
+            modalImage.onload = function() {
+                modalImage.style.opacity = '1';
+                console.log(`Successfully loaded: ${currentImage.url}`);
+            };
+            
+            // Handle image load error
+            modalImage.onerror = function() {
+                modalImage.style.opacity = '1';
+                console.error(`Failed to load image: ${currentImage.url}`);
+                showImageError();
+            };
+            
             updateImageCounter();
             imageModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+        }
+
+        // Show image error
+        function showImageError() {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'absolute inset-0 flex items-center justify-center bg-gray-800 text-white';
+            errorDiv.innerHTML = `
+                <div class="text-center">
+                    <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <h3 class="text-lg font-semibold mb-2">Failed to load image</h3>
+                    <p class="text-gray-300 text-sm mb-4">The image format may not be supported or the URL is invalid</p>
+                    <p class="text-gray-400 text-xs break-all">${currentAlbum.images[currentImageIndex].url}</p>
+                </div>
+            `;
+            
+            // Replace the image with error message temporarily
+            const imageContainer = modalImage.parentElement;
+            modalImage.style.display = 'none';
+            imageContainer.appendChild(errorDiv);
+            
+            // Remove error message after 3 seconds and show image again
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                    modalImage.style.display = 'block';
+                }
+            }, 3000);
         }
 
         // Close modal
