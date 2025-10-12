@@ -262,12 +262,15 @@
         const albumsDatabase = [
             {
                 id: 1,
-                name: "金句",
-                type: "金句",
-                date: "2025-10-12",
-                coverImage: "https://drive.google.com/u/0/drive-viewer/AKGpiha03iEEgqboe_NNaYF_UrdueTcBJsvJBExwvNiuKub1yV8lcUeibBYEgA9o8A1BDGwb3EvNROzVVlHGR5FHIhRp61dk4_DNE2E=s1600-rw-v1",
+                name: "Mountain Adventures",
+                type: "nature",
+                date: "2024-01-15",
+                coverImage: "https://picsum.photos/400/300?random=1",
                 images: [
-                    { url: "https://drive.google.com/u/0/drive-viewer/AKGpihbOWNfGH1LUZ0QYwmQeX5HY-092q81BiOWU50D1NN9RhS9_GSMhh8yvJSdmO876Ke7479fKG1wc6gNAA0P0kfgb2JocbNB_mHk=s1600-rw-v1", name: "1.webp" }
+                    { url: "https://picsum.photos/800/600?random=1", name: "mountain1.jpg" },
+                    { url: "https://picsum.photos/800/600?random=2", name: "mountain2.jpg" },
+                    { url: "https://picsum.photos/800/600?random=3", name: "mountain3.jpg" },
+                    { url: "https://picsum.photos/800/600?random=4", name: "mountain4.jpg" }
                 ]
             },
             {
@@ -416,155 +419,18 @@
             showImageModal();
         }
 
-        // Show image modal with advanced loading
-        async function showImageModal() {
+        // Show image modal
+        function showImageModal() {
             if (!currentAlbum || !currentAlbum.images.length) return;
 
             const currentImage = currentAlbum.images[currentImageIndex];
-            
-            // Show loading state
-            showLoadingState();
+            modalImage.src = currentImage.url;
+            modalImage.alt = currentImage.name;
+            modalImage.style.transform = `scale(${zoomLevel})`;
             
             updateImageCounter();
             imageModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
-            
-            // Try to load image with multiple methods
-            await loadImageWithFallback(currentImage);
-        }
-
-        // Show loading state
-        function showLoadingState() {
-            modalImage.style.opacity = '0.3';
-            modalImage.style.transform = `scale(${zoomLevel})`;
-            modalImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkxvYWRpbmcuLi48L3RleHQ+PC9zdmc+';
-            modalImage.alt = 'Loading...';
-        }
-
-        // Advanced image loading with multiple fallback methods
-        async function loadImageWithFallback(imageObj) {
-            const methods = [
-                () => loadWithFetch(imageObj.url),
-                () => loadWithDirectSrc(imageObj.url),
-                () => loadWithCorsProxy(imageObj.url)
-            ];
-
-            for (let i = 0; i < methods.length; i++) {
-                try {
-                    console.log(`Trying method ${i + 1} for: ${imageObj.url}`);
-                    const result = await methods[i]();
-                    
-                    modalImage.src = result;
-                    modalImage.alt = imageObj.name;
-                    modalImage.style.opacity = '1';
-                    modalImage.style.transform = `scale(${zoomLevel})`;
-                    
-                    console.log(`Successfully loaded with method ${i + 1}: ${imageObj.url}`);
-                    return;
-                } catch (error) {
-                    console.warn(`Method ${i + 1} failed for ${imageObj.url}:`, error);
-                    continue;
-                }
-            }
-            
-            // All methods failed
-            console.error(`All loading methods failed for: ${imageObj.url}`);
-            showImageError();
-        }
-
-        // Method 1: Fetch with blob URL
-        function loadWithFetch(url) {
-            return new Promise(async (resolve, reject) => {
-                try {
-                    const response = await fetch(url, {
-                        mode: 'cors',
-                        credentials: 'omit',
-                        headers: {
-                            'Accept': 'image/webp,image/avif,image/apng,image/svg+xml,image/*,*/*;q=0.8'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-
-                    const blob = await response.blob();
-                    
-                    // Verify it's actually an image
-                    if (!blob.type.startsWith('image/')) {
-                        throw new Error(`Invalid content type: ${blob.type}`);
-                    }
-
-                    const blobUrl = URL.createObjectURL(blob);
-                    
-                    // Test if the blob URL actually works
-                    const testImg = new Image();
-                    testImg.onload = () => {
-                        URL.revokeObjectURL(blobUrl);
-                        resolve(blobUrl);
-                    };
-                    testImg.onerror = () => {
-                        URL.revokeObjectURL(blobUrl);
-                        reject(new Error('Blob URL failed to load'));
-                    };
-                    testImg.src = blobUrl;
-
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        }
-
-        // Method 2: Direct src assignment
-        function loadWithDirectSrc(url) {
-            return new Promise((resolve, reject) => {
-                const testImg = new Image();
-                testImg.crossOrigin = 'anonymous';
-                testImg.onload = () => resolve(url);
-                testImg.onerror = () => reject(new Error('Direct src loading failed'));
-                testImg.src = url;
-            });
-        }
-
-        // Method 3: CORS proxy (fallback)
-        function loadWithCorsProxy(url) {
-            return new Promise((resolve, reject) => {
-                // Try with a CORS proxy as last resort
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                const testImg = new Image();
-                testImg.onload = () => resolve(proxyUrl);
-                testImg.onerror = () => reject(new Error('CORS proxy loading failed'));
-                testImg.src = proxyUrl;
-            });
-        }
-
-        // Show image error
-        function showImageError() {
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'absolute inset-0 flex items-center justify-center bg-gray-800 text-white';
-            errorDiv.innerHTML = `
-                <div class="text-center">
-                    <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                    </svg>
-                    <h3 class="text-lg font-semibold mb-2">Failed to load image</h3>
-                    <p class="text-gray-300 text-sm mb-4">The image format may not be supported or the URL is invalid</p>
-                    <p class="text-gray-400 text-xs break-all">${currentAlbum.images[currentImageIndex].url}</p>
-                </div>
-            `;
-            
-            // Replace the image with error message temporarily
-            const imageContainer = modalImage.parentElement;
-            modalImage.style.display = 'none';
-            imageContainer.appendChild(errorDiv);
-            
-            // Remove error message after 3 seconds and show image again
-            setTimeout(() => {
-                if (errorDiv.parentElement) {
-                    errorDiv.remove();
-                    modalImage.style.display = 'block';
-                }
-            }, 3000);
         }
 
         // Close modal
