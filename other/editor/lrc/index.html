@@ -40,6 +40,10 @@
             @apply bg-green-500 text-white;
         }
         
+        .lyric-button.auto-matched {
+            @apply bg-blue-500 text-white;
+        }
+        
         .recording-active .lyric-button {
             @apply cursor-pointer;
         }
@@ -48,6 +52,21 @@
             background: linear-gradient(90deg, #5D5CDE 0%, #8B5CF6 100%);
             height: 4px;
             border-radius: 2px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #5D5CDE;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -115,30 +134,87 @@
             </button>
         </div>
 
-        <!-- Recording Section -->
-        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2 sm:mb-0">⏱️ Timing Recording</h2>
-                <div class="flex items-center space-x-3">
-                    <div id="currentTime" class="text-sm font-mono text-gray-600 dark:text-gray-400">00:00</div>
-                    <button id="recordButton" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        🔴 Start Recording
-                    </button>
-                    <button id="clearTimings" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
-                        🗑️ Clear
-                    </button>
+        <!-- Timing Section -->
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6 border-2 border-gray-300 dark:border-gray-700">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">⏰ Sync Lyrics to Audio</h1>
+            
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900 dark:to-purple-900 rounded-lg p-6 mb-6 border border-blue-200 dark:border-blue-700">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                    🤖 Auto Sync <span class="text-sm font-normal ml-3 px-3 py-1 bg-blue-500 text-white rounded-full">Experimental</span>
+                </h2>
+                <p class="text-gray-700 dark:text-gray-300 mb-4">Automatically synchronize lyrics using speech recognition. This feature uses your browser's built-in functionality.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+                        <select id="autoSyncLanguage" class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="en-US">English (US)</option>
+                            <option value="en-GB">English (UK)</option>
+                            <option value="zh-CN">Chinese (Simplified)</option>
+                            <option value="zh-TW">Chinese (Traditional)</option>
+                            <option value="yue-Hant-HK">Chinese (Cantonese, HK) - New</option>
+                            <option value="ja-JP">Japanese</option>
+                            <option value="ko-KR">Korean</option>
+                            <option value="es-ES">Spanish</option>
+                            <option value="fr-FR">French</option>
+                            <option value="de-DE">German</option>
+                            <option value="it-IT">Italian</option>
+                            <option value="pt-BR">Portuguese (Brazil)</option>
+                            <option value="ru-RU">Russian</option>
+                            <option value="ar-SA">Arabic</option>
+                            <option value="hi-IN">Hindi</option>
+                            <option value="vi-VN">Vietnamese</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="startAutoSync" class="w-full bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            ✨ Start Auto Sync
+                        </button>
+                    </div>
+                </div>
+        
+                <div id="autoSyncStatus" class="hidden">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-blue-300 dark:border-blue-600">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-medium text-gray-900 dark:text-white">Status:</span>
+                            <span id="autoSyncStatusText" class="text-blue-600 dark:text-blue-400"></span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <div>Recognized: <span id="recognizedText" class="font-mono">Listening...</span></div>
+                            <div class="mt-2">Progress: <span id="autoSyncProgress">0</span> / <span id="autoSyncTotal">0</span> lyrics matched</div>
+                        </div>
+                    </div>
+                </div>
+        
+                <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                    <p><strong>Note:</strong> This feature requires microphone permission and works best with clear audio. Results may vary based on audio quality and background noise.</p>
                 </div>
             </div>
             
-            <div class="mb-4">
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div id="progressBar" class="waveform h-2 rounded-full" style="width: 0%"></div>
+            <div class="p-6 pt-0">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 border-t pt-6 border-gray-200 dark:border-gray-700">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2 sm:mb-0">⏱️ Manual Timing Recording</h2>
+                    <div class="flex items-center space-x-3">
+                        <div id="currentTime" class="text-sm font-mono text-gray-600 dark:text-gray-400">00:00</div>
+                        <button id="recordButton" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            🔴 Start Recording
+                        </button>
+                        <button id="clearTimings" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            🗑️ Clear
+                        </button>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
-                <div id="lyricsContainer" class="space-y-2">
-                    <p class="text-gray-500 dark:text-gray-400 text-center py-8">Parse lyrics first to start timing</p>
+                
+                <div class="mb-4">
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div id="progressBar" class="waveform h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                    <div id="lyricsContainer" class="space-y-2">
+                        <p class="text-gray-500 dark:text-gray-400 text-center py-8">Parse lyrics first to start timing</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -170,8 +246,11 @@
         let audioFile = null;
         let lyrics = [];
         let lyricTimings = {}; // { lyricIndex: [timestamp1, timestamp2, ...] }
+        let autoTimings = {}; // Separate storage for auto-generated timings
         let isRecording = false;
         let startTime = 0;
+        let recognition = null;
+        let isAutoTiming = false;
 
         // DOM elements
         const dropZone = document.getElementById('dropZone');
@@ -192,6 +271,13 @@
         const progressBar = document.getElementById('progressBar');
         const lrcPreview = document.getElementById('lrcPreview');
         const downloadLrc = document.getElementById('downloadLrc');
+        const autoLanguage = document.getElementById('autoLanguage');
+        const startAuto = document.getElementById('startAuto');
+        const autoStatus = document.getElementById('autoStatus');
+        const autoProgress = document.getElementById('autoProgress');
+        const autoResults = document.getElementById('autoResults');
+        const autoResultText = document.getElementById('autoResultText');
+        const clearAuto = document.getElementById('clearAuto');
 
         // File upload handlers
         dropZone.addEventListener('click', () => audioFileInput.click());
@@ -258,6 +344,7 @@
 
             lyrics = text.split('\n').filter(line => line.trim() !== '');
             lyricTimings = {};
+            autoTimings = {};
             renderLyricButtons();
             updatePreview();
         });
@@ -293,13 +380,173 @@
         function updateTimingDisplay(index) {
             const timingInfo = document.getElementById(`timing-${index}`);
             if (timingInfo) {
-                const timings = lyricTimings[index] || [];
-                if (timings.length > 0) {
-                    timingInfo.textContent = timings.map(formatTime).join(', ');
+                const manualTimings = lyricTimings[index] || [];
+                const autoTiming = autoTimings[index];
+                
+                let displayText = '';
+                
+                if (autoTiming !== undefined) {
+                    displayText = `🤖 Auto: ${formatTime(autoTiming)}`;
+                }
+                
+                if (manualTimings.length > 0) {
+                    const manualText = manualTimings.map(formatTime).join(', ');
+                    displayText += (displayText ? ' | ' : '') + `👆 Manual: ${manualText}`;
+                }
+                
+                if (!displayText) {
+                    displayText = 'No timing recorded';
+                }
+                
+                timingInfo.textContent = displayText;
+            }
+        }
+
+        // Auto Timing Functionality
+        startAuto.addEventListener('click', startAutoTiming);
+        clearAuto.addEventListener('click', clearAutoTimings);
+
+        function startAutoTiming() {
+            if (!audioFile) {
+                showAlert('Please upload an audio file first.');
+                return;
+            }
+
+            if (!lyrics.length) {
+                showAlert('Please parse lyrics first.');
+                return;
+            }
+
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showAlert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+
+            isAutoTiming = true;
+            autoTimings = {};
+            autoStatus.classList.remove('hidden');
+            autoResults.classList.add('hidden');
+            startAuto.disabled = true;
+            recordButton.disabled = true;
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = autoLanguage.value;
+
+            const transcripts = [];
+            let currentLyricIndex = 0;
+
+            recognition.onstart = () => {
+                autoProgress.textContent = 'Listening to audio... Speak clearly for best results.';
+                audioPlayer.currentTime = 0;
+                audioPlayer.play();
+            };
+
+            recognition.onresult = (event) => {
+                const currentTranscript = event.results[event.results.length - 1];
+                const transcriptText = currentTranscript[0].transcript.trim().toLowerCase();
+                const timestamp = audioPlayer.currentTime;
+
+                if (currentTranscript.isFinal && transcriptText) {
+                    autoProgress.textContent = `Detected: "${transcriptText}"`;
+                    
+                    // Try to match with remaining lyrics
+                    const bestMatch = findBestLyricMatch(transcriptText, currentLyricIndex);
+                    
+                    if (bestMatch !== -1) {
+                        autoTimings[bestMatch] = timestamp;
+                        currentLyricIndex = bestMatch + 1;
+                        updateTimingDisplay(bestMatch);
+                        updatePreview();
+                        
+                        // Visual feedback
+                        const button = document.querySelector(`[data-index="${bestMatch}"]`);
+                        if (button) {
+                            button.classList.add('auto-matched');
+                            setTimeout(() => button.classList.remove('auto-matched'), 1000);
+                        }
+                    }
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                autoProgress.textContent = `Error: ${event.error}. Continuing...`;
+            };
+
+            recognition.onend = () => {
+                if (isAutoTiming && audioPlayer.currentTime < audioPlayer.duration - 1) {
+                    recognition.start();
                 } else {
-                    timingInfo.textContent = 'No timing recorded';
+                    stopAutoTiming();
+                }
+            };
+
+            audioPlayer.onended = () => {
+                stopAutoTiming();
+            };
+
+            recognition.start();
+        }
+
+        function findBestLyricMatch(transcript, startIndex) {
+            let bestMatch = -1;
+            let bestScore = 0;
+
+            for (let i = startIndex; i < lyrics.length; i++) {
+                if (autoTimings[i] !== undefined) continue;
+
+                const lyric = lyrics[i].toLowerCase();
+                const score = calculateSimilarity(transcript, lyric);
+
+                if (score > bestScore && score > 0.3) {
+                    bestScore = score;
+                    bestMatch = i;
                 }
             }
+
+            return bestMatch;
+        }
+
+        function calculateSimilarity(str1, str2) {
+            // Simple word-based similarity
+            const words1 = str1.split(/\s+/).filter(w => w.length > 2);
+            const words2 = str2.split(/\s+/).filter(w => w.length > 2);
+            
+            if (words1.length === 0 || words2.length === 0) return 0;
+
+            let matches = 0;
+            words1.forEach(word1 => {
+                if (words2.some(word2 => word2.includes(word1) || word1.includes(word2))) {
+                    matches++;
+                }
+            });
+
+            return matches / Math.max(words1.length, words2.length);
+        }
+
+        function stopAutoTiming() {
+            isAutoTiming = false;
+            if (recognition) {
+                recognition.stop();
+            }
+            audioPlayer.pause();
+            audioStatus.classList.add('hidden');
+            startAuto.disabled = false;
+            recordButton.disabled = false;
+
+            const matchedCount = Object.keys(autoTimings).length;
+            autoResults.classList.remove('hidden');
+            autoResultText.textContent = `Matched ${matchedCount} out of ${lyrics.length} lyrics automatically.`;
+        }
+
+        function clearAutoTimings() {
+            autoTimings = {};
+            lyrics.forEach((_, index) => updateTimingDisplay(index));
+            updatePreview();
+            autoResults.classList.add('hidden');
         }
 
         // Recording functionality
@@ -396,9 +643,29 @@
                 lrc += `[ar:${artist.value.trim()}]\n`;
             }
             
+            // Combine auto and manual timings
+            const allTimings = {};
+            lyrics.forEach((lyric, index) => {
+                const timings = [];
+                
+                // Add auto timing if exists
+                if (autoTimings[index] !== undefined) {
+                    timings.push(autoTimings[index]);
+                }
+                
+                // Add manual timings if exist
+                if (lyricTimings[index]) {
+                    timings.push(...lyricTimings[index]);
+                }
+                
+                if (timings.length > 0) {
+                    allTimings[index] = timings;
+                }
+            });
+            
             // Add lyrics with timing
             lyrics.forEach((lyric, index) => {
-                const timings = lyricTimings[index];
+                const timings = allTimings[index];
                 if (timings && timings.length > 0) {
                     const sortedTimings = [...timings].sort((a, b) => a - b);
                     const timeStamps = sortedTimings.map(formatTimeForLrc).join('');
