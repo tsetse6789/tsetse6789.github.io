@@ -68,13 +68,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        .gradient-border {
-            border: 2px solid transparent;
-            background-image: linear-gradient(white, white), linear-gradient(to right, #5D5CDE, #8B5CF6);
-            background-origin: border-box;
-            background-clip: content-box, border-box;
-        }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 min-h-screen transition-colors">
@@ -150,7 +143,7 @@
                     <div class="font-semibold text-gray-900 dark:text-white">Manual Timing</div>
                     <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Click lyrics while listening</div>
                 </button>
-                <button id="selectAuto" class="p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:bg-primary hover:bg-opacity-10 transition-colors gradient-border">
+                <button id="selectAuto" class="p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary hover:bg-opacity-10 transition-colors">
                     <div class="text-3xl mb-2">🤖</div>
                     <div class="font-semibold text-gray-900 dark:text-white">Auto Timing (Experimental)</div>
                     <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Speech recognition matching</div>
