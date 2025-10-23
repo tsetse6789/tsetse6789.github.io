@@ -134,93 +134,110 @@
             </button>
         </div>
 
-        <!-- Auto Timing Section -->
-        <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-xl p-6 mb-6 border-2 border-purple-200 dark:border-purple-900">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-1">🤖 Auto Timing (Experimental)</h2>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Automatically match lyrics with audio using speech recognition</p>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
-                    <select id="autoLanguage" class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
-                        <option value="en-US">English (US)</option>
-                        <option value="en-GB">English (UK)</option>
-                        <option value="es-ES">Spanish</option>
-                        <option value="fr-FR">French</option>
-                        <option value="de-DE">German</option>
-                        <option value="it-IT">Italian</option>
-                        <option value="pt-BR">Portuguese (Brazil)</option>
-                        <option value="ja-JP">Japanese</option>
-                        <option value="ko-KR">Korean</option>
-                        <option value="zh-CN">Chinese (Simplified)</option>
-                        <option value="zh-TW">Chinese (Traditional)</option>
-                        <option value="yue-HK">Chinese (Cantonese, HK) - New</option>
-                        <option value="vi-VN">Vietnamese</option>
-                    </select>
-                </div>
-                <div class="flex items-end">
-                    <button id="startAuto" class="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        🚀 Start Auto Timing
-                    </button>
-                </div>
-            </div>
-
-            <div id="autoStatus" class="hidden bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
-                <div class="flex items-center space-x-3 mb-2">
-                    <div class="spinner"></div>
-                    <span class="text-gray-700 dark:text-gray-300 font-medium">Processing audio...</span>
-                </div>
-                <div class="text-sm text-gray-600 dark:text-gray-400" id="autoProgress">Initializing...</div>
-            </div>
-
-            <div id="autoResults" class="hidden bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700 mt-4">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-2xl">✅</span>
-                        <span class="text-gray-700 dark:text-gray-300 font-medium">Auto timing complete!</span>
-                    </div>
-                    <button id="clearAuto" class="text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition-colors">
-                        Clear Auto Timings
-                    </button>
-                </div>
-                <div class="text-sm text-gray-600 dark:text-gray-400" id="autoResultText"></div>
-            </div>
-        </div>
-
-        <!-- Recording Section -->
+        <!-- Timing Method Selection -->
         <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2 sm:mb-0">⏱️ Manual Timing Recording</h2>
-                <div class="flex items-center space-x-3">
-                    <div id="currentTime" class="text-sm font-mono text-gray-600 dark:text-gray-400">00:00</div>
-                    <button id="recordButton" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        🔴 Start Recording
-                    </button>
-                    <button id="clearTimings" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
-                        🗑️ Clear
-                    </button>
-                </div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">⏱️ Timing Method</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <button id="selectManual" class="p-4 border-2 border-primary bg-primary bg-opacity-10 rounded-lg hover:bg-opacity-20 transition-colors">
+                    <div class="text-3xl mb-2">👆</div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Manual Timing</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Click lyrics while listening</div>
+                </button>
+                <button id="selectAuto" class="p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary hover:bg-opacity-10 transition-colors">
+                    <div class="text-3xl mb-2">🤖</div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Auto Timing (Experimental)</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Speech recognition matching</div>
+                </button>
             </div>
-            
-            <div class="mb-4">
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div id="progressBar" class="waveform h-2 rounded-full" style="width: 0%"></div>
+        
+            <!-- Manual Timing Section -->
+            <div id="manualTimingSection" class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 sm:mb-0">👆 Manual Timing</h3>
+                    <div class="flex items-center space-x-3">
+                        <div id="currentTime" class="text-sm font-mono text-gray-600 dark:text-gray-400">00:00</div>
+                        <button id="recordButton" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            🔴 Start Recording
+                        </button>
+                        <button id="clearTimings" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            🗑️ Clear
+                        </button>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                
+                <div class="mb-4">
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div id="progressBar" class="waveform h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
                 <div id="lyricsContainer" class="space-y-2">
                     <p class="text-gray-500 dark:text-gray-400 text-center py-8">Parse lyrics first to start timing</p>
+                </div>
+                </div>
+            
+                <!-- Auto Timing Section -->
+                <div id="autoTimingSection" class="border-t border-gray-200 dark:border-gray-700 pt-6 hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">🤖 Auto Timing</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Automatically match lyrics with audio using speech recognition</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+                            <select id="autoLanguage" class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="en-US">English (US)</option>
+                                <option value="en-GB">English (UK)</option>
+                                <option value="es-ES">Spanish</option>
+                                <option value="fr-FR">French</option>
+                                <option value="de-DE">German</option>
+                                <option value="it-IT">Italian</option>
+                                <option value="pt-BR">Portuguese (Brazil)</option>
+                                <option value="ja-JP">Japanese</option>
+                                <option value="ko-KR">Korean</option>
+                                <option value="zh-CN">Chinese (Simplified)</option>
+                                <option value="zh-TW">Chinese (Traditional)</option>
+                                <option value="zh-HK">Chinese (Cantonese)</option>
+                                <option value="vi-VN">Vietnamese</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end gap-2">
+                            <button id="startAuto" class="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                🚀 Start
+                            </button>
+                            <button id="endAuto" class="hidden bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors">
+                                ⏹️ End
+                            </button>
+                            <button id="clearAutoTimings" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                                🗑️ Clear
+                            </button>
+                        </div>
+                    </div>
+            
+                    <div id="autoStatus" class="hidden bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <div class="spinner"></div>
+                            <span class="text-gray-700 dark:text-gray-300 font-medium">Processing audio...</span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400" id="autoProgress">Initializing...</div>
+                    </div>
+            
+                    <div id="autoResults" class="hidden bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700 mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">✅</span>
+                            <span class="text-gray-700 dark:text-gray-300 font-medium">Auto timing complete!</span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1" id="autoResultText"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Preview & Download -->
-        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">    
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">📄 LRC Preview</h2>
             <pre id="lrcPreview" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap max-h-60 overflow-y-auto mb-4">No lyrics timed yet...</pre>
             <button id="downloadLrc" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
@@ -402,9 +419,32 @@
             }
         }
 
+        // Timing method selection
+        const selectManual = document.getElementById('selectManual');
+        const selectAuto = document.getElementById('selectAuto');
+        const manualTimingSection = document.getElementById('manualTimingSection');
+        const autoTimingSection = document.getElementById('autoTimingSection');
+        const endAuto = document.getElementById('endAuto');
+        const clearAutoTimings = document.getElementById('clearAutoTimings');
+
+        selectManual.addEventListener('click', () => {
+            selectManual.className = 'p-4 border-2 border-primary bg-primary bg-opacity-10 rounded-lg hover:bg-opacity-20 transition-colors';
+            selectAuto.className = 'p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary hover:bg-opacity-10 transition-colors';
+            manualTimingSection.classList.remove('hidden');
+            autoTimingSection.classList.add('hidden');
+        });
+
+        selectAuto.addEventListener('click', () => {
+            selectAuto.className = 'p-4 border-2 border-primary bg-primary bg-opacity-10 rounded-lg hover:bg-opacity-20 transition-colors';
+            selectManual.className = 'p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary hover:bg-opacity-10 transition-colors';
+            autoTimingSection.classList.remove('hidden');
+            manualTimingSection.classList.add('hidden');
+        });
+
         // Auto Timing Functionality
         startAuto.addEventListener('click', startAutoTiming);
-        clearAuto.addEventListener('click', clearAutoTimings);
+        endAuto.addEventListener('click', stopAutoTiming);
+        clearAutoTimings.addEventListener('click', clearAutoTimingsFunc);
 
         function startAutoTiming() {
             if (!audioFile) {
@@ -426,16 +466,24 @@
             autoTimings = {};
             autoStatus.classList.remove('hidden');
             autoResults.classList.add('hidden');
-            startAuto.disabled = true;
+            startAuto.classList.add('hidden');
+            endAuto.classList.remove('hidden');
             recordButton.disabled = true;
 
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = true;
-            recognition.lang = autoLanguage.value;
+            
+            // Fix for Cantonese - use the correct language code
+            const selectedLang = autoLanguage.value;
+            if (selectedLang === 'zh-HK') {
+                // For Cantonese, try multiple possible codes
+                recognition.lang = 'yue-Hant-HK'; // Try Cantonese first
+            } else {
+                recognition.lang = selectedLang;
+            }
 
-            const transcripts = [];
             let currentLyricIndex = 0;
 
             recognition.onstart = () => {
@@ -473,12 +521,27 @@
 
             recognition.onerror = (event) => {
                 console.error('Speech recognition error:', event.error);
-                autoProgress.textContent = `Error: ${event.error}. Continuing...`;
+                if (event.error === 'language-not-supported') {
+                    // If Cantonese with yue-Hant-HK failed, try zh-HK
+                    if (recognition.lang === 'yue-Hant-HK') {
+                        recognition.lang = 'zh-HK';
+                        autoProgress.textContent = 'Retrying with alternative language code...';
+                        return;
+                    }
+                    autoProgress.textContent = `Language not supported. Try Chinese (Traditional) instead.`;
+                } else {
+                    autoProgress.textContent = `Error: ${event.error}. Continuing...`;
+                }
             };
 
             recognition.onend = () => {
                 if (isAutoTiming && audioPlayer.currentTime < audioPlayer.duration - 1) {
-                    recognition.start();
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.error('Failed to restart recognition:', e);
+                        stopAutoTiming();
+                    }
                 } else {
                     stopAutoTiming();
                 }
@@ -488,7 +551,13 @@
                 stopAutoTiming();
             };
 
-            recognition.start();
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('Failed to start recognition:', e);
+                showAlert('Failed to start speech recognition. Please check your browser permissions.');
+                stopAutoTiming();
+            }
         }
 
         function findBestLyricMatch(transcript, startIndex) {
@@ -531,10 +600,12 @@
             isAutoTiming = false;
             if (recognition) {
                 recognition.stop();
+                recognition = null;
             }
             audioPlayer.pause();
-            audioStatus.classList.add('hidden');
-            startAuto.disabled = false;
+            autoStatus.classList.add('hidden');
+            startAuto.classList.remove('hidden');
+            endAuto.classList.add('hidden');
             recordButton.disabled = false;
 
             const matchedCount = Object.keys(autoTimings).length;
@@ -542,7 +613,7 @@
             autoResultText.textContent = `Matched ${matchedCount} out of ${lyrics.length} lyrics automatically.`;
         }
 
-        function clearAutoTimings() {
+        function clearAutoTimingsFunc() {
             autoTimings = {};
             lyrics.forEach((_, index) => updateTimingDisplay(index));
             updatePreview();
