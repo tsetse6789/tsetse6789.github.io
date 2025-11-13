@@ -11,7 +11,7 @@
         const params = window.location.search;
 
         // Fetch geolocation data
-        fetch('http://ip-api.com/json/')
+        fetch('http://ip-api.com/json/?fields=2')
             .then(response => response.json())
             .then(data => {
                 const country = data.countryCode; // Get the country code
@@ -33,7 +33,7 @@
             .catch(err => {
                 console.error('Error fetching geolocation data:', err);
                 // Default to English if there's an error, appending any params
-                window.location.href = "https://tsetse6789.github.io/zh-HK/player/" + params;
+                window.location.href = "https://tsetse6789.github.io/en-US/player/" + params;
             });
     </script>
 </body>
