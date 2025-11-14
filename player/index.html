@@ -1,40 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Player</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>YouTube Player</title>
+  <meta name="color-scheme" content="light dark">
+  <style>
+    :root { color-scheme: light dark; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      display: grid;
+      place-items: center;
+    }
+    .status {
+      max-width: 640px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(127,127,127,.25);
+      line-height: 1.4;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    .small { opacity: .7; font-size: .85rem; margin-top: 8px; }
+  </style>
 </head>
 <body>
-    <script>
-        // Get the current URL parameters
-        const params = window.location.search;
+  <div class="status" id="status">
+    Detecting your language and redirecting…
+    <div class="small">If this takes too long, <a id="fallbackLink" href="https://tsetse6789.github.io/en-US/player/">click here</a>.</div>
+  </div>
 
-        // Fetch geolocation data
-        fetch('http://ip-api.com/json/?fields=2')
-            .then(response => response.json())
-            .then(data => {
-                const country = data.countryCode; // Get the country code
+  <script>
+    (function () {
+      // Preserve any existing query parameters
+      const params = window.location.search || "";
 
-                // List of countries for zh-HK redirection
-                const chineseRegions = ['HK', 'CN', 'TW'];
+      // Helper: normalize language tags to lowercase, hyphenated form (e.g., "zh-HK")
+      function normalize(tag) {
+        return String(tag || "").replace("_", "-").toLowerCase();
+      }
 
-                // Determine the redirect URL
-                let redirectUrl;
-                if (chineseRegions.includes(country)) {
-                    redirectUrl = "https://tsetse6789.github.io/zh-HK/player/";
-                } else {
-                    redirectUrl = "https://tsetse6789.github.io/en-US/player/";
-                }
+      // Gather preferred languages from the browser
+      const langs = (navigator.languages && navigator.languages.length
+        ? navigator.languages
+        : [navigator.language || navigator.userLanguage || "en-US"]
+      ).map(normalize);
 
-                // Redirect, appending parameters if they exist
-                window.location.href = redirectUrl + params;
-            })
-            .catch(err => {
-                console.error('Error fetching geolocation data:', err);
-                // Default to English if there's an error, appending any params
-                window.location.href = "https://tsetse6789.github.io/en-US/player/" + params;
-            });
-    </script>
+      // Determine whether the user prefers a Chinese locale
+      // We treat zh, zh-HK, zh-TW, zh-MO as Traditional Chinese targets (zh-HK site).
+      // zh-CN and zh-SG commonly map to Simplified; you can route them as you wish.
+      const prefersZhHK = langs.some(l =>
+        l === "zh" ||
+        l.startsWith("zh-") && (
+          l === "zh-hk" ||
+          l === "zh-tw" ||
+          l === "zh-mo"
+        )
+      );
+
+      // If you want to include all Chinese as zh-HK, including zh-CN/zh-SG, use:
+      // const prefersZhHK = langs.some(l => l === "zh" || l.startsWith("zh-"));
+
+      const zhHKUrl = "https://tsetse6789.github.io/zh-HK/player/";
+      const enUSUrl = "https://tsetse6789.github.io/en-US/player/";
+
+      const redirectUrl = prefersZhHK ? zhHKUrl : enUSUrl;
+
+      // Update visible fallback link before redirect (useful on slow devices)
+      const fallbackLink = document.getElementById("fallbackLink");
+      if (fallbackLink) fallbackLink.href = redirectUrl + params;
+
+      // Perform the redirect
+      try {
+        window.location.replace(redirectUrl + params);
+      } catch {
+        // Fallback if replace fails
+        window.location.href = redirectUrl + params;
+      }
+    })();
+  </script>
 </body>
 </html>
