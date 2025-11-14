@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="apple-mobile-web-app-title" content="YT Player">
+    <meta name="apple-mobile-web-app-title" content="YT播放器">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" sizes="180x180" href="https://tsetse6789.github.io/player/YT-Player-iOS-Default.png">
@@ -865,7 +865,7 @@
                         <input 
                             type="text" 
                             id="searchInput" 
-                            placeholder="Search or paste a URL"
+                            placeholder="在YouTube中搜尋或貼上連結"
                             class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         >
                         <button 
@@ -2000,7 +2000,7 @@
             const videos = playlists[currentPlaylist].videos;
             
             if (videos.length === 0) {
-                container.innerHTML = '<p class="text-gray-600 dark:text-gray-400 text-sm">No videos in this playlist yet.</p>';
+                container.innerHTML = '<p class="text-gray-600 dark:text-gray-400 text-sm">這個播放清單還沒有影片。</p>';
                 return;
             }
             
@@ -4816,7 +4816,7 @@
             
             const playlist = playlists[playlistName];
             if (playlist.videos.length === 0) {
-                alert('This playlist is empty. No videos to search.');
+                alert('這個播放清單是空的，沒有影片可以搜尋。');
                 return;
             }
             
@@ -4867,7 +4867,7 @@
                     
                     <div id="videoSearchNoResults" class="hidden text-center py-8 text-gray-500 dark:text-gray-400">
                         <div class="text-4xl mb-2">🔍</div>
-                        <div>No videos found matching your search</div>
+                        <div>未找到與您的搜尋匹配的影片</div>
                         <div class="text-sm mt-1">Try different keywords or check spelling</div>
                     </div>
                 </div>
@@ -5946,7 +5946,7 @@
             const queueList = document.getElementById('queueList');
             
             if (playQueue.length === 0) {
-                statusText.textContent = 'No videos';
+                statusText.textContent = '沒有影片';
                 emptyState.classList.remove('hidden');
                 queueList.classList.add('hidden');
                 queueList.innerHTML = '';
