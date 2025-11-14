@@ -1944,30 +1944,30 @@
                         <button 
                             onclick="showRenameForm('${escapeHtml(name)}')" 
                             class="playlist-action-btn btn-rename"
-                            title="Rename playlist"
+                            title="重新命名播放清單"
                         >
-                            📝 Rename
+                            📝 重新命名
                         </button>
                         <button 
                             onclick="duplicatePlaylist('${escapeHtml(name)}')" 
                             class="playlist-action-btn btn-duplicate"
-                            title="Duplicate playlist"
+                            title="複製播放清單"
                         >
-                            📋 Copy
+                            📋 複製
                         </button>
                         <button 
                             onclick="showMergeDialog('${escapeHtml(name)}')" 
                             class="playlist-action-btn btn-merge"
-                            title="Merge with other playlists"
+                            title="與其他播放清單合併"
                         >
-                            🔀 Merge
+                            🔀 合併
                         </button>
                         <button 
                             onclick="showOtherMenu('${escapeHtml(name)}', this)" 
                             class="playlist-action-btn bg-gray-600 hover:bg-gray-700"
-                            title="More options"
+                            title="更多選項"
                         >
-                            ⋯ Other
+                            ⋯ 其他
                         </button>
                     </div>
                 </div>
@@ -3408,26 +3408,26 @@
             form.className = 'rename-form';
             
             form.innerHTML = `
-                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Rename Playlist</h3>
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">重新命名播放清單</h3>
                 <input 
                     type="text" 
                     id="renameInput" 
                     value="${oldName}"
                     class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded mb-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    placeholder="Enter new name..."
+                    placeholder="輸入新的名稱···"
                 >
                 <div class="flex gap-3 justify-end">
                     <button 
                         onclick="hideRenameForm()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                     <button 
                         onclick="confirmRename('${escapeHtml(oldName)}')" 
                         class="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors"
                     >
-                        Rename
+                        重新命名
                     </button>
                 </div>
             `;
@@ -3467,7 +3467,7 @@
             const newName = input.value.trim();
             
             if (!newName) {
-                alert('Please enter a valid name');
+                alert('請輸入一個有效的名字');
                 return;
             }
             
@@ -3477,7 +3477,7 @@
             }
             
             if (playlists[newName]) {
-                alert('A playlist with this name already exists');
+                alert('此名稱的播放清單已經存在');
                 return;
             }
             
@@ -3502,7 +3502,7 @@
             const playlistNames = Object.keys(playlists).filter(name => name !== targetPlaylist);
             
             if (playlistNames.length === 0) {
-                alert('No other playlists available to merge');
+                alert('沒有可合併的播放清單');
                 return;
             }
             
@@ -3525,13 +3525,13 @@
             form.innerHTML = `
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Merge Playlists</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Select playlists to merge into "${targetPlaylist}":
+                    選擇要合併入「${targetPlaylist}」的播放清單：
                 </p>
                 <div class="max-h-64 overflow-y-auto mb-4 space-y-2">
                     ${playlistNames.map(name => `
                         <label class="flex items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded cursor-pointer">
                             <input type="checkbox" value="${name}" class="merge-checkbox">
-                            <span class="flex-1">${name} (${playlists[name].videos.length} videos)</span>
+                            <span class="flex-1">${name} (${playlists[name].videos.length}條影片)</span>
                         </label>
                     `).join('')}
                 </div>
@@ -3540,13 +3540,13 @@
                         onclick="hideMergeDialog()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                     <button 
                         onclick="confirmMerge('${escapeHtml(targetPlaylist)}')" 
                         class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                     >
-                        Merge
+                        合併
                     </button>
                 </div>
             `;
@@ -3574,7 +3574,7 @@
             const selectedPlaylists = Array.from(checkboxes).map(cb => cb.value);
             
             if (selectedPlaylists.length === 0) {
-                alert('Please select at least one playlist to merge');
+                alert('請至少選擇一個要合併的播放清單');
                 return;
             }
             
@@ -3609,16 +3609,16 @@
             renderCurrentPlaylist();
             hideMergeDialog();
             
-            alert(`Successfully merged ${selectedPlaylists.length} playlists. Added ${totalVideos} new videos to "${targetPlaylist}".`);
+            alert(`${selectedPlaylists.length}個播放清單合併成功。已加入${totalVideos}條新影片入「${targetPlaylist}」。`);
         }
 
         // Duplicate Playlist
         function duplicatePlaylist(playlistName) {
-            let newName = `${playlistName} (Copy)`;
+            let newName = `${playlistName}（副本）`;
             let counter = 2;
             
             while (playlists[newName]) {
-                newName = `${playlistName} (Copy ${counter})`;
+                newName = `${playlistName}（副本${counter}）`;
                 counter++;
             }
             
@@ -3657,32 +3657,32 @@
             }
             
             form.innerHTML = `
-                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📊 Playlist Info</h3>
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📊 播放清單資訊</h3>
                 
                 <div class="space-y-3 mb-4">
                     <div class="flex justify-between">
-                        <span class="font-medium text-gray-700 dark:text-gray-300">Name:</span>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">名稱：</span>
                         <span class="text-gray-900 dark:text-white">${playlistName}</span>
                     </div>
                     
                     <div class="flex justify-between">
-                        <span class="font-medium text-gray-700 dark:text-gray-300">Videos:</span>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">影片：</span>
                         <span class="text-gray-900 dark:text-white">${playlist.videos.length}</span>
                     </div>
                     
                     <div class="flex justify-between">
-                        <span class="font-medium text-gray-700 dark:text-gray-300">Created:</span>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">建立日期：</span>
                         <span class="text-gray-900 dark:text-white">${createdDate}</span>
                     </div>
                     
                     <div class="flex justify-between">
-                        <span class="font-medium text-gray-700 dark:text-gray-300">Source:</span>
-                        <span class="text-gray-900 dark:text-white">${playlist.imported ? 'Imported from YouTube' : 'Created locally'}</span>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">來源：</span>
+                        <span class="text-gray-900 dark:text-white">${playlist.imported ? '從YouTube匯入' : '本地建立'}</span>
                     </div>
                     
                     ${playlist.duplicatedFrom ? `
                         <div class="flex justify-between">
-                            <span class="font-medium text-gray-700 dark:text-gray-300">Duplicated from:</span>
+                            <span class="font-medium text-gray-700 dark:text-gray-300">複製自：</span>
                             <span class="text-gray-900 dark:text-white">${playlist.duplicatedFrom}</span>
                         </div>
                     ` : ''}
@@ -3690,17 +3690,17 @@
                 
                 <div class="mb-4">
                     <label class="block font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        📝 Remarks / Notes:
+                        📝 備註：
                     </label>
                     <textarea 
                         id="playlistRemarks" 
-                        placeholder="Add your notes about this playlist..."
+                        placeholder="添加關於這個播放清單的備註···"
                         class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-vertical"
                         rows="4"
                         style="min-height: 80px; max-height: 200px;"
                     >${remarks}</textarea>
                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Use this space to add personal notes, descriptions, or reminders about this playlist.
+                        使用此空間新增有關此播放清單的個人筆記、描述或提醒。
                     </div>
                 </div>
                 
@@ -3709,13 +3709,13 @@
                         onclick="hidePlaylistInfo()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                     <button 
                         onclick="savePlaylistRemarks('${escapeHtml(playlistName)}')" 
                         class="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 transition-colors"
                     >
-                        💾 Save
+                        💾 儲存
                     </button>
                 </div>
             `;
@@ -3766,7 +3766,7 @@
             // Show brief success feedback
             const feedback = document.createElement('div');
             feedback.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity';
-            feedback.textContent = '✅ Remarks saved!';
+            feedback.textContent = '✅ 已保存備註！';
             document.body.appendChild(feedback);
             
             // Auto-remove feedback after 2 seconds
@@ -3964,7 +3964,7 @@
             form.innerHTML = `
                 <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Move Videos</h3>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Select playlist to move ${selectedVideos.size} selected videos to:
+                    移動${selectedVideos.size}條已選擇影片至：
                 </p>
                 <div class="max-h-64 overflow-y-auto mb-4 space-y-2">
                     ${playlistNames.map(name => `
@@ -3972,7 +3972,7 @@
                             <input type="radio" name="targetPlaylist" value="${escapeHtml(name)}" class="move-radio">
                             <div class="flex-1">
                                 <div class="font-medium">${name}</div>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length} videos</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length}條影片</div>
                             </div>
                         </label>
                     `).join('')}
@@ -3982,13 +3982,13 @@
                         onclick="hideMoveVideosDialog()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                     <button 
                         onclick="confirmMoveVideos()" 
                         class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                     >
-                        📁 Move Videos
+                        📁 移動影片
                     </button>
                 </div>
             `;
@@ -4734,21 +4734,21 @@
                     class="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors flex items-center gap-2"
                 >
                     <span>🔍</span>
-                    <span>Search Videos</span>
+                    <span>搜尋影片</span>
                 </div>
                 <div 
                     onclick="showPlaylistInfo('${escapeHtml(playlistName)}'); hideOtherMenu();" 
                     class="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors flex items-center gap-2"
                 >
                     <span>📊</span>
-                    <span>Playlist Info</span>
+                    <span>清單資訊</span>
                 </div>
                 <div 
                     onclick="exportPlaylist('${escapeHtml(playlistName)}'); hideOtherMenu();" 
                     class="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors flex items-center gap-2"
                 >
                     <span>📤</span>
-                    <span>Export Playlist</span>
+                    <span>匯出清單</span>
                 </div>
             `;
             
@@ -4841,7 +4841,7 @@
             }
             
             modal.innerHTML = `
-                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🔍 Search Videos in "${playlistName}"</h3>
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🔍 在「${playlistName}」中搜尋影片</h3>
                 
                 <div class="mb-4">
                     <input 
@@ -5777,7 +5777,7 @@
             searchChannels();
             
             // Show feedback
-            showSuccessMessage(`🔍 Searching for channel: @${channelName}`);
+            showSuccessMessage(`🔍 正在搜尋頻道：@${channelName}`);
         }
 
         // Search Videos with Hashtag
@@ -5793,7 +5793,7 @@
             searchVideos();
             
             // Show feedback
-            showSuccessMessage(`🔍 Searching videos with hashtag: #${hashtag}`);
+            showSuccessMessage(`🔍 正在用標籤搜尋影片：#${hashtag}`);
         }
 
         // ========================================
