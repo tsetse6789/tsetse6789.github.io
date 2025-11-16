@@ -7,6 +7,9 @@
   <meta name="color-scheme" content="light dark">
   <style>
     :root { color-scheme: light dark; }
+    * {
+      box-sizing: border-box;
+    }
     body, html {
       height: 100%;
       background:#ffffff;
@@ -14,18 +17,26 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #212121;
     }
     @media (prefers-color-scheme: dark) {
-        body, html {
-          height: 100%;
-          background:#212121;
-          margin: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+      body, html {
+        background:#212121;
+        color: #ffffff;
+      }
     }
     
+    .page {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 1.5rem;
+    }
+
     .loader {
       display: flex;
       justify-content: center;
@@ -93,69 +104,118 @@
         box-shadow: 0 0 20px rgba(0, 0, 255, 0.5);
       }
     }
+
+    .manual-choices {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+      color: rgba(33, 33, 33, 0.7);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .manual-choices {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+
+    .manual-button {
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+      font: inherit;
+      padding: 0;
+      margin: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .manual-button:hover,
+    .manual-button:focus-visible {
+      opacity: 0.7;
+      outline: none;
+    }
+
+    .manual-separator {
+      user-select: none;
+    }
   </style>
 </head>
 <body>
-  <div class="loader">
-    <div class="loader-inner">
-      <div class="loader-block"></div>
-      <div class="loader-block"></div>
-      <div class="loader-block"></div>
-      <div class="loader-block"></div>
-      <div class="loader-block"></div>
-      <div class="loader-block"></div>
-      <div class="loader-block"></div>
-      <div class="loader-block"></div>
+  <div class="page">
+    <div class="loader" role="status" aria-live="polite" aria-label="Loading">
+      <div class="loader-inner">
+        <div class="loader-block"></div>
+        <div class="loader-block"></div>
+        <div class="loader-block"></div>
+        <div class="loader-block"></div>
+        <div class="loader-block"></div>
+        <div class="loader-block"></div>
+        <div class="loader-block"></div>
+        <div class="loader-block"></div>
+      </div>
+    </div>
+
+    <div class="manual-choices" aria-label="Choose language manually">
+      <button class="manual-button" data-locale="en-US">en-US</button>
+      <span class="manual-separator">|</span>
+      <button class="manual-button" data-locale="zh-HK">zh-HK</button>
     </div>
   </div>
 
   <script>
     (function () {
-      // Preserve any existing query parameters
       const params = window.location.search || "";
 
-      // Helper: normalize language tags to lowercase, hyphenated form (e.g., "zh-HK")
       function normalize(tag) {
         return String(tag || "").replace("_", "-").toLowerCase();
       }
 
-      // Gather preferred languages from the browser
       const langs = (navigator.languages && navigator.languages.length
         ? navigator.languages
         : [navigator.language || navigator.userLanguage || "en-US"]
       ).map(normalize);
 
-      // Determine whether the user prefers a Chinese locale
-      // We treat zh, zh-HK, zh-TW, zh-MO as Traditional Chinese targets (zh-HK site).
-      // zh-CN and zh-SG commonly map to Simplified; you can route them as you wish.
       const prefersZhHK = langs.some(l =>
         l === "zh" ||
-        l.startsWith("zh-") && (
+        (l.startsWith("zh-") && (
           l === "zh-hk" ||
           l === "zh-tw" ||
           l === "zh-mo"
-        )
+        ))
       );
-
-      // If you want to include all Chinese as zh-HK, including zh-CN/zh-SG, use:
-      // const prefersZhHK = langs.some(l => l === "zh" || l.startsWith("zh-"));
 
       const zhHKUrl = "https://tsetse6789.github.io/zh-HK/player/";
       const enUSUrl = "https://tsetse6789.github.io/en-US/player/";
 
       const redirectUrl = prefersZhHK ? zhHKUrl : enUSUrl;
 
-      // Update visible fallback link before redirect (useful on slow devices)
-      const fallbackLink = document.getElementById("fallbackLink");
-      if (fallbackLink) fallbackLink.href = redirectUrl + params;
+      const redirectTimer = setTimeout(() => {
+        try {
+          window.location.replace(redirectUrl + params);
+        } catch {
+          window.location.href = redirectUrl + params;
+        }
+      }, 3000);
 
-      // Perform the redirect
-      try {
-        window.location.replace(redirectUrl + params);
-      } catch {
-        // Fallback if replace fails
-        window.location.href = redirectUrl + params;
-      }
+      document.querySelectorAll(".manual-button").forEach(button => {
+        button.addEventListener("click", () => {
+          clearTimeout(redirectTimer);
+          const locale = button.dataset.locale;
+          const target = locale === "zh-HK" ? zhHKUrl : enUSUrl;
+          try {
+            window.location.replace(target + params);
+          } catch {
+            window.location.href = target + params;
+          }
+        });
+      });
     })();
   </script>
 </body>
