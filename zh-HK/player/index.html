@@ -1358,21 +1358,6 @@
                 return;
             }
             
-            // Fallback to old playlist system if no queue
-            if (!currentPlaylist) return;
-            
-            const videos = playlists[currentPlaylist].videos;
-            if (videos.length === 0) return;
-            
-            // Handle repeat one mode
-            if (playbackSettings.repeat === 'one') {
-                // Replay the same video
-                if (player && player.playVideo) {
-                    player.playVideo();
-                }
-                return;
-            }
-            
             // Handle repeat all mode or normal playback
             let nextIndex;
             
@@ -2767,20 +2752,6 @@
                 return;
             }
             
-            // Fallback to old playlist system if no queue
-            if (!currentPlaylist) return;
-            
-            const videos = playlists[currentPlaylist].videos;
-            if (videos.length === 0) return;
-            
-            let nextIndex;
-            
-            if (playbackSettings.shuffle) {
-                nextIndex = Math.floor(Math.random() * videos.length);
-            } else {
-                nextIndex = (currentVideoIndex + 1) % videos.length;
-            }
-            
             playVideoFromPlaylist(nextIndex);
         }
 
@@ -2808,20 +2779,6 @@
                 
                 playFromQueue(prevIndex);
                 return;
-            }
-            
-            // Fallback to old playlist system if no queue
-            if (!currentPlaylist) return;
-            
-            const videos = playlists[currentPlaylist].videos;
-            if (videos.length === 0) return;
-            
-            let prevIndex;
-            
-            if (playbackSettings.shuffle) {
-                prevIndex = Math.floor(Math.random() * videos.length);
-            } else {
-                prevIndex = currentVideoIndex === 0 ? videos.length - 1 : currentVideoIndex - 1;
             }
             
             playVideoFromPlaylist(prevIndex);
