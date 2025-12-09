@@ -1401,7 +1401,7 @@
         let currentVideoIndex = 0;
         let playbackSettings = {
             shuffle: false,
-            repeat: 'off' // 'off', 'all', 'one'
+            repeat: '關閉' // 'off', 'all', 'one'
         };
         let searchType = 'video'; // 'video' or 'channel'
         let currentChannelId = null;
@@ -1907,7 +1907,7 @@
             const playlistNames = Object.keys(playlists);
             
             if (playlistNames.length === 0) {
-                container.innerHTML = '<p class="text-gray-600 dark:text-gray-400 text-sm">No playlists yet. Create one to get started!</p>';
+                container.innerHTML = '<p class="text-gray-600 dark:text-gray-400 text-sm">暫無播放清單，立即建立播放清單！</p>';
                 return;
             }
             
@@ -2048,7 +2048,7 @@
             // Add header
             const header = document.createElement('div');
             header.className = 'px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600';
-            header.textContent = 'Add to playlist:';
+            header.textContent = '添加至播放清單：';
             dropdown.appendChild(header);
             
             // Add playlist options
@@ -2582,55 +2582,55 @@
             dialog.className = 'play-options-dialog';
             
             dialog.innerHTML = `
-                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎵 Add to Queue</h3>
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎵添加至播放列表</h3>
                 
                 <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div class="font-medium text-sm line-clamp-2 mb-1">${video.title}</div>
                     <div class="text-xs text-gray-600 dark:text-gray-400">${video.channel}</div>
-                    <div class="text-xs text-blue-600 dark:text-blue-400 mt-1">From playlist: ${playlistName}</div>
+                    <div class="text-xs text-blue-600 dark:text-blue-400 mt-1">來自播放清單：${playlistName}</div>
                 </div>
                 
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Queue has ${playQueue.length} videos. How would you like to add this content?
+                    播放列表已經有${playQueue.length}部影片，您想要如何添加？
                 </p>
                 
                 <div class="space-y-2 mb-6">
                     <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'current'); hidePlaylistOptionsDialog()" class="play-option-btn">
                         <div class="play-option-icon">▶️</div>
                         <div class="play-option-content">
-                            <div class="play-option-title">Play This Video Now</div>
-                            <div class="play-option-desc">Stop current video and play this one immediately</div>
+                            <div class="play-option-title">現在播放這個影片</div>
+                            <div class="play-option-desc">停止當前影片並立即播放此影片</div>
                         </div>
                     </button>
                     
                     <button onclick="clearQueueAndLoadPlaylist('${escapeHtml(playlistName)}', ${videoIndex}); hidePlaylistOptionsDialog()" class="play-option-btn">
                         <div class="play-option-icon">📋</div>
                         <div class="play-option-content">
-                            <div class="play-option-title">Play Entire Playlist</div>
-                            <div class="play-option-desc">Replace queue with this playlist, starting from this video</div>
+                            <div class="play-option-title">播放整個播放清單</div>
+                            <div class="play-option-desc">從這個影片開始，用這個播放清單替換列表</div>
                         </div>
                     </button>
                     
                     <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'next'); hidePlaylistOptionsDialog()" class="play-option-btn">
                         <div class="play-option-icon">⏭️</div>
                         <div class="play-option-content">
-                            <div class="play-option-title">Play Next</div>
-                            <div class="play-option-desc">Add this video after current video</div>
+                            <div class="play-option-title">接下來播放</div>
+                            <div class="play-option-desc">在當前影片之後新增此影片</div>
                         </div>
                     </button>
                     
                     <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'end'); hidePlaylistOptionsDialog()" class="play-option-btn">
                         <div class="play-option-icon">📝</div>
                         <div class="play-option-content">
-                            <div class="play-option-title">Add to End</div>
-                            <div class="play-option-desc">Add this video to the end of the queue</div>
+                            <div class="play-option-title">新增到結尾</div>
+                            <div class="play-option-desc">將此影片新增到播放列表末尾</div>
                         </div>
                     </button>
                 </div>
                 
                 <div class="flex gap-3 justify-end">
                     <button onclick="hidePlaylistOptionsDialog()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
-                        Cancel
+                        取消
                     </button>
                 </div>
             `;
@@ -2707,7 +2707,7 @@
         }
 
         function toggleRepeat() {
-            const modes = ['off', 'all', 'one'];
+            const modes = ['關閉', '所有', '單曲'];
             const currentIndex = modes.indexOf(playbackSettings.repeat);
             playbackSettings.repeat = modes[(currentIndex + 1) % modes.length];
             saveSettings();
@@ -2715,15 +2715,15 @@
         }
 
         function updatePlaybackUI() {
-            document.getElementById('shuffleStatus').textContent = playbackSettings.shuffle ? 'On' : 'Off';
+            document.getElementById('shuffleStatus').textContent = playbackSettings.shuffle ? '開啟' : '關閉';
             document.getElementById('shuffleBtn').classList.toggle('bg-primary', playbackSettings.shuffle);
             document.getElementById('shuffleBtn').classList.toggle('bg-gray-600', !playbackSettings.shuffle);
             
-            const repeatText = playbackSettings.repeat === 'off' ? 'Off' : 
-                              playbackSettings.repeat === 'all' ? 'All' : 'One';
+            const repeatText = playbackSettings.repeat === '關閉' ? '關閉' : 
+                              playbackSettings.repeat === '所有' ? '所有' : '單曲';
             document.getElementById('repeatStatus').textContent = repeatText;
-            document.getElementById('repeatBtn').classList.toggle('bg-primary', playbackSettings.repeat !== 'off');
-            document.getElementById('repeatBtn').classList.toggle('bg-gray-600', playbackSettings.repeat === 'off');
+            document.getElementById('repeatBtn').classList.toggle('bg-primary', playbackSettings.repeat !== '關閉');
+            document.getElementById('repeatBtn').classList.toggle('bg-gray-600', playbackSettings.repeat === '關閉');
         }
 
         function playNext() {
@@ -4043,7 +4043,7 @@
                         onclick="hideCopyVideosDialog()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                     <button 
                         onclick="confirmCopyVideos()" 
@@ -4364,11 +4364,11 @@
             form.style.maxWidth = '500px';
             
             form.innerHTML = `
-                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📥 Import Playlist</h3>
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📥匯入播放清單</h3>
                 
                 <div class="mb-4">
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                        Select a playlist file (JSON format) to import:
+                        選擇要匯入的播放清單檔案（JSON格式）：
                     </p>
                     <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
                         <input 
@@ -4383,12 +4383,12 @@
                             class="cursor-pointer flex flex-col items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors"
                         >
                             <div class="text-4xl">📁</div>
-                            <div class="font-medium">Click to select file</div>
-                            <div class="text-xs">or drag and drop here</div>
+                            <div class="font-medium">選擇檔案</div>
+                            <div class="text-xs">或者在這裡拖放</div>
                         </label>
                     </div>
                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                        Supported formats: JSON files exported from YouTube Player
+                        支援的格式：從YouTube播放器匯出的JSON檔案
                     </div>
                 </div>
                 
@@ -4402,7 +4402,7 @@
                         onclick="hideImportPlaylistDialog()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                     <button 
                         id="confirmImportBtn"
@@ -4410,7 +4410,7 @@
                         class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                         disabled
                     >
-                        📥 Import Playlist
+                        📥匯入播放清單
                     </button>
                 </div>
             `;
@@ -4471,13 +4471,13 @@
             
             // Check file type
             if (!file.name.toLowerCase().endsWith('.json')) {
-                alert('Please select a JSON file.');
+                alert('請選擇JSON檔案。');
                 return;
             }
             
             // Check file size (max 10MB)
             if (file.size > 10 * 1024 * 1024) {
-                alert('File too large. Maximum size is 10MB.');
+                alert('檔案太大了，最大大小為10MB。');
                 return;
             }
             
@@ -4489,12 +4489,12 @@
                     validateAndPreviewPlaylist(importData);
                 } catch (error) {
                     console.error('Error parsing playlist file:', error);
-                    alert('Invalid JSON file. Please check the file format.');
+                    alert('JSON檔案無效，請檢查檔案格式。');
                 }
             };
             
             reader.onerror = function() {
-                alert('Error reading file. Please try again.');
+                alert('讀取檔案時出錯，請重試。');
             };
             
             reader.readAsText(file);
@@ -4503,7 +4503,7 @@
         function validateAndPreviewPlaylist(data) {
             // Validate required fields
             if (!data.name || !Array.isArray(data.videos)) {
-                alert('Invalid playlist format. Missing required fields (name, videos).');
+                alert('播放列表格式無效，缺少必填欄位（名稱、影片）。');
                 return;
             }
             
@@ -4517,7 +4517,7 @@
             );
             
             if (validVideos.length === 0) {
-                alert('No valid videos found in the playlist.');
+                alert('在播放清單中沒有找到有效的影片。');
                 return;
             }
             
@@ -4531,18 +4531,18 @@
             const preview = document.getElementById('importPreview');
             const details = document.getElementById('importDetails');
             
-            const created = data.created ? new Date(data.created).toLocaleDateString() : 'Unknown';
-            const exported = data.exported ? new Date(data.exported).toLocaleDateString() : 'Unknown';
-            const source = data.source || 'Unknown';
+            const created = data.created ? new Date(data.created).toLocaleDateString() : '未知';
+            const exported = data.exported ? new Date(data.exported).toLocaleDateString() : '未知';
+            const source = data.source || '未知';
             
             details.innerHTML = `
                 <div class="space-y-1">
-                    <div><strong>Name:</strong> ${data.name}</div>
-                    <div><strong>Videos:</strong> ${validVideos.length} ${data.totalVideos && data.totalVideos !== validVideos.length ? `(${data.totalVideos - validVideos.length} invalid videos filtered)` : ''}</div>
-                    <div><strong>Created:</strong> ${created}</div>
-                    <div><strong>Exported:</strong> ${exported}</div>
-                    <div><strong>Source:</strong> ${source}</div>
-                    ${data.remarks ? `<div><strong>Notes:</strong> ${data.remarks}</div>` : ''}
+                    <div><strong>名稱：</strong> ${data.name}</div>
+                    <div><strong>影片：</strong> ${validVideos.length} ${data.totalVideos && data.totalVideos !== validVideos.length ? `(${data.totalVideos - validVideos.length} invalid videos filtered)` : ''}</div>
+                    <div><strong>建立日期：</strong> ${created}</div>
+                    <div><strong>匯出日期：</strong> ${exported}</div>
+                    <div><strong>來源：</strong> ${source}</div>
+                    ${data.remarks ? `<div><strong>備註：</strong>${data.remarks}</div>` : ''}
                 </div>
             `;
             
@@ -4563,7 +4563,7 @@
             
             // Handle name conflicts
             if (playlists[finalName]) {
-                const choice = confirm(`A playlist named "${finalName}" already exists. Would you like to:\n\nOK - Overwrite the existing playlist\nCancel - Create with a different name`);
+                const choice = confirm(`名字叫「${finalName}」的播放清單已經存在了。您想要如何處理：\n\n確定 - 取代現有播放清單\n取消 - 用不同的名字建立`);
                 
                 if (!choice) {
                     // Generate a unique name
@@ -4581,7 +4581,7 @@
                 videos: data.videos,
                 created: data.created || new Date().toISOString(),
                 imported: true,
-                importedFrom: data.source || 'External source',
+                importedFrom: data.source || '外部來源',
                 remarks: data.remarks || '',
                 originalName: data.name !== finalName ? data.name : undefined
             };
@@ -4592,7 +4592,7 @@
             hideImportPlaylistDialog();
             
             // Show success message
-            showSuccessMessage(`✅ Successfully imported "${finalName}" with ${data.videos.length} videos!`);
+            showSuccessMessage(`✅成功匯入「${finalName}」，共${data.videos.length}部影片！`);
             
             // Automatically load the imported playlist
             setTimeout(() => {
@@ -4622,8 +4622,8 @@
             progressIndicator.innerHTML = `
                 <div class="animate-spin inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full"></div>
                 <div>
-                    <div class="font-medium">Importing "${playlistTitle}"</div>
-                    <div class="text-sm opacity-90" id="importProgressText">Starting import...</div>
+                    <div class="font-medium">正在匯入「${playlistTitle}」</div>
+                    <div class="text-sm opacity-90" id="importProgressText">開始匯入中···</div>
                 </div>
             `;
             document.body.appendChild(progressIndicator);
@@ -4684,7 +4684,7 @@
             // Add menu items
             dropdown.innerHTML = `
                 <div class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-600">
-                    More Options
+                    更多選項
                 </div>
                 <div 
                     onclick="showVideoSearchDialog('${escapeHtml(playlistName)}'); hideOtherMenu();" 
@@ -4804,18 +4804,18 @@
                     <input 
                         type="text" 
                         id="videoSearchInput" 
-                        placeholder="Search by video title or channel name..."
+                        placeholder="按影片標題或頻道名稱搜尋···"
                         class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                     >
                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Search in ${playlist.videos.length} videos • Type to find videos instantly
+                        在${playlist.videos.length}部影片中尋找 • 輸入即可立即找到影片
                     </div>
                 </div>
                 
                 <div id="videoSearchResults" class="flex-1 min-h-0 mb-4">
                     <div id="videoSearchEmptyState" class="text-center py-8 text-gray-500 dark:text-gray-400">
                         <div class="text-4xl mb-2">🎬</div>
-                        <div>Start typing to search through your videos</div>
+                        <div>開始輸入以搜尋您的影片</div>
                     </div>
                     
                     <div id="videoSearchResultsList" class="hidden max-h-96 overflow-y-auto space-y-2">
@@ -4956,14 +4956,14 @@
                             class="px-2 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-xs"
                             title="Play this video"
                         >
-                            ▶️ Play
+                            ▶️播放
                         </button>
                         <button 
                             onclick="jumpToVideoInPlaylist('${playlistName}', ${video.index}); event.stopPropagation();"
                             class="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
                             title="Show in playlist"
                         >
-                            📍 Show
+                            📍顯示
                         </button>
                     </div>
                 </div>
@@ -5290,7 +5290,7 @@
                         onclick="hideAutoPlaylistDialog()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                 </div>
             `;
@@ -6081,7 +6081,7 @@
             dialog.className = 'play-options-dialog';
             
             dialog.innerHTML = `
-                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎵 Add to Queue</h3>
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎵添加至播放列表</h3>
                 
                 <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                     <div class="font-medium text-sm line-clamp-2 mb-1">${video.title}</div>
@@ -6089,38 +6089,38 @@
                 </div>
                 
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Queue has ${playQueue.length} videos. Where would you like to add this video?
+                    播放列表已經有${playQueue.length}部影片，您想把影片添加至哪裏？
                 </p>
                 
                 <div class="space-y-2 mb-6">
                     <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'current'); hidePlayOptionsDialog()" class="play-option-btn">
                         <div class="play-option-icon">▶️</div>
                         <div class="play-option-content">
-                            <div class="play-option-title">Play Now</div>
-                            <div class="play-option-desc">Stop current video and play this immediately</div>
+                            <div class="play-option-title">現在播放</div>
+                            <div class="play-option-desc">停止當前影片並立即播放</div>
                         </div>
                     </button>
                     
                     <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'next'); hidePlayOptionsDialog()" class="play-option-btn">
                         <div class="play-option-icon">⏭️</div>
                         <div class="play-option-content">
-                            <div class="play-option-title">Play Next</div>
-                            <div class="play-option-desc">Add after current video (next in queue)</div>
+                            <div class="play-option-title">接下來播放</div>
+                            <div class="play-option-desc">在當前影片之後新增（列表中的下一個）</div>
                         </div>
                     </button>
                     
                     <button onclick="addToQueue(${JSON.stringify(video).replace(/"/g, '&quot;')}, 'end'); hidePlayOptionsDialog()" class="play-option-btn">
                         <div class="play-option-icon">📝</div>
                         <div class="play-option-content">
-                            <div class="play-option-title">Add to End</div>
-                            <div class="play-option-desc">Add to the end of the queue</div>
+                            <div class="play-option-title">新增到結尾</div>
+                            <div class="play-option-desc">新增到播放列表的末尾</div>
                         </div>
                     </button>
                 </div>
                 
                 <div class="flex gap-3 justify-end">
                     <button onclick="hidePlayOptionsDialog()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
-                        Cancel
+                        取消
                     </button>
                 </div>
             `;
@@ -6146,16 +6146,16 @@
         // Modified video end handler for queue system
         function handleVideoEndWithQueue() {
             // Remove current video if not in repeat mode
-            if (playbackSettings.repeat === 'off') {
+            if (playbackSettings.repeat === '關閉') {
                 if (playQueue.length > currentQueueIndex) {
                     playQueue.splice(currentQueueIndex, 1);
                     // Don't increment currentQueueIndex as we removed current item
                 }
-            } else if (playbackSettings.repeat === 'one') {
+            } else if (playbackSettings.repeat === '單曲') {
                 // Replay same video
                 playFromQueue(currentQueueIndex);
                 return;
-            } else if (playbackSettings.repeat === 'all') {
+            } else if (playbackSettings.repeat === '所有') {
                 // Move to next video, loop to start if at end
                 currentQueueIndex++;
                 if (currentQueueIndex >= playQueue.length) {
@@ -6364,7 +6364,7 @@
                         onclick="hideImportQueueDialog()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                 </div>
             `;
@@ -6424,7 +6424,7 @@
                         onclick="hideCreateQueuePlaylistDialog()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                     <button 
                         onclick="confirmCreatePlaylistFromQueue()" 
@@ -6537,7 +6537,7 @@
                         onclick="hideAddQueueToPlaylistDialog()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                     <button 
                         onclick="confirmAddQueueToPlaylist()" 
@@ -6679,7 +6679,7 @@
                 
                 <div class="flex gap-3 justify-end">
                     <button onclick="hideAddSelectedToQueueDialog()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
-                        Cancel
+                        取消
                     </button>
                 </div>
             `;
@@ -6847,7 +6847,7 @@
                         onclick="hideCustomConfirm(false)" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Cancel
+                        取消
                     </button>
                     <button 
                         onclick="hideCustomConfirm(true)" 
