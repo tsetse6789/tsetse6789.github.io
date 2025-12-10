@@ -1916,7 +1916,7 @@
                     <div class="flex justify-between items-center mb-2">
                         <div class="flex-1 cursor-pointer" onclick="loadPlaylist('${name}')">
                             <div class="font-medium">${name}</div>
-                            <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length} videos</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">${playlists[name].videos.length}部影片</div>
                         </div>
                         <button 
                             onclick="deletePlaylist('${name}')" 
@@ -1931,21 +1931,21 @@
                             class="playlist-action-btn btn-rename"
                             title="重新命名播放清單"
                         >
-                            📝 重新命名
+                            📝重新命名
                         </button>
                         <button 
                             onclick="duplicatePlaylist('${escapeHtml(name)}')" 
                             class="playlist-action-btn btn-duplicate"
                             title="複製播放清單"
                         >
-                            📋 複製  
+                            📋複製  
                         </button>
                         <button 
                             onclick="showMergeDialog('${escapeHtml(name)}')" 
                             class="playlist-action-btn btn-merge"
                             title="與其他播放清單合併"
                         >
-                            🔀 合併  
+                            🔀合併  
                         </button>
                         <button 
                             onclick="showOtherMenu('${escapeHtml(name)}', this)" 
@@ -3823,13 +3823,13 @@
             
             if (isSelectionMode) {
                 container.classList.add('selection-mode');
-                button.textContent = 'Done';
+                button.textContent = '完成';
                 button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
                 button.classList.add('bg-red-600', 'hover:bg-red-700');
                 controls.classList.remove('hidden');
             } else {
                 container.classList.remove('selection-mode');
-                button.textContent = 'Select';
+                button.textContent = '選擇';
                 button.classList.remove('bg-red-600', 'hover:bg-red-700');
                 button.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 controls.classList.add('hidden');
@@ -4834,7 +4834,7 @@
                         onclick="hideVideoSearchDialog()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Close
+                        關閉
                     </button>
                 </div>
             `;
@@ -5520,7 +5520,7 @@
                     dropdown.remove();
                     
                     // Show success message
-                    showSuccessMessage(`✅ Added "${title}" to "${playlistName}"`);
+                    showSuccessMessage(`✅已添加「${title}"」至「${playlistName}」`);
                 };
                 dropdown.appendChild(option);
             });
@@ -5576,7 +5576,7 @@
                 // Copy to clipboard
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(shareUrl).then(() => {
-                        showShareSuccessMessage('✅ Share URL copied to clipboard!', shareUrl);
+                        showShareSuccessMessage('✅分享URL已複製到剪貼簿！', shareUrl);
                     }).catch(error => {
                         console.error('Failed to copy to clipboard:', error);
                         showShareFallback(shareUrl);
@@ -5620,10 +5620,10 @@
             modal.style.maxWidth = '500px';
             
             modal.innerHTML = `
-                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📤 Share Video</h3>
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">📤分享影片</h3>
                 
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Copy this URL to share the current video:
+                    複製此URL以分享當前影片：
                 </p>
                 
                 <div class="mb-4">
@@ -5640,13 +5640,13 @@
                         onclick="hideShareUrlModal()" 
                         class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
-                        Close
+                        關閉
                     </button>
                     <button 
                         onclick="selectShareUrl()" 
                         class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                     >
-                        📋 Select All
+                        📋全選
                     </button>
                 </div>
             `;
@@ -5676,7 +5676,7 @@
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(textarea.value).then(() => {
                     hideShareUrlModal();
-                    showShareSuccessMessage('✅ Share URL copied to clipboard!', textarea.value);
+                    showShareSuccessMessage('✅分享URL已複製到剪貼簿！', textarea.value);
                 }).catch(error => {
                     console.error('Failed to copy to clipboard:', error);
                 });
@@ -5764,7 +5764,7 @@
             // Check if video already exists in queue
             const existingIndex = playQueue.findIndex(queueVideo => queueVideo.id === video.id);
             if (existingIndex !== -1) {
-                showSuccessMessage(`🎵 Video already in queue at position ${existingIndex + 1}`);
+                showSuccessMessage(`🎵影片已經在播放列表的第${existingIndex + 1}部`);
                 return;
             }
             
@@ -5816,7 +5816,7 @@
             currentQueueIndex = 0;
             
             updateQueueUI();
-            showSuccessMessage(`🎵 Added ${playlistName} to queue (${videos.length} videos)`);
+            showSuccessMessage(`🎵已添加「${playlistName}」至播放列表（${videos.length}部影片）`);
         }
 
         function removeFromQueue(index) {
@@ -5843,7 +5843,7 @@
                 }
             }
             
-            showSuccessMessage(`🗑️ Removed "${removedVideo.title}" from queue`);
+            showSuccessMessage(`🗑️成功從播放列表移除「${removedVideo.title}」`);
         }
 
         function clearQueue() {
@@ -5913,14 +5913,14 @@
             const nowPlaying = playQueue[currentQueueIndex];
             const nextVideo = playQueue[currentQueueIndex + 1];
             
-            let statusMsg = `${playQueue.length} videos`;
+            let statusMsg = `${playQueue.length}部影片`;
             if (nowPlaying) {
                 const nowPlayingText = nowPlaying.title.length > 15 ? nowPlaying.title.substring(0, 15) + '...' : nowPlaying.title;
-                statusMsg += ` • now playing: ${nowPlayingText}`;
+                statusMsg += ` • 現在播放：${nowPlayingText}`;
                 
                 if (nextVideo) {
                     const nextText = nextVideo.title.length > 15 ? nextVideo.title.substring(0, 15) + '...' : nextVideo.title;
-                    statusMsg += ` • next: ${nextText}`;
+                    statusMsg += ` • 下一個：${nextText}`;
                 }
             }
             
@@ -6190,12 +6190,12 @@
             const controls = document.getElementById('queueSelectionControls');
             
             if (isQueueSelectionMode) {
-                button.textContent = 'Done';
+                button.textContent = '完成';
                 button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
                 button.classList.add('bg-red-600', 'hover:bg-red-700');
                 controls.classList.remove('hidden');
             } else {
-                button.textContent = 'Select';
+                button.textContent = '選擇';
                 button.classList.remove('bg-red-600', 'hover:bg-red-700');
                 button.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 controls.classList.add('hidden');
@@ -6290,7 +6290,7 @@
                     updateQueueUI();
                     updateQueueSelectedCount();
                     
-                    showSuccessMessage(`🗑️ Removed ${removedCount} videos from queue`);
+                    showSuccessMessage(`🗑️成功從播放列表移除${removedCount}部影片`);
                 }
             );
         }
@@ -6492,7 +6492,7 @@
             hideCreateQueuePlaylistDialog();
             
             // Show success message
-            showSuccessMessage(`✅ Created "${name}" with ${playQueue.length} videos from queue!`);
+            showSuccessMessage(`✅成功建立「${name}」，共${playQueue.length}部影片`);
             
             // Auto-load the new playlist
             setTimeout(() => {
@@ -6588,9 +6588,9 @@
             hideAddQueueToPlaylistDialog();
             
             if (newVideos.length < playQueue.length) {
-                showSuccessMessage(`📋 Added ${newVideos.length} videos to "${targetPlaylist}" (${playQueue.length - newVideos.length} duplicates skipped)`);
+                showSuccessMessage(`📋已添加${newVideos.length}部影片至「${targetPlaylist}」（已跳過${playQueue.length - newVideos.length}部重複的）`);
             } else {
-                showSuccessMessage(`📋 Added ${newVideos.length} videos to "${targetPlaylist}"`);
+                showSuccessMessage(`📋已添加${newVideos.length}部影片至「${targetPlaylist}」`);
             }
         }
 
@@ -6738,9 +6738,9 @@
             updateSelectedCount();
             
             // Show success message
-            const positionText = position === 'next' ? 'next in queue' : position === 'current' ? 'queue (playing now)' : 'end of queue';
-            const duplicateMsg = newVideos.length < videos.length ? ` (${videos.length - newVideos.length} duplicates skipped)` : '';
-            showSuccessMessage(`🎵 Added ${newVideos.length} videos to ${positionText}${duplicateMsg}`);
+            const positionText = position === 'next' ? '播放列表的下一個' : position === 'current' ? '播放列表（現在播放）' : '播放列表末尾';
+            const duplicateMsg = newVideos.length < videos.length ? `（已跳過${videos.length - newVideos.length}部重複的）` : '';
+            showSuccessMessage(`🎵已添加${newVideos.length}部影片至${positionText}${duplicateMsg}`);
         }
 
         // Custom Modal Dialog Functions (replacing alert/confirm)
@@ -6781,7 +6781,7 @@
                         onclick="hideCustomAlert()" 
                         class="px-6 py-2 ${colorMap[type]} text-white rounded hover:opacity-90 transition-colors"
                     >
-                        OK
+                        確定
                     </button>
                 </div>
             `;
