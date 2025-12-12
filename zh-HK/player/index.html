@@ -2443,7 +2443,7 @@
             document.getElementById('videoStats').classList.remove('hidden');
             
             // Show video description with clickable @ mentions and # hashtags
-            const description = video.snippet.description || 'No description available.';
+            const description = video.snippet.description || '暫無描述。';
             const processedDescription = processDescriptionLinks(description);
             document.getElementById('descriptionText').innerHTML = processedDescription;
             
@@ -2490,13 +2490,13 @@
             const diffMonths = Math.floor(diffDays / 30);
             const diffYears = Math.floor(diffDays / 365);
             
-            if (diffDays === 0) return 'Today';
-            if (diffDays === 1) return '1 day ago';
-            if (diffDays < 30) return `${diffDays} days ago`;
-            if (diffMonths === 1) return '1 month ago';
-            if (diffMonths < 12) return `${diffMonths} months ago`;
-            if (diffYears === 1) return '1 year ago';
-            return `${diffYears} years ago`;
+            if (diffDays === 0) return '今天';
+            if (diffDays === 1) return '昨天';
+            if (diffDays < 30) return `${diffDays} 天前`;
+            if (diffMonths === 1) return '1 個月前';
+            if (diffMonths < 12) return `${diffMonths} 個月前`;
+            if (diffYears === 1) return '1 年前';
+            return `${diffYears} 年前`;
         }
 
         function toggleDescription() {
@@ -2865,14 +2865,14 @@
             
             resultsContainer.innerHTML = `
                 <div class="col-span-full mb-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                    Found ${playlists.length} playlists
+                    找到了${playlists.length}個播放清單
                 </div>
             ` + playlists.map(playlist => `
                 <div class="bg-white dark:bg-gray-700 rounded-lg shadow-md overflow-hidden">
                     <div class="relative">
                         <img src="${playlist.snippet.thumbnails.medium?.url || playlist.snippet.thumbnails.default?.url || ''}" alt="${playlist.snippet.title}" class="w-full h-32 object-cover">
                         <div class="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded">
-                            📋 Playlist
+                            📋播放清單
                         </div>
                     </div>
                     <div class="p-3">
@@ -2887,13 +2887,13 @@
                                 onclick="viewPlaylistVideos('${playlist.id}', '${escapeHtml(playlist.snippet.title)}')" 
                                 class="px-3 py-1 bg-primary text-white rounded hover:bg-opacity-90 transition-colors text-xs"
                             >
-                                📺 View Videos
+                                📺查看影片
                             </button>
                             <button 
                                 onclick="importYouTubePlaylist('${playlist.id}', '${escapeHtml(playlist.snippet.title)}')" 
                                 class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs"
                             >
-                                📥 Import
+                                📥匯入
                             </button>
                         </div>
                     </div>
@@ -4825,7 +4825,7 @@
                     <div id="videoSearchNoResults" class="hidden text-center py-8 text-gray-500 dark:text-gray-400">
                         <div class="text-4xl mb-2">🔍</div>
                         <div>未找到與您的搜尋匹配的影片</div>
-                        <div class="text-sm mt-1">Try different keywords or check spelling</div>
+                        <div class="text-sm mt-1">請嘗試不同的關鍵字</div>
                     </div>
                 </div>
                 
@@ -4946,8 +4946,8 @@
                         <div class="font-medium text-sm line-clamp-2 mb-1">${video.titleHighlight}</div>
                         <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">${video.channelHighlight}</div>
                         <div class="text-xs text-gray-500 dark:text-gray-500">
-                            Position: ${video.index + 1} of ${playlist.videos.length}
-                            ${video.index === currentVideoIndex ? ' • Currently Playing' : ''}
+                            位置：${playlist.videos.length}中的第${video.index + 1}個
+                            ${video.index === currentVideoIndex ? ' • 正在播放' : ''}
                         </div>
                     </div>
                     <div class="flex flex-col gap-1">
@@ -6339,8 +6339,8 @@
                         >
                             <span class="text-xl">✨</span>
                             <div>
-                                <div class="font-medium">Create New Playlist</div>
-                                <div class="text-sm opacity-90">Create a new playlist with these ${playQueue.length} videos</div>
+                                <div class="font-medium">建立新播放清單</div>
+                                <div class="text-sm opacity-90">使用這${playQueue.length}部影片建立一個新播放清單</div>
                             </div>
                         </button>
                         
@@ -6351,8 +6351,8 @@
                             >
                                 <span class="text-xl">📋</span>
                                 <div>
-                                    <div class="font-medium">Add to Existing Playlist</div>
-                                    <div class="text-sm opacity-90">Choose from ${playlistNames.length} existing playlists</div>
+                                    <div class="font-medium">加入至現有播放清單</div>
+                                    <div class="text-sm opacity-90">從${playlistNames.length}個現有播放清單中選擇</div>
                                 </div>
                             </button>
                         ` : ''}
@@ -6543,7 +6543,7 @@
                         onclick="confirmAddQueueToPlaylist()" 
                         class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                     >
-                        📋 Add to Playlist
+                        📋添加至播放清單
                     </button>
                 </div>
             `;
@@ -6597,7 +6597,7 @@
         // Add Selected Videos from Playlist to Queue Function
         function addSelectedVideosToQueue() {
             if (selectedVideos.size === 0) {
-                showCustomAlert('Please select videos to add to queue', 'warning');
+                showCustomAlert('請選擇要新增至列表的影片', 'warning');
                 return;
             }
             
@@ -6607,7 +6607,7 @@
             const videosToAdd = Array.from(selectedVideos).map(index => currentVideos[index]).filter(Boolean);
             
             if (videosToAdd.length === 0) {
-                showCustomAlert('No valid videos selected', 'warning');
+                showCustomAlert('未選擇有效影片', 'warning');
                 return;
             }
             
@@ -6624,54 +6624,54 @@
             dialog.className = 'play-options-dialog';
             
             dialog.innerHTML = `
-                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎵 Add Selected Videos to Queue</h3>
+                <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">🎵新增選定影片至列表</h3>
                 
                 <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div class="font-medium text-sm mb-1">${videos.length} videos selected</div>
-                    <div class="text-xs text-gray-600 dark:text-gray-400">From playlist: ${currentPlaylist}</div>
+                    <div class="font-medium text-sm mb-1">已選擇${videos.length}部影片</div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400">從播放清單：${currentPlaylist}</div>
                 </div>
                 
                 ${playQueue.length > 0 ? `
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Queue has ${playQueue.length} videos. Where would you like to add these videos?
+                        播放列表有${playQueue.length}部影片，您想將這些影片添加到哪裡？
                     </p>
                     
                     <div class="space-y-2 mb-6">
                         <button onclick="addMultipleToQueue(${JSON.stringify(videos).replace(/"/g, '&quot;')}, 'current'); hideAddSelectedToQueueDialog()" class="play-option-btn">
                             <div class="play-option-icon">▶️</div>
                             <div class="play-option-content">
-                                <div class="play-option-title">Replace Queue & Play</div>
-                                <div class="play-option-desc">Clear current queue and play these videos</div>
+                                <div class="play-option-title">取代列表並播放</div>
+                                <div class="play-option-desc">清除當前列表並播放這些影片</div>
                             </div>
                         </button>
                         
                         <button onclick="addMultipleToQueue(${JSON.stringify(videos).replace(/"/g, '&quot;')}, 'next'); hideAddSelectedToQueueDialog()" class="play-option-btn">
                             <div class="play-option-icon">⏭️</div>
                             <div class="play-option-content">
-                                <div class="play-option-title">Play Next</div>
-                                <div class="play-option-desc">Add after current video (next in queue)</div>
+                                <div class="play-option-title">接下來播放</div>
+                                <div class="play-option-desc">在當前影片之後新增此影片（列表的下一個）</div>
                             </div>
                         </button>
                         
                         <button onclick="addMultipleToQueue(${JSON.stringify(videos).replace(/"/g, '&quot;')}, 'end'); hideAddSelectedToQueueDialog()" class="play-option-btn">
                             <div class="play-option-icon">📝</div>
                             <div class="play-option-content">
-                                <div class="play-option-title">Add to End</div>
-                                <div class="play-option-desc">Add to the end of the current queue</div>
+                                <div class="play-option-title">新增到結尾</div>
+                                <div class="play-option-desc">將此影片新增到播放列表末尾</div>
                             </div>
                         </button>
                     </div>
                 ` : `
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        Queue is empty. These videos will be added and start playing.
+                        播放列表是空的，這些影片將被添加並開始播放。
                     </p>
                     
                     <div class="space-y-2 mb-6">
                         <button onclick="addMultipleToQueue(${JSON.stringify(videos).replace(/"/g, '&quot;')}, 'current'); hideAddSelectedToQueueDialog()" class="play-option-btn">
                             <div class="play-option-icon">▶️</div>
                             <div class="play-option-content">
-                                <div class="play-option-title">Add to Queue & Play</div>
-                                <div class="play-option-desc">Add these ${videos.length} videos and start playing</div>
+                                <div class="play-option-title">添加至列表並播放</div>
+                                <div class="play-option-desc">加入這${videos.length}部影片並開始播放</div>
                             </div>
                         </button>
                     </div>
@@ -6710,7 +6710,7 @@
             const newVideos = videos.filter(video => !existingIds.has(video.id));
             
             if (newVideos.length === 0) {
-                showSuccessMessage('🎵 All selected videos are already in queue');
+                showSuccessMessage('🎵所有選定的影片都已在播放列表中');
                 return;
             }
             
