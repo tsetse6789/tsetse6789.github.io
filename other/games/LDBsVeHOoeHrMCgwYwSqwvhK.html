@@ -29,16 +29,13 @@
     </style>
 </head>
 <body class="h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-    <!-- Fixed Toolbar -->
     <header class="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <!-- Title -->
                 <div class="flex-shrink-0">
                     <h1 class="text-xl font-bold text-primary">Quiz Game Pro by Nut</h1>
                 </div>
                 
-                <!-- Desktop Navigation -->
                 <div class="hidden md:flex items-center space-x-4">
                     <button id="importGameBtn" class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary border border-gray-300 dark:border-gray-600 rounded-md hover:border-primary transition-colors">
                         📁 Import Game
@@ -55,7 +52,6 @@
                     </button>
                 </div>
                 
-                <!-- Mobile Navigation -->
                 <div class="md:hidden flex items-center space-x-2">
                     <button id="searchBtnMobile" class="p-2 text-gray-700 dark:text-gray-300 hover:text-primary">🔍</button>
                     <button id="importGameBtnMobile" class="p-2 text-gray-700 dark:text-gray-300 hover:text-primary">📁</button>
@@ -64,22 +60,18 @@
                 </div>
             </div>
             
-            <!-- Mobile Search (Hidden by default) -->
             <div id="mobileSearch" class="hidden md:hidden pb-4">
                 <input id="searchInputMobile" type="text" placeholder="Search games..." class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="pt-16 min-h-screen">
-        <!-- Main App UI -->
         <div id="mainAppUI" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="mb-8">
                 <h2 class="text-2xl font-bold mb-4">My Games</h2>
                 <div id="gamesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Games will be populated here -->
-                </div>
+                    </div>
                 <div id="noGamesMessage" class="text-center py-12 text-gray-500 dark:text-gray-400 hidden">
                     <div class="text-6xl mb-4">🎯</div>
                     <h3 class="text-xl font-medium mb-2">No games yet</h3>
@@ -88,19 +80,13 @@
             </div>
         </div>
 
-        <!-- Host Game UI -->
         <div id="hostGameUI" class="hidden max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Host content will be populated here -->
-        </div>
+            </div>
 
-        <!-- Player Game UI -->
         <div id="playerGameUI" class="hidden max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <!-- Player content will be populated here -->
-        </div>
+            </div>
     </main>
 
-    <!-- Modals -->
-    <!-- Import Game Modal -->
     <div id="importModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto slide-up">
             <div class="p-6">
@@ -115,8 +101,7 @@
                 </div>
                 
                 <div id="gamePreview" class="hidden mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <!-- Game preview content -->
-                </div>
+                    </div>
                 
                 <div class="flex justify-end space-x-3">
                     <button id="cancelImport" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors">Cancel</button>
@@ -126,7 +111,6 @@
         </div>
     </div>
 
-    <!-- Join Game Modal -->
     <div id="joinModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full slide-up">
             <div class="p-6">
@@ -158,7 +142,6 @@
         </div>
     </div>
 
-    <!-- QR Scanner Modal -->
     <div id="qrScannerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full slide-up">
             <div class="p-6">
@@ -176,7 +159,6 @@
         </div>
     </div>
 
-    <!-- Player Name Modal -->
     <div id="playerNameModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full slide-up">
             <div class="p-6">
@@ -197,7 +179,6 @@
         </div>
     </div>
 
-    <!-- Game Details Modal -->
     <div id="gameDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto slide-up">
             <div class="p-6">
@@ -207,8 +188,7 @@
                 </div>
                 
                 <div id="gameDetailsContent">
-                    <!-- Game details content will be populated here -->
-                </div>
+                    </div>
                 
                 <div class="flex justify-end space-x-3 mt-6">
                     <button onclick="exportGame()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
@@ -220,7 +200,6 @@
         </div>
     </div>
 
-    <!-- Game Settings Modal -->
     <div id="gameSettingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full slide-up">
             <div class="p-6">
@@ -272,7 +251,6 @@
         </div>
     </div>
 
-    <!-- Game History Modal -->
     <div id="historyModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto slide-up">
             <div class="p-6">
@@ -282,8 +260,7 @@
                 </div>
                 
                 <div id="historyContent" class="space-y-4">
-                    <!-- History content will be populated here -->
-                </div>
+                    </div>
             </div>
         </div>
     </div>
@@ -441,6 +418,16 @@
             return parseInt(parts[0]) * 60 + parseInt(parts[1]);
         }
 
+        // True Randomization function (Fisher-Yates)
+        function shuffleArray(array) {
+            const newArr = [...array];
+            for (let i = newArr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        }
+
         function showCustomAlert(message) {
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
@@ -541,6 +528,22 @@
             // Search functionality
             document.getElementById('searchInput').addEventListener('input', handleSearch);
             document.getElementById('searchInputMobile').addEventListener('input', handleSearch);
+
+            // Game Settings modal
+            document.getElementById('cancelGameSettings').addEventListener('click', () => {
+                document.getElementById('gameSettingsModal').classList.add('hidden');
+            });
+            
+            document.getElementById('startGameWithSettings').addEventListener('click', () => {
+                if (!currentGame.settings) currentGame.settings = {};
+                currentGame.settings.timeBonus = document.getElementById('timeBonusToggle').checked;
+                currentGame.settings.streakBonus = document.getElementById('streakBonusToggle').checked;
+                currentGame.settings.deductIncorrect = document.getElementById('deductToggle').checked;
+                
+                document.getElementById('gameSettingsModal').classList.add('hidden');
+                isHost = true;
+                startHostingGame();
+            });
         }
 
         // Modal functions
@@ -712,8 +715,21 @@
 
         function playGame(index) {
             currentGame = storage.games[index];
-            isHost = true;
-            startHostingGame();
+            
+            // Sync toggles with JSON settings
+            if (currentGame.settings) {
+                document.getElementById('timeBonusToggle').checked = currentGame.settings.timeBonus ?? true;
+                document.getElementById('streakBonusToggle').checked = currentGame.settings.streakBonus ?? true;
+                document.getElementById('deductToggle').checked = currentGame.settings.deductIncorrect ?? false;
+            } else {
+                // defaults
+                document.getElementById('timeBonusToggle').checked = true;
+                document.getElementById('streakBonusToggle').checked = true;
+                document.getElementById('deductToggle').checked = false;
+            }
+            
+            // Open the settings modal BEFORE creating the room
+            document.getElementById('gameSettingsModal').classList.remove('hidden');
         }
 
         // Import functionality
@@ -930,43 +946,59 @@
             gameStarted = true;
             currentQuestionIndex = 0;
             
-            // Randomize questions
-            const shuffledQuestions = [...currentGame.questions].sort(() => Math.random() - 0.5);
+            const settings = currentGame.settings || {};
+            const shouldRandomizeQuestions = settings.randomizeQuestions !== false; // Uses json if present
+            const shouldRandomizeAnswers = settings.randomizeAnswers !== false; // Uses json if present
+            
+            let questionsToUse = [...currentGame.questions];
+            
+            // Randomize questions if setting allows
+            if (shouldRandomizeQuestions) {
+                questionsToUse = shuffleArray(questionsToUse);
+            }
             
             // Randomize answer options for applicable question types
-            shuffledQuestions.forEach(question => {
-                if (question.answerType === 'radio' || question.answerType === 'checkbox') {
+            questionsToUse.forEach(question => {
+                // Shuffle Multiple Choice / Multiple Select
+                if (shouldRandomizeAnswers && (question.answerType === 'radio' || question.answerType === 'checkbox')) {
                     const originalOptions = [...question.answerSettings.options];
                     const originalAnswer = question.answer;
                     
-                    // Create array of indices and shuffle them
                     const indices = Array.from({ length: originalOptions.length }, (_, i) => i);
-                    const shuffledIndices = indices.sort(() => Math.random() - 0.5);
+                    const shuffledIndices = shuffleArray(indices);
                     
-                    // Reorder options according to shuffled indices
                     question.answerSettings.options = shuffledIndices.map(i => originalOptions[i]);
                     
                     // Update correct answer mapping
                     if (question.answerType === 'radio') {
-                        // Find new position of correct answer
                         question.answer = shuffledIndices.indexOf(originalAnswer);
                     } else if (question.answerType === 'checkbox') {
-                        // Map multiple correct answers to new positions
                         question.answer = originalAnswer.map(correctIndex => 
                             shuffledIndices.indexOf(correctIndex)
                         );
                     }
                     
-                    console.log(`🔀 Randomized options for question: "${question.questionContent}"`, {
-                        original: originalOptions,
-                        shuffled: question.answerSettings.options,
-                        originalAnswer: originalAnswer,
-                        newAnswer: question.answer
-                    });
+                    console.log(`🔀 Randomized options for question: "${question.questionContent}"`);
+                }
+                
+                // ALWAYS shuffle arrange items (so they aren't presented in correct order initially)
+                if (question.answerType === 'rearrange' || question.questionType === 'arrange') {
+                    const originalItems = [...question.answerSettings.items];
+                    const indices = Array.from({ length: originalItems.length }, (_, i) => i);
+                    const shuffledIndices = shuffleArray(indices);
+                    
+                    question.answerSettings.items = shuffledIndices.map(i => originalItems[i]);
+                    
+                    // Remap the answer string (which is a comma separated list of correct original indices)
+                    if (typeof question.answer === 'string') {
+                        const oldAnswerIndices = question.answer.split(',').map(Number);
+                        const newAnswerIndices = oldAnswerIndices.map(oldIndex => shuffledIndices.indexOf(oldIndex));
+                        question.answer = newAnswerIndices.join(',');
+                    }
                 }
             });
             
-            currentGame.questions = shuffledQuestions;
+            currentGame.questions = questionsToUse;
             
             database.ref(`rooms/${currentRoom}/gameState`).set('playing');
             showNextQuestion();
@@ -1168,7 +1200,6 @@
                         ${renderCorrectAnswer(question)}
                     </div>
                     
-                    <!-- Current Leaderboard -->
                     <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 max-w-4xl mx-auto">
                         <h3 class="text-xl font-semibold mb-4">Current Leaderboard</h3>
                         <div id="currentLeaderboard" class="space-y-3">
@@ -2236,7 +2267,6 @@
                 case 'archived':
                     detailsContent = `
                         <div class="space-y-6">
-                            <!-- Game Summary -->
                             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                 <h4 class="text-lg font-semibold mb-3">Game Summary</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2267,7 +2297,6 @@
                                 </div>
                             </div>
 
-                            <!-- Leaderboard -->
                             ${entry.leaderboard && entry.leaderboard.length > 0 ? `
                                 <div>
                                     <h4 class="text-lg font-semibold mb-3">Final Leaderboard</h4>
@@ -2287,7 +2316,6 @@
                                 </div>
                             ` : ''}
 
-                            <!-- Questions Overview -->
                             ${entry.questions && entry.questions.length > 0 ? `
                                 <div>
                                     <h4 class="text-lg font-semibold mb-3">Questions Used</h4>
@@ -2312,7 +2340,6 @@
                 case 'player':
                     detailsContent = `
                         <div class="space-y-6">
-                            <!-- Player Summary -->
                             <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                                 <h4 class="text-lg font-semibold mb-3">Your Performance</h4>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2343,7 +2370,6 @@
                                 </div>
                             </div>
 
-                            <!-- Answers Review -->
                             ${entry.answers && entry.gameQuestions ? `
                                 <div>
                                     <h4 class="text-lg font-semibold mb-3">Your Answers</h4>
@@ -3202,7 +3228,6 @@
             
             content.innerHTML = `
                 <div class="space-y-6">
-                    <!-- Basic Info -->
                     <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                         <h4 class="text-lg font-semibold mb-3">Basic Information</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3231,7 +3256,6 @@
                         ` : ''}
                     </div>
 
-                    <!-- Questions List -->
                     <div>
                         <h4 class="text-lg font-semibold mb-3">Questions Preview</h4>
                         <div class="space-y-3 max-h-96 overflow-y-auto">
