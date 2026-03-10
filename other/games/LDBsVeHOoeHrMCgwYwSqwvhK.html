@@ -946,62 +946,26 @@
             gameStarted = true;
             currentQuestionIndex = 0;
             
+            // Explicitly follow settings: check JSON first, then global settings
             const settings = currentGame.settings || {};
-            const shouldRandomizeQuestions = settings.randomizeQuestions !== false; // Uses json if present
-            const shouldRandomizeAnswers = settings.randomizeAnswers !== false; // Uses json if present
-            
+            const shouldRandomizeQuestions = settings.randomizeQuestions === true; 
+            const shouldRandomizeAnswers = settings.randomizeAnswers === true; 
+        
             let questionsToUse = [...currentGame.questions];
-            
-            // Randomize questions if setting allows
+        
             if (shouldRandomizeQuestions) {
                 questionsToUse = shuffleArray(questionsToUse);
             }
             
-            // Randomize answer options for applicable question types
-            questionsToUse.forEach(question => {
-                // Shuffle Multiple Choice / Multiple Select
-                if (shouldRandomizeAnswers && (question.answerType === 'radio' || question.answerType === 'checkbox')) {
-                    const originalOptions = [...question.answerSettings.options];
-                    const originalAnswer = question.answer;
-                    
-                    const indices = Array.from({ length: originalOptions.length }, (_, i) => i);
-                    const shuffledIndices = shuffleArray(indices);
-                    
-                    question.answerSettings.options = shuffledIndices.map(i => originalOptions[i]);
-                    
-                    // Update correct answer mapping
-                    if (question.answerType === 'radio') {
-                        question.answer = shuffledIndices.indexOf(originalAnswer);
-                    } else if (question.answerType === 'checkbox') {
-                        question.answer = originalAnswer.map(correctIndex => 
-                            shuffledIndices.indexOf(correctIndex)
-                        );
-                    }
-                    
-                    console.log(`🔀 Randomized options for question: "${question.questionContent}"`);
-                }
-                
-                // ALWAYS shuffle arrange items (so they aren't presented in correct order initially)
-                if (question.answerType === 'rearrange' || question.questionType === 'arrange') {
-                    const originalItems = [...question.answerSettings.items];
-                    const indices = Array.from({ length: originalItems.length }, (_, i) => i);
-                    const shuffledIndices = shuffleArray(indices);
-                    
-                    question.answerSettings.items = shuffledIndices.map(i => originalItems[i]);
-                    
-                    // Remap the answer string (which is a comma separated list of correct original indices)
-                    if (typeof question.answer === 'string') {
-                        const oldAnswerIndices = question.answer.split(',').map(Number);
-                        const newAnswerIndices = oldAnswerIndices.map(oldIndex => shuffledIndices.indexOf(oldIndex));
-                        question.answer = newAnswerIndices.join(',');
-                    }
-                }
+            // Store the finalized question set back to the game instance for this session
+            currentGame.activeQuestions = questionsToUse;
+            
+            database.ref(`rooms/${currentRoom}`).update({
+                gameState: 'playing',
+                questions: questionsToUse // Sync the randomized order to all players
             });
-            
-            currentGame.questions = questionsToUse;
-            
-            database.ref(`rooms/${currentRoom}/gameState`).set('playing');
-            showNextQuestion();
+        
+            nextQuestion();
         }
 
         function showNextQuestion() {
@@ -1615,71 +1579,26 @@
         function validatePlayerAnswer() {
             const submitBtn = document.getElementById('submitAnswer');
             if (!submitBtn) return;
-            
+        
             let hasAnswer = false;
-            
-            // Check each input type using specific selectors
-            const radios = document.querySelectorAll('input[type="radio"]:checked');
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
-            const textInput = document.getElementById('textAnswerInput'); // Use specific ID
-            const numberInput = document.getElementById('numberAnswerInput'); // Use specific ID
+            const radioSelected = document.querySelector('input[name="answer"]:checked');
+            const checkboxes = document.querySelectorAll('input[name="answer"]:checked');
+            const textInput = document.getElementById('textAnswerInput');
+            const numberInput = document.getElementById('numberAnswerInput');
             const rangeInput = document.querySelector('input[type="range"]');
             const sortableItems = document.getElementById('sortableItems');
-            
-            // Check each input type
-            if (radios.length > 0) {
-                hasAnswer = true;
-                console.log('✅ Radio answer selected');
-            }
-            
-            if (checkboxes.length > 0) {
-                hasAnswer = true;
-                console.log('✅ Checkbox answer selected');
-            }
-            
-            if (textInput && textInput.value.trim().length > 0) {
-                hasAnswer = true;
-                console.log('✅ Text input has value:', textInput.value.trim());
-            }
-            
-            if (numberInput && numberInput.value.trim().length > 0) {
-                hasAnswer = true;
-                console.log('✅ Number input has value:', numberInput.value.trim());
-            }
-            
-            if (rangeInput) {
-                hasAnswer = true; // Range always has a value
-                console.log('✅ Range input has value:', rangeInput.value);
-            }
-            
-            if (sortableItems) {
-                // For rearrange questions, check if order has changed
-                if (checkIfRearranged()) {
-                    hasAnswer = true;
-                    console.log('✅ Items have been rearranged');
-                }
-            }
-            
-            console.log('🔍 validatePlayerAnswer result:', { 
-                hasAnswer, 
-                textValue: textInput?.value,
-                textElement: !!textInput,
-                numberValue: numberInput?.value,
-                numberElement: !!numberInput
-            });
-            
+        
+            // Check specific to the active element type
+            if (radioSelected) hasAnswer = true;
+            else if (checkboxes.length > 0) hasAnswer = true;
+            else if (textInput && textInput.value.trim().length > 0) hasAnswer = true;
+            else if (numberInput && numberInput.value.trim().length > 0) hasAnswer = true;
+            else if (rangeInput) hasAnswer = true; // Range always has a default value
+            else if (sortableItems) hasAnswer = true; // Arrange is valid if interaction occurred
+        
             submitBtn.disabled = !hasAnswer;
-            
-            // Visual feedback
-            if (hasAnswer) {
-                submitBtn.classList.remove('opacity-50');
-                submitBtn.classList.add('opacity-100');
-                console.log('✅ Submit button enabled');
-            } else {
-                submitBtn.classList.add('opacity-50');
-                submitBtn.classList.remove('opacity-100');
-                console.log('❌ Submit button disabled');
-            }
+            submitBtn.classList.toggle('opacity-50', !hasAnswer);
+            submitBtn.classList.toggle('opacity-100', hasAnswer);
         }
 
         // Track original order for rearrange questions
@@ -1771,51 +1690,37 @@
         function showPlayerQuestionResult(question) {
             // Calculate if answer was correct and update score
             checkAnswerCorrect(question).then(isCorrect => {
-                const pointsEarned = isCorrect ? question.points : 0;
+                let pointsEarned = 0;
                 
-                // Update player score in Firebase
-                if (pointsEarned > 0) {
-                    database.ref(`rooms/${currentRoom}/players/${currentUser.id}/score`).transaction(currentScore => {
-                        return (currentScore || 0) + pointsEarned;
-                    });
-                }
-                
-                const playerUI = document.getElementById('playerGameUI');
-                playerUI.innerHTML = `
-                    <div class="text-center">
-                        <div class="mb-6">
-                            <div class="text-6xl mb-4">${isCorrect ? '✅' : '❌'}</div>
-                            <h2 class="text-2xl font-bold mb-2">${isCorrect ? 'Correct!' : 'Incorrect'}</h2>
-                            <p class="text-lg text-gray-600 dark:text-gray-400">
-                                ${isCorrect ? `+${question.points} points` : '0 points'}
-                            </p>
-                        </div>
-                        
-                        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6">
-                            <h3 class="text-lg font-semibold mb-2">Correct Answer:</h3>
-                            <p class="text-lg">${getCorrectAnswerText(question)}</p>
-                        </div>
-                        
-                        <div class="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
-                            <h3 class="text-lg font-semibold mb-2">Your Current Score</h3>
-                            <p class="text-2xl font-bold text-primary" id="currentScore">Loading...</p>
-                        </div>
-                        
-                        <div class="mt-6">
-                            <p class="text-lg">Waiting for next question...</p>
-                        </div>
-                    </div>
-                `;
-                
-                // Update current score display
-                database.ref(`rooms/${currentRoom}/players/${currentUser.id}/score`).once('value', (snapshot) => {
-                    const currentScore = snapshot.val() || 0;
-                    const scoreElement = document.getElementById('currentScore');
-                    if (scoreElement) {
-                        scoreElement.textContent = currentScore;
+                if (isCorrect) {
+                    pointsEarned = question.points || 0;
+                    
+                    // 1. Time Bonus Calculation
+                    if (currentGame.settings?.timeBonus) {
+                        const timeLimit = parseTimeString(question.time || "00:30");
+                        const timeTaken = (Date.now() - questionStartTime) / 1000;
+                        const timePercent = Math.max(0, (timeLimit - timeTaken) / timeLimit);
+                        pointsEarned += Math.floor(pointsEarned * 0.5 * timePercent); // Up to 50% extra
                     }
+                    
+                    // 2. Streak Bonus Calculation
+                    if (currentGame.settings?.streakBonus) {
+                        currentUser.streak = (currentUser.streak || 0) + 1;
+                        if (currentUser.streak >= 3) {
+                            pointsEarned += Math.min(currentUser.streak * 10, 100); // Max 100 bonus
+                        }
+                    }
+                } else {
+                    currentUser.streak = 0; // Reset streak
+                    if (currentGame.settings?.deductIncorrect) {
+                        pointsEarned = -25; // Simple penalty
+                    }
+                }
+            
+                database.ref(`rooms/${currentRoom}/players/${currentUser.id}`).update({
+                    score: (currentUser.score || 0) + pointsEarned,
+                    streak: currentUser.streak || 0
                 });
-            });
         }
 
         function checkAnswerCorrect(question) {
@@ -2623,74 +2528,41 @@
         }
 
         // Real-time player answers listener
-        function listenToPlayerAnswers() {
-            // Listen to both answers and players to ensure proper updates
-            const answersRef = database.ref(`rooms/${currentRoom}/answers`);
+        function updatePlayerActivity() {
+            if (!currentRoom || currentQuestionIndex === null) return;
+        
             const playersRef = database.ref(`rooms/${currentRoom}/players`);
-            
-            function updatePlayerActivity() {
-                // Get both answers and players data
-                Promise.all([
-                    answersRef.once('value'),
-                    playersRef.once('value')
-                ]).then(([answersSnapshot, playersSnapshot]) => {
-                    const answers = answersSnapshot.val() || {};
-                    const players = playersSnapshot.val() || {};
-                    const playersArray = Object.values(players);
-                    
-                    // Count answers for current question only
-                    const currentQuestionAnswers = Object.values(answers).filter(answer => 
-                        answer && answer.questionIndex === currentQuestionIndex
-                    );
-                    const responseCount = currentQuestionAnswers.length;
-                    
-                    // Update response count
-                    const responseCountElement = document.getElementById('responseCount');
-                    if (responseCountElement) {
-                        responseCountElement.textContent = `(${responseCount} answered)`;
-                    }
-                    
-                    // Update player responses display
-                    const playerResponsesElement = document.getElementById('playerResponses');
-                    if (playerResponsesElement) {
-                        if (playersArray.length === 0) {
-                            playerResponsesElement.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center">No players in game...</p>';
-                        } else if (responseCount === 0) {
-                            // Show all players as waiting
-                            const responsesList = playersArray.map(player => `
-                                <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                                    <span class="text-sm font-medium">${player.name}</span>
-                                    <span class="text-xs text-gray-400">Waiting...</span>
-                                </div>
-                            `).join('');
-                            playerResponsesElement.innerHTML = responsesList;
-                        } else {
-                            // Show which players have answered for the current question
-                            const responsesList = playersArray.map(player => {
-                                // Find player ID by matching name (since we have player objects with names)
-                                const playerId = Object.keys(players).find(id => players[id].name === player.name);
-                                
-                                // Check if this specific player has answered the current question
-                                const hasAnswered = playerId && answers[playerId] && 
-                                                  answers[playerId].questionIndex === currentQuestionIndex;
-                                
-                                return `
-                                    <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                                        <span class="text-sm font-medium">${player.name}</span>
-                                        <span class="text-xs ${hasAnswered ? 'text-green-600 dark:text-green-400' : 'text-gray-400'}">
-                                            ${hasAnswered ? '✓ Answered' : 'Waiting...'}
-                                        </span>
-                                    </div>
-                                `;
-                            }).join('');
-                            
-                            playerResponsesElement.innerHTML = responsesList;
-                        }
-                    }
-                }).catch(error => {
-                    console.error('❌ Error updating player activity:', error);
-                });
-            }
+            const answersRef = database.ref(`rooms/${currentRoom}/answers`);
+        
+            Promise.all([playersRef.once('value'), answersRef.once('value')]).then(([playerSnap, answerSnap]) => {
+                const players = playerSnap.val() || {};
+                const answers = answerSnap.val() || {};
+                const playerResponsesElement = document.getElementById('playerResponses');
+                const responseCountElement = document.getElementById('responseCount');
+        
+                if (!playerResponsesElement) return;
+        
+                const playerIds = Object.keys(players);
+                let answeredCount = 0;
+        
+                const responsesList = playerIds.map(playerId => {
+                    // Check if player has an answer for the CURRENT question index
+                    const hasAnswered = answers[playerId] && answers[playerId].questionIndex === currentQuestionIndex;
+                    if (hasAnswered) answeredCount++;
+        
+                    return `
+                        <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                            <span class="text-sm font-medium">${players[playerId].name}</span>
+                            <span class="text-xs ${hasAnswered ? 'text-green-600' : 'text-gray-400'}">
+                                ${hasAnswered ? '✓ Submitted' : 'Thinking...'}
+                            </span>
+                        </div>`;
+                }).join('');
+        
+                playerResponsesElement.innerHTML = responsesList || '<p class="text-center">No players connected</p>';
+                if (responseCountElement) responseCountElement.textContent = `(${answeredCount}/${playerIds.length} answered)`;
+            });
+        }
             
             // Listen to changes in answers
             answersRef.on('value', (snapshot) => {
