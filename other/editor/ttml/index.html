@@ -253,8 +253,8 @@
         // Global variables
         let audioFile = null;
         let lyrics = [];
-        let lyricTimings = {}; // { lyricIndex: timestamp }
-        let autoTimings = {}; // Separate storage for auto-generated timings
+        let lyricTimings = {}; // { lyricIndex: [timestamp1, timestamp2] }
+        let autoTimings = {}; // { lyricIndex: [timestamp1, timestamp2] }
         let isRecording = false;
         let startTime = 0;
         let recognition = null;
@@ -388,17 +388,19 @@
         function updateTimingDisplay(index) {
             const timingInfo = document.getElementById(`timing-${index}`);
             if (timingInfo) {
-                const manualTiming = lyricTimings[index];
-                const autoTiming = autoTimings[index];
+                const manualTimingArr = lyricTimings[index] || [];
+                const autoTimingArr = autoTimings[index] || [];
                 
                 let displayText = '';
                 
-                if (autoTiming !== undefined) {
-                    displayText = `🤖 Auto Begin: ${formatTimeForTTML(autoTiming)}`;
+                if (autoTimingArr.length > 0) {
+                    const autoText = autoTimingArr.map(formatTimeForTTML).join(', ');
+                    displayText = `🤖 Auto: ${autoText}`;
                 }
                 
-                if (manualTiming !== undefined) {
-                    displayText += (displayText ? ' | ' : '') + `👆 Manual Begin: ${formatTimeForTTML(manualTiming)}`;
+                if (manualTimingArr.length > 0) {
+                    const manualText = manualTimingArr.map(formatTimeForTTML).join(', ');
+                    displayText += (displayText ? ' | ' : '') + `👆 Manual: ${manualText}`;
                 }
                 
                 if (!displayText) {
@@ -491,7 +493,8 @@
                     const bestMatch = findBestLyricMatch(transcriptText, currentLyricIndex);
                     
                     if (bestMatch !== -1) {
-                        autoTimings[bestMatch] = timestamp;
+                        if (!autoTimings[bestMatch]) autoTimings[bestMatch] = [];
+                        autoTimings[bestMatch].push(timestamp);
                         currentLyricIndex = bestMatch + 1;
                         updateTimingDisplay(bestMatch);
                         updatePreview();
@@ -550,8 +553,8 @@
             let bestScore = 0;
 
             for (let i = startIndex; i < lyrics.length; i++) {
-                if (autoTimings[i] !== undefined) continue;
-
+                // Remove the check that skips if autoTimings[i] exists 
+                // to allow matching repeated sections
                 const lyric = lyrics[i].toLowerCase();
                 const score = calculateSimilarity(transcript, lyric);
 
@@ -594,7 +597,7 @@
 
             const matchedCount = Object.keys(autoTimings).length;
             autoResults.classList.remove('hidden');
-            autoResultText.textContent = `Matched ${matchedCount} out of ${lyrics.length} lines automatically.`;
+            autoResultText.textContent = `Matched ${matchedCount} out of ${lyrics.length} unique lines automatically.`;
         }
 
         function clearAutoTimingsFunc() {
@@ -660,8 +663,11 @@
         function recordTiming(lyricIndex) {
             const currentAudioTime = audioPlayer.currentTime;
             
-            // Overwrite if previously clicked (stores a single start time)
-            lyricTimings[lyricIndex] = currentAudioTime;
+            // Push to array to allow multiple triggers of the same line
+            if (!lyricTimings[lyricIndex]) {
+                lyricTimings[lyricIndex] = [];
+            }
+            lyricTimings[lyricIndex].push(currentAudioTime);
             
             updateTimingDisplay(lyricIndex);
             updatePreview();
@@ -702,25 +708,34 @@
             ttml += `  <body>\n`;
             ttml += `    <div style="s1">\n`;
 
-            // Collect timings into an array of objects
-            let lines = [];
+            // Flatten all manual and auto timings into a single chronological array
+            let allLines = [];
+            
             lyrics.forEach((lyric, index) => {
-                let time = autoTimings[index] !== undefined ? autoTimings[index] : lyricTimings[index];
-                if (time !== undefined) {
-                    lines.push({ index, begin: time, text: lyric });
+                // Add auto timings
+                if (autoTimings[index]) {
+                    autoTimings[index].forEach(time => {
+                        allLines.push({ begin: time, text: lyric });
+                    });
+                }
+                // Add manual timings
+                if (lyricTimings[index]) {
+                    lyricTimings[index].forEach(time => {
+                        allLines.push({ begin: time, text: lyric });
+                    });
                 }
             });
 
-            // Sort by begin time 
-            lines.sort((a, b) => a.begin - b.begin);
+            // Sort by chronological begin time 
+            allLines.sort((a, b) => a.begin - b.begin);
 
             let hasTimings = false;
 
-            // Generate <p> blocks with calculated end times
-            for (let i = 0; i < lines.length; i++) {
+            // Generate <p> blocks with calculated end times for every single occurrence
+            for (let i = 0; i < allLines.length; i++) {
                 hasTimings = true;
-                let current = lines[i];
-                let next = lines[i + 1];
+                let current = allLines[i];
+                let next = allLines[i + 1];
                 let beginStr = formatTimeForTTML(current.begin);
                 
                 let endStr;
