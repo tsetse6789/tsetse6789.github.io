@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTML Subtitle Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .drag-active {
+            @apply border-primary bg-primary bg-opacity-10;
+        }
+        
+        .lyric-button {
+            transition: all 0.2s ease;
+        }
+        
+        .lyric-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(93, 92, 222, 0.3);
+        }
+        
+        .lyric-button.recorded {
+            @apply bg-green-500 text-white;
+        }
+        
+        .lyric-button.auto-matched {
+            @apply bg-blue-500 text-white;
+        }
+        
+        .recording-active .lyric-button {
+            @apply cursor-pointer;
+        }
+        
+        .waveform {
+            background: linear-gradient(90deg, #5D5CDE 0%, #8B5CF6 100%);
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #5D5CDE;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 min-h-screen transition-colors">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">🎞️ TTML Subtitle Maker by Nut</h1>
+            <p class="text-gray-600 dark:text-gray-400">Create synchronized TTML subtitle files with precise begin and end timings</p>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">📁 Upload Audio File</h2>
+            
+            <div id="dropZone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition-colors">
+                <div id="dropContent">
+                    <div class="text-6xl mb-4">🎧</div>
+                    <p class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Drop your audio file here</p>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4">or click to browse</p>
+                    <button class="bg-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors">
+                        Choose File
+                    </button>
+                </div>
+                <div id="fileInfo" class="hidden">
+                    <div class="text-4xl mb-2">🎵</div>
+                    <p id="fileName" class="font-medium text-gray-900 dark:text-white"></p>
+                    <p id="fileSize" class="text-gray-500 dark:text-gray-400"></p>
+                </div>
+            </div>
+            
+            <input type="file" id="audioFile" accept="audio/*" class="hidden">
+            
+            <audio id="audioPlayer" class="w-full mt-4 hidden" controls>
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">ℹ️ Metadata</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title</label>
+                    <input type="text" id="songTitle" placeholder="Enter title" 
+                           class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description / Artist</label>
+                    <input type="text" id="artist" placeholder="Enter description or artist" 
+                           class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">📝 Subtitle Text</h2>
+            <textarea id="lyricsInput" placeholder="Paste your subtitle lines here, one line per block..." 
+                      class="w-full h-40 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent resize-vertical"
+                      style="font-family: inherit;"></textarea>
+            <button id="parseLyrics" class="mt-3 bg-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 transition-colors">
+                📋 Parse Lines
+            </button>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">⏱️ Timing Method</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <button id="selectManual" class="p-4 border-2 border-primary bg-primary bg-opacity-10 rounded-lg hover:bg-opacity-20 transition-colors">
+                    <div class="text-3xl mb-2">👆</div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Manual Timing</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Click lines while listening</div>
+                </button>
+                <button id="selectAuto" class="p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary hover:bg-opacity-10 transition-colors">
+                    <div class="text-3xl mb-2">🤖</div>
+                    <div class="font-semibold text-gray-900 dark:text-white">Auto Timing (Experimental)</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Speech recognition matching</div>
+                </button>
+            </div>
+        
+            <div id="manualTimingSection" class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 sm:mb-0">👆 Manual Timing</h3>
+                    <div class="flex items-center space-x-3">
+                        <div id="currentTime" class="text-sm font-mono text-gray-600 dark:text-gray-400">00:00:00.000</div>
+                        <button id="recordButton" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            🔴 Start Recording
+                        </button>
+                        <button id="clearTimings" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div id="progressBar" class="waveform h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
+                <div id="lyricsContainer" class="space-y-2">
+                    <p class="text-gray-500 dark:text-gray-400 text-center py-8">Parse lines first to start timing</p>
+                </div>
+                </div>
+            
+                <div id="autoTimingSection" class="border-t border-gray-200 dark:border-gray-700 pt-6 hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">🤖 Auto Timing</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Automatically match text with audio using speech recognition</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+                            <select id="autoLanguage" class="w-full px-4 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="en-US">English (US)</option>
+                                <option value="en-GB">English (UK)</option>
+                                <option value="es-ES">Spanish</option>
+                                <option value="fr-FR">French</option>
+                                <option value="de-DE">German</option>
+                                <option value="it-IT">Italian</option>
+                                <option value="pt-BR">Portuguese (Brazil)</option>
+                                <option value="ja-JP">Japanese</option>
+                                <option value="ko-KR">Korean</option>
+                                <option value="zh-CN">Chinese (Simplified)</option>
+                                <option value="zh-TW">Chinese (Traditional)</option>
+                                <option value="zh-HK">Chinese (Cantonese)</option>
+                                <option value="vi-VN">Vietnamese</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end gap-2">
+                            <button id="startAuto" class="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                🚀 Start
+                            </button>
+                            <button id="endAuto" class="hidden bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors">
+                                ⏹️ End
+                            </button>
+                            <button id="clearAutoTimings" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
+                                🗑️ Clear
+                            </button>
+                        </div>
+                    </div>
+            
+                    <div id="autoStatus" class="hidden bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <div class="spinner"></div>
+                            <span class="text-gray-700 dark:text-gray-300 font-medium">Processing audio...</span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400" id="autoProgress">Initializing...</div>
+                    </div>
+            
+                    <div id="autoResults" class="hidden bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700 mt-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">✅</span>
+                            <span class="text-gray-700 dark:text-gray-300 font-medium">Auto timing complete!</span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1" id="autoResultText"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">    
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">📄 TTML Preview</h2>
+            <pre id="ttmlPreview" class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-sm font-mono text-gray-800 dark:text-gray-200 whitespace-pre-wrap max-h-60 overflow-y-auto mb-4">No subtitles timed yet...</pre>
+            <button id="downloadTtml" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                💾 Download TTML File
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Global variables
+        let audioFile = null;
+        let lyrics = [];
+        let lyricTimings = {}; // { lyricIndex: timestamp }
+        let autoTimings = {}; // Separate storage for auto-generated timings
+        let isRecording = false;
+        let startTime = 0;
+        let recognition = null;
+        let isAutoTiming = false;
+
+        // DOM elements
+        const dropZone = document.getElementById('dropZone');
+        const audioFileInput = document.getElementById('audioFile');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const dropContent = document.getElementById('dropContent');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const songTitle = document.getElementById('songTitle');
+        const artist = document.getElementById('artist');
+        const lyricsInput = document.getElementById('lyricsInput');
+        const parseLyrics = document.getElementById('parseLyrics');
+        const lyricsContainer = document.getElementById('lyricsContainer');
+        const recordButton = document.getElementById('recordButton');
+        const clearTimings = document.getElementById('clearTimings');
+        const currentTime = document.getElementById('currentTime');
+        const progressBar = document.getElementById('progressBar');
+        const ttmlPreview = document.getElementById('ttmlPreview');
+        const downloadTtml = document.getElementById('downloadTtml');
+        const autoLanguage = document.getElementById('autoLanguage');
+        const startAuto = document.getElementById('startAuto');
+        const autoStatus = document.getElementById('autoStatus');
+        const autoProgress = document.getElementById('autoProgress');
+        const autoResults = document.getElementById('autoResults');
+        const autoResultText = document.getElementById('autoResultText');
+        const clearAuto = document.getElementById('clearAuto');
+
+        // File upload handlers
+        dropZone.addEventListener('click', () => audioFileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-active');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-active');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-active');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        audioFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.startsWith('audio/') && !file.type.startsWith('video/')) {
+                showAlert('Please select a valid media file.');
+                return;
+            }
+
+            audioFile = file;
+            const url = URL.createObjectURL(file);
+            audioPlayer.src = url;
+            audioPlayer.classList.remove('hidden');
+
+            // Update file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            dropContent.classList.add('hidden');
+            fileInfo.classList.remove('hidden');
+
+            // Auto-fill song title if possible
+            if (!songTitle.value) {
+                songTitle.value = file.name.replace(/\.[^/.]+$/, "");
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Lyrics parsing
+        parseLyrics.addEventListener('click', () => {
+            const text = lyricsInput.value.trim();
+            if (!text) {
+                showAlert('Please enter some text first.');
+                return;
+            }
+
+            lyrics = text.split('\n').filter(line => line.trim() !== '');
+            lyricTimings = {};
+            autoTimings = {};
+            renderLyricButtons();
+            updatePreview();
+        });
+
+        function renderLyricButtons() {
+            lyricsContainer.innerHTML = '';
+            
+            lyrics.forEach((lyric, index) => {
+                const button = document.createElement('button');
+                button.className = 'lyric-button w-full text-left p-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors';
+                button.textContent = lyric;
+                button.dataset.index = index;
+                
+                const timingInfo = document.createElement('div');
+                timingInfo.className = 'text-xs text-gray-500 dark:text-gray-400 mt-1';
+                timingInfo.id = `timing-${index}`;
+                updateTimingDisplay(index);
+                
+                const wrapper = document.createElement('div');
+                wrapper.appendChild(button);
+                wrapper.appendChild(timingInfo);
+                
+                button.addEventListener('click', () => {
+                    if (isRecording) {
+                        recordTiming(index);
+                    }
+                });
+                
+                lyricsContainer.appendChild(wrapper);
+            });
+        }
+
+        function updateTimingDisplay(index) {
+            const timingInfo = document.getElementById(`timing-${index}`);
+            if (timingInfo) {
+                const manualTiming = lyricTimings[index];
+                const autoTiming = autoTimings[index];
+                
+                let displayText = '';
+                
+                if (autoTiming !== undefined) {
+                    displayText = `🤖 Auto Begin: ${formatTimeForTTML(autoTiming)}`;
+                }
+                
+                if (manualTiming !== undefined) {
+                    displayText += (displayText ? ' | ' : '') + `👆 Manual Begin: ${formatTimeForTTML(manualTiming)}`;
+                }
+                
+                if (!displayText) {
+                    displayText = 'No timing recorded';
+                }
+                
+                timingInfo.textContent = displayText;
+            }
+        }
+
+        // Timing method selection
+        const selectManual = document.getElementById('selectManual');
+        const selectAuto = document.getElementById('selectAuto');
+        const manualTimingSection = document.getElementById('manualTimingSection');
+        const autoTimingSection = document.getElementById('autoTimingSection');
+        const endAuto = document.getElementById('endAuto');
+        const clearAutoTimings = document.getElementById('clearAutoTimings');
+
+        selectManual.addEventListener('click', () => {
+            selectManual.className = 'p-4 border-2 border-primary bg-primary bg-opacity-10 rounded-lg hover:bg-opacity-20 transition-colors';
+            selectAuto.className = 'p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary hover:bg-opacity-10 transition-colors';
+            manualTimingSection.classList.remove('hidden');
+            autoTimingSection.classList.add('hidden');
+        });
+
+        selectAuto.addEventListener('click', () => {
+            selectAuto.className = 'p-4 border-2 border-primary bg-primary bg-opacity-10 rounded-lg hover:bg-opacity-20 transition-colors';
+            selectManual.className = 'p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary hover:bg-primary hover:bg-opacity-10 transition-colors';
+            autoTimingSection.classList.remove('hidden');
+            manualTimingSection.classList.add('hidden');
+        });
+
+        // Auto Timing Functionality
+        startAuto.addEventListener('click', startAutoTiming);
+        endAuto.addEventListener('click', stopAutoTiming);
+        clearAutoTimings.addEventListener('click', clearAutoTimingsFunc);
+
+        function startAutoTiming() {
+            if (!audioFile) {
+                showAlert('Please upload an audio file first.');
+                return;
+            }
+
+            if (!lyrics.length) {
+                showAlert('Please parse text first.');
+                return;
+            }
+
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showAlert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+                return;
+            }
+
+            isAutoTiming = true;
+            autoTimings = {};
+            autoStatus.classList.remove('hidden');
+            autoResults.classList.add('hidden');
+            startAuto.classList.add('hidden');
+            endAuto.classList.remove('hidden');
+            recordButton.disabled = true;
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            const selectedLang = autoLanguage.value;
+            if (selectedLang === 'zh-HK') {
+                recognition.lang = 'yue-Hant-HK'; 
+            } else {
+                recognition.lang = selectedLang;
+            }
+
+            let currentLyricIndex = 0;
+
+            recognition.onstart = () => {
+                autoProgress.textContent = 'Listening to audio... Speak clearly for best results.';
+                audioPlayer.currentTime = 0;
+                audioPlayer.play();
+            };
+
+            recognition.onresult = (event) => {
+                const currentTranscript = event.results[event.results.length - 1];
+                const transcriptText = currentTranscript[0].transcript.trim().toLowerCase();
+                const timestamp = audioPlayer.currentTime;
+
+                if (currentTranscript.isFinal && transcriptText) {
+                    autoProgress.textContent = `Detected: "${transcriptText}"`;
+                    
+                    const bestMatch = findBestLyricMatch(transcriptText, currentLyricIndex);
+                    
+                    if (bestMatch !== -1) {
+                        autoTimings[bestMatch] = timestamp;
+                        currentLyricIndex = bestMatch + 1;
+                        updateTimingDisplay(bestMatch);
+                        updatePreview();
+                        
+                        const button = document.querySelector(`[data-index="${bestMatch}"]`);
+                        if (button) {
+                            button.classList.add('auto-matched');
+                            setTimeout(() => button.classList.remove('auto-matched'), 1000);
+                        }
+                    }
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'language-not-supported') {
+                    if (recognition.lang === 'yue-Hant-HK') {
+                        recognition.lang = 'zh-HK';
+                        autoProgress.textContent = 'Retrying with alternative language code...';
+                        return;
+                    }
+                    autoProgress.textContent = `Language not supported. Try Chinese (Traditional) instead.`;
+                } else {
+                    autoProgress.textContent = `Error: ${event.error}. Continuing...`;
+                }
+            };
+
+            recognition.onend = () => {
+                if (isAutoTiming && audioPlayer.currentTime < audioPlayer.duration - 1) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        console.error('Failed to restart recognition:', e);
+                        stopAutoTiming();
+                    }
+                } else {
+                    stopAutoTiming();
+                }
+            };
+
+            audioPlayer.onended = () => {
+                stopAutoTiming();
+            };
+
+            try {
+                recognition.start();
+            } catch (e) {
+                console.error('Failed to start recognition:', e);
+                showAlert('Failed to start speech recognition. Please check your browser permissions.');
+                stopAutoTiming();
+            }
+        }
+
+        function findBestLyricMatch(transcript, startIndex) {
+            let bestMatch = -1;
+            let bestScore = 0;
+
+            for (let i = startIndex; i < lyrics.length; i++) {
+                if (autoTimings[i] !== undefined) continue;
+
+                const lyric = lyrics[i].toLowerCase();
+                const score = calculateSimilarity(transcript, lyric);
+
+                if (score > bestScore && score > 0.3) {
+                    bestScore = score;
+                    bestMatch = i;
+                }
+            }
+
+            return bestMatch;
+        }
+
+        function calculateSimilarity(str1, str2) {
+            const words1 = str1.split(/\s+/).filter(w => w.length > 2);
+            const words2 = str2.split(/\s+/).filter(w => w.length > 2);
+            
+            if (words1.length === 0 || words2.length === 0) return 0;
+
+            let matches = 0;
+            words1.forEach(word1 => {
+                if (words2.some(word2 => word2.includes(word1) || word1.includes(word2))) {
+                    matches++;
+                }
+            });
+
+            return matches / Math.max(words1.length, words2.length);
+        }
+
+        function stopAutoTiming() {
+            isAutoTiming = false;
+            if (recognition) {
+                recognition.stop();
+                recognition = null;
+            }
+            audioPlayer.pause();
+            autoStatus.classList.add('hidden');
+            startAuto.classList.remove('hidden');
+            endAuto.classList.add('hidden');
+            recordButton.disabled = false;
+
+            const matchedCount = Object.keys(autoTimings).length;
+            autoResults.classList.remove('hidden');
+            autoResultText.textContent = `Matched ${matchedCount} out of ${lyrics.length} lines automatically.`;
+        }
+
+        function clearAutoTimingsFunc() {
+            autoTimings = {};
+            lyrics.forEach((_, index) => updateTimingDisplay(index));
+            updatePreview();
+            autoResults.classList.add('hidden');
+        }
+
+        // Recording functionality
+        recordButton.addEventListener('click', () => {
+            if (!audioFile) {
+                showAlert('Please upload an audio file first.');
+                return;
+            }
+
+            if (!lyrics.length) {
+                showAlert('Please parse text first.');
+                return;
+            }
+
+            if (!isRecording) {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        function startRecording() {
+            isRecording = true;
+            recordButton.textContent = '⏹️ Stop Recording';
+            recordButton.className = 'bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors';
+            lyricsContainer.classList.add('recording-active');
+            
+            audioPlayer.currentTime = 0;
+            audioPlayer.play();
+            startTime = Date.now();
+            updateTimer();
+        }
+
+        function stopRecording() {
+            isRecording = false;
+            recordButton.textContent = '🔴 Start Recording';
+            recordButton.className = 'bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors';
+            lyricsContainer.classList.remove('recording-active');
+            audioPlayer.pause();
+        }
+
+        function updateTimer() {
+            if (!isRecording) return;
+            
+            const elapsed = audioPlayer.currentTime;
+            currentTime.textContent = formatTimeForTTML(elapsed);
+            
+            if (audioPlayer.duration) {
+                const progress = (elapsed / audioPlayer.duration) * 100;
+                progressBar.style.width = `${Math.min(progress, 100)}%`;
+            }
+            
+            requestAnimationFrame(updateTimer);
+        }
+
+        function recordTiming(lyricIndex) {
+            const currentAudioTime = audioPlayer.currentTime;
+            
+            // Overwrite if previously clicked (stores a single start time)
+            lyricTimings[lyricIndex] = currentAudioTime;
+            
+            updateTimingDisplay(lyricIndex);
+            updatePreview();
+            
+            // Visual feedback
+            const button = document.querySelector(`[data-index="${lyricIndex}"]`);
+            button.classList.add('recorded');
+            setTimeout(() => button.classList.remove('recorded'), 500);
+        }
+
+        clearTimings.addEventListener('click', () => {
+            lyricTimings = {};
+            lyrics.forEach((_, index) => updateTimingDisplay(index));
+            updatePreview();
+        });
+
+        // TTML generation and preview
+        function updatePreview() {
+            const ttmlContent = generateTtmlContent();
+            ttmlPreview.textContent = ttmlContent;
+            downloadTtml.disabled = !ttmlContent.includes('begin=');
+        }
+
+        function generateTtmlContent() {
+            let ttml = `<?xml version="1.0" encoding="utf-8"?>\n`;
+            ttml += `<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" xmlns:tts="http://www.w3.org/ns/ttml#styling">\n`;
+            ttml += `  <head>\n`;
+            ttml += `    <metadata>\n`;
+            ttml += `      <ttm:title>${escapeXml(songTitle.value || 'Untitled')}</ttm:title>\n`;
+            if (artist.value.trim()) {
+                ttml += `      <ttm:desc>Artist/Description: ${escapeXml(artist.value.trim())}</ttm:desc>\n`;
+            }
+            ttml += `    </metadata>\n`;
+            ttml += `    <styling>\n`;
+            ttml += `      <style xml:id="s1" tts:textAlign="center" tts:color="white" tts:fontFamily="sans-serif"/>\n`;
+            ttml += `    </styling>\n`;
+            ttml += `  </head>\n`;
+            ttml += `  <body>\n`;
+            ttml += `    <div style="s1">\n`;
+
+            // Collect timings into an array of objects
+            let lines = [];
+            lyrics.forEach((lyric, index) => {
+                let time = autoTimings[index] !== undefined ? autoTimings[index] : lyricTimings[index];
+                if (time !== undefined) {
+                    lines.push({ index, begin: time, text: lyric });
+                }
+            });
+
+            // Sort by begin time 
+            lines.sort((a, b) => a.begin - b.begin);
+
+            let hasTimings = false;
+
+            // Generate <p> blocks with calculated end times
+            for (let i = 0; i < lines.length; i++) {
+                hasTimings = true;
+                let current = lines[i];
+                let next = lines[i + 1];
+                let beginStr = formatTimeForTTML(current.begin);
+                
+                let endStr;
+                if (next) {
+                    // Set end time to the next line's begin time
+                    endStr = formatTimeForTTML(next.begin);
+                } else {
+                    // For the last line, guess an end time (start + 5 seconds, max audio duration)
+                    let duration = audioPlayer.duration || current.begin + 5;
+                    let endTime = Math.min(current.begin + 5, duration);
+                    endStr = formatTimeForTTML(endTime);
+                }
+                
+                ttml += `      <p begin="${beginStr}" end="${endStr}">${escapeXml(current.text)}</p>\n`;
+            }
+
+            ttml += `    </div>\n`;
+            ttml += `  </body>\n`;
+            ttml += `</tt>`;
+            
+            if (!hasTimings) {
+                return 'No subtitles timed yet...';
+            }
+            
+            return ttml;
+        }
+
+        // Formats seconds into hh:mm:ss.ms
+        function formatTimeForTTML(seconds) {
+            const hrs = Math.floor(seconds / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 1000);
+            return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+        }
+
+        // Escapes illegal XML characters
+        function escapeXml(unsafe) {
+            return unsafe
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        // Download functionality
+        downloadTtml.addEventListener('click', () => {
+            const ttmlContent = generateTtmlContent();
+            if (!ttmlContent.includes('begin=')) {
+                showAlert('No timed subtitles to download.');
+                return;
+            }
+            
+            const blob = new Blob([ttmlContent], { type: 'application/xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${songTitle.value || 'subtitles'}.ttml`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Custom alert function
+        function showAlert(message) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                    <div class="flex items-center mb-4">
+                        <div class="text-2xl mr-3">⚠️</div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Notice</h3>
+                    </div>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">${message}</p>
+                    <div class="flex justify-end">
+                        <button class="px-4 py-2 bg-primary text-white hover:bg-opacity-90 rounded transition-colors" onclick="this.closest('.fixed').remove()">OK</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Auto-update preview when info changes
+        songTitle.addEventListener('input', updatePreview);
+        artist.addEventListener('input', updatePreview);
+    </script>
+</body>
+</html>
