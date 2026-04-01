@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Player 2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#DE5CDE', // New primary color (Pink/Magenta)
+                        primaryDark: '#5D5CDE', // Purple
+                        primaryLight: '#F1EDC0', // Yellow/Gold
+                        bgMain: '#F3F4F6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Hide scrollbar for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Smooth tab transition */
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease-out;
+        }
+
+        .tab-content.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Playlist Item Image Masking (Fading effect on the left of the image) */
+        .playlist-img-mask {
+            -webkit-mask-image: linear-gradient(to right, transparent, black 40%);
+            mask-image: linear-gradient(to right, transparent, black 40%);
+        }
+    </style>
+</head>
+<body class="bg-bgMain h-screen w-screen overflow-hidden text-gray-800 font-sans flex flex-col md:flex-row pb-16 md:pb-0">
+
+    <!-- DESKTOP NAV BAR (Left, slim) -->
+    <nav class="hidden md:flex w-20 flex-col items-center py-8 gap-6 bg-transparent z-50 shrink-0 border-r border-gray-200/60">
+        <!-- Search Button (Active state in PDF Page 4 has gray background) -->
+        <button onclick="switchTab('search')" id="nav-desktop-search" class="nav-btn p-3 rounded-2xl bg-gray-200 text-gray-800 transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <!-- Playlist Button -->
+        <button onclick="switchTab('playlist')" id="nav-desktop-playlist" class="nav-btn p-3 rounded-2xl text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+        </button>
+        <!-- Settings Button -->
+        <button onclick="switchTab('settings')" id="nav-desktop-settings" class="nav-btn p-3 rounded-2xl text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <!-- Queue Button -->
+        <button onclick="switchTab('queue')" id="nav-desktop-queue" class="nav-btn p-3 rounded-2xl text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
+    </nav>
+
+    <!-- MOBILE NAV BAR (Bottom) -->
+    <nav class="md:hidden fixed bottom-0 w-full bg-white/90 backdrop-blur-md border-t border-gray-200 flex justify-around items-center py-2 z-50 px-4">
+        <button onclick="switchTab('search')" id="nav-mobile-search" class="nav-btn p-3 rounded-xl bg-gray-200 text-gray-800 transition-colors flex-1 flex justify-center mx-1">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <button onclick="switchTab('playlist')" id="nav-mobile-playlist" class="nav-btn p-3 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors flex-1 flex justify-center mx-1">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>
+        </button>
+        <button onclick="switchTab('settings')" id="nav-mobile-settings" class="nav-btn p-3 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors flex-1 flex justify-center mx-1">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button onclick="switchTab('queue')" id="nav-mobile-queue" class="nav-btn p-3 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors flex-1 flex justify-center mx-1">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
+    </nav>
+
+    <!-- CENTER CONTENT (Left on Mobile, Middle on Desktop) -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-transparent">
+        
+        <!-- SEARCH VIEW (PDF Page 2 & 3) -->
+        <div id="section-search" class="tab-content active flex-col h-full p-4 md:p-8 pt-6">
+            <!-- Search Bar (Top Center) -->
+            <div class="w-full flex justify-center mb-6">
+                <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-sm border border-gray-100">
+                    <input type="text" id="searchInput" placeholder="Search on Youtube" class="w-full bg-transparent text-gray-800 rounded-2xl py-4 px-6 pr-14 outline-none focus:ring-2 focus:ring-primary/40 transition-shadow">
+                    <button onclick="triggerSearch()" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-100 hover:bg-gray-200 p-2.5 rounded-xl transition-colors text-gray-600">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Pills (Hidden by default, shown after searching) -->
+            <div id="searchFilters" class="flex gap-3 mb-6 overflow-x-auto no-scrollbar pb-2 opacity-0 transition-opacity duration-300 hidden px-2">
+                <button class="filter-btn active whitespace-nowrap px-6 py-2.5 rounded-full bg-primary text-white font-medium text-sm transition-colors shadow-sm" onclick="setFilter(this, 'all')">All</button>
+                <button class="filter-btn whitespace-nowrap px-6 py-2.5 rounded-full bg-white text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors shadow-sm" onclick="setFilter(this, 'videos')">Videos</button>
+                <button class="filter-btn whitespace-nowrap px-6 py-2.5 rounded-full bg-white text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors shadow-sm" onclick="setFilter(this, 'channels')">Channels</button>
+                <button class="filter-btn whitespace-nowrap px-6 py-2.5 rounded-full bg-white text-gray-700 hover:bg-gray-50 font-medium text-sm transition-colors shadow-sm" onclick="setFilter(this, 'playlists')">Playlists</button>
+            </div>
+
+            <!-- Results Scroll Area -->
+            <div class="flex-1 overflow-y-auto no-scrollbar pb-24 md:pb-8 px-2">
+                <!-- Startup / Empty State -->
+                <div id="searchStart" class="h-full flex flex-col items-center justify-center text-gray-400 gap-4 mt-12 md:mt-0">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-50"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <p class="font-medium">Type something to search</p>
+                </div>
+
+                <!-- Skeleton Loading Grid -->
+                <div id="searchSkeleton" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="animate-pulse bg-gray-200 rounded-3xl aspect-[16/10] w-full"></div>
+                    <div class="animate-pulse bg-gray-200 rounded-3xl aspect-[16/10] w-full"></div>
+                    <div class="animate-pulse bg-gray-200 rounded-3xl aspect-[16/10] w-full"></div>
+                    <div class="animate-pulse bg-gray-200 rounded-3xl aspect-[16/10] w-full"></div>
+                </div>
+
+                <!-- Mock Results Grid (PDF Page 3) -->
+                <div id="searchResults" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Cards injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- PLAYLIST VIEW (PDF Page 5) -->
+        <div id="section-playlist" class="tab-content flex-col h-full p-4 md:p-8 pt-6">
+            <!-- Playlist Header -->
+            <div class="flex justify-between items-center mb-6 px-2">
+                <h2 class="text-3xl font-bold text-gray-800">Playlist</h2>
+                <div class="flex gap-2">
+                    <button class="p-3 bg-white hover:bg-gray-50 rounded-2xl text-gray-700 transition-colors shadow-sm" title="Import">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </button>
+                    <button class="p-3 bg-white hover:bg-gray-50 rounded-2xl text-gray-700 transition-colors shadow-sm" title="New Playlist">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Playlist Scroll Area -->
+            <div class="flex-1 overflow-y-auto no-scrollbar pb-24 md:pb-8 px-2 space-y-3" id="playlistContainer">
+                <!-- Cards injected via JS -->
+            </div>
+        </div>
+
+        <!-- SETTINGS VIEW (Placeholder) -->
+        <div id="section-settings" class="tab-content flex-col h-full items-center justify-center p-8 text-gray-400">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4 opacity-50"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <p class="font-medium">Settings coming soon...</p>
+        </div>
+
+        <!-- QUEUE VIEW (Placeholder) -->
+        <div id="section-queue" class="tab-content flex-col h-full items-center justify-center p-8 text-gray-400">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mb-4 opacity-50"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <p class="font-medium">Queue coming soon...</p>
+        </div>
+    </main>
+
+    <!-- RIGHT PLAYER & BRANDING AREA (Main Focus) -->
+    <!-- On desktop, it takes the right panel. On mobile, it shrinks to a neat top bar when playing or sits above content. 
+         For pure layout match of the PDF, we place it predominantly on the right side for large screens. -->
+    <aside class="w-full md:w-[360px] lg:w-[420px] bg-transparent flex flex-col pt-6 md:pt-12 px-6 pb-6 shrink-0 md:border-l border-gray-200/60 order-first md:order-last">
+        
+        <!-- Branding (PDF Page 1 & 4) -->
+        <div class="text-center mb-8 flex flex-col items-center">
+            <h1 class="text-[28px] font-black bg-gradient-to-br from-primaryDark via-primary to-primaryLight text-transparent bg-clip-text leading-tight tracking-tight">
+                YouTube Player 2
+            </h1>
+            <p class="text-[11px] font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">
+                Powered by Nut
+            </p>
+        </div>
+
+        <!-- Main Video Player Box (PDF Page 4) -->
+        <!-- Fixed aspect ratio, empty state reads "Not Playing" -->
+        <div class="w-full aspect-video bg-[#E5E7EB] rounded-[24px] flex items-center justify-center shadow-inner relative overflow-hidden group">
+            <span class="text-gray-500 font-semibold text-sm tracking-wide">Not Playing</span>
+            
+            <!-- This acts as a placeholder for the actual iframe/video element later -->
+            <div id="youtube-player-container" class="absolute inset-0 hidden bg-black"></div>
+        </div>
+        
+    </aside>
+
+    <script>
+        // Array of realistic YouTube thumbnails (Unsplash placeholders to represent "COVER")
+        const mockThumbnails = [
+            'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?q=80&w=600&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=600&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1511379938547-c1f69419868d?q=80&w=600&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=600&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1493225457124-a1a2a5f56468?q=80&w=600&auto=format&fit=crop',
+            'https://images.unsplash.com/photo-1516280440502-861f1b0a5ce2?q=80&w=600&auto=format&fit=crop'
+        ];
+
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            // Update Desktop Nav Icons
+            document.querySelectorAll('#nav-desktop-search, #nav-desktop-playlist, #nav-desktop-settings, #nav-desktop-queue').forEach(btn => {
+                btn.classList.remove('bg-gray-200', 'text-gray-800');
+                btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+            });
+            const desktopBtn = document.getElementById(`nav-desktop-${tabId}`);
+            if(desktopBtn) {
+                desktopBtn.classList.add('bg-gray-200', 'text-gray-800');
+                desktopBtn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+            }
+
+            // Update Mobile Nav Icons
+            document.querySelectorAll('#nav-mobile-search, #nav-mobile-playlist, #nav-mobile-settings, #nav-mobile-queue').forEach(btn => {
+                btn.classList.remove('bg-gray-200', 'text-gray-800');
+                btn.classList.add('text-gray-500', 'hover:bg-gray-100');
+            });
+            const mobileBtn = document.getElementById(`nav-mobile-${tabId}`);
+            if(mobileBtn) {
+                mobileBtn.classList.add('bg-gray-200', 'text-gray-800');
+                mobileBtn.classList.remove('text-gray-500', 'hover:bg-gray-100');
+            }
+
+            // Update Content Visibility
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`section-${tabId}`).classList.add('active');
+        }
+
+        // Search Mock UI Logic
+        function triggerSearch() {
+            const input = document.getElementById('searchInput').value;
+            if(!input.trim()) return;
+
+            // Hide start state
+            document.getElementById('searchStart').classList.add('hidden');
+            document.getElementById('searchResults').classList.add('hidden');
+            
+            // Show Skeleton loading
+            const skeleton = document.getElementById('searchSkeleton');
+            skeleton.classList.remove('hidden');
+
+            // Hide filters initially
+            const filters = document.getElementById('searchFilters');
+            filters.classList.add('hidden');
+            filters.classList.remove('opacity-100');
+
+            // Mock network delay (1.5 seconds)
+            setTimeout(() => {
+                skeleton.classList.add('hidden');
+                
+                // Show filters
+                filters.classList.remove('hidden');
+                setTimeout(() => filters.classList.add('opacity-100'), 50);
+
+                // Inject and show results
+                renderMockResults();
+                document.getElementById('searchResults').classList.remove('hidden');
+            }, 1500);
+        }
+
+        // Handle enter key in search
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') triggerSearch();
+        });
+
+        // Filter Pills Logic
+        function setFilter(element, type) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('bg-white', 'text-gray-700');
+            });
+            element.classList.remove('bg-white', 'text-gray-700');
+            element.classList.add('bg-primary', 'text-white');
+            
+            // Re-render mock results on filter click to demonstrate transition
+            document.getElementById('searchResults').classList.add('hidden');
+            setTimeout(() => {
+                renderMockResults(type);
+                document.getElementById('searchResults').classList.remove('hidden');
+            }, 200);
+        }
+
+        // Render Mock Search Results (PDF Page 3 layout)
+        function renderMockResults(filterType = 'all') {
+            const container = document.getElementById('searchResults');
+            let html = '';
+            
+            for(let i=0; i<6; i++) {
+                // Determine layout text based on mock state
+                const bottomTextLeft = (i % 3 === 0) ? 'Channel' : (i % 2 === 0 ? 'Playlist' : 'Video');
+                const bottomTextRight = (i % 3 === 0) ? '2.8M Subscribers' : (i % 2 === 0 ? 'Author' : '▷ ≡');
+                const img = mockThumbnails[i % mockThumbnails.length];
+
+                html += `
+                <div class="relative rounded-[20px] overflow-hidden bg-white border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow aspect-[16/10] flex flex-col">
+                    <!-- YouTube Cover Placeholder (Image) -->
+                    <div class="relative flex-1 bg-gray-200 overflow-hidden">
+                        <img src="${img}" alt="Thumbnail" class="absolute inset-0 w-full h-full object-cover">
+                        <!-- Subtle gradient overlay to make text readable -->
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                        
+                        <!-- Overlay Details (Like PDF Page 3) -->
+                        <div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+                            <span class="text-white/90 text-[13px] font-medium tracking-wide drop-shadow-md">
+                                ${bottomTextLeft}
+                            </span>
+                            <span class="text-white text-sm font-semibold drop-shadow-md tracking-widest flex gap-1 items-center">
+                                ${bottomTextRight}
+                            </span>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // Render Mock Playlists (PDF Page 5)
+        function renderPlaylists() {
+            const container = document.getElementById('playlistContainer');
+            
+            let html = '';
+            for(let i=0; i<8; i++) {
+                const img = mockThumbnails[i % mockThumbnails.length];
+                
+                html += `
+                <div class="relative h-[88px] rounded-[20px] overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] transition-all cursor-pointer border border-gray-50 bg-white group flex items-center">
+                    
+                    <!-- Text Area (Left Side) -->
+                    <div class="pl-6 flex flex-col justify-center flex-1 z-20">
+                        <h3 class="text-[17px] font-bold text-gray-800 mb-0.5 group-hover:text-primaryDark transition-colors">Name</h3>
+                        <p class="text-[13px] font-medium text-gray-400">25 videos</p>
+                    </div>
+
+                    <!-- Image Area (Right Side with Fade out mask) -->
+                    <div class="absolute right-0 top-0 h-full w-3/5 z-10 playlist-img-mask pointer-events-none">
+                        <img src="${img}" class="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500" alt="Cover" />
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        // Initialize UI
+        renderPlaylists();
+        
+        // Start on search tab
+        switchTab('search');
+    </script>
+</body>
+</html>
