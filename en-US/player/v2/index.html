@@ -32,6 +32,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* Island Transition Dynamics */
         #nav-island {
             transition: all 0.5s cubic-bezier(0.32, 0.72, 0, 1);
             will-change: width, height, border-radius;
@@ -41,6 +42,7 @@
             transition: opacity 0.3s ease-in-out, height 0.4s cubic-bezier(0.32, 0.72, 0, 1);
         }
 
+        /* Gradient Heading */
         .text-gradient {
             background: linear-gradient(to right, #5d5cde, #de5cde, #f1edc0);
             -webkit-background-clip: text;
@@ -49,6 +51,7 @@
             color: transparent;
         }
 
+        /* Custom Scrollbar for inner island content */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
@@ -63,6 +66,7 @@
             background-color: #475569;
         }
         
+        /* Smooth View Fades */
         .view-section {
             display: none;
             opacity: 0;
@@ -77,6 +81,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
+        /* Remove default input styling */
         input[type="text"] {
             -webkit-appearance: none;
         }
@@ -109,6 +114,7 @@
                 
                 <div id="view-search" class="view-section flex-col h-full w-full p-5 pt-6 gap-4">
                     <h2 class="text-xl font-bold dark:text-white mb-2">Search on YouTube</h2>
+                    
                     <div class="relative w-full shrink-0">
                         <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
                         <input type="text" id="search-input" placeholder="Search videos, channels..." 
@@ -117,6 +123,56 @@
                             <i class="ph-fill ph-x-circle text-xl"></i>
                         </button>
                     </div>
+
+                    <div id="search-results-area" class="flex-1 hidden flex-col overflow-hidden mt-2">
+                        <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-3 shrink-0">
+                            <button class="px-4 py-1.5 rounded-full bg-primary text-white text-sm font-semibold shrink-0 shadow-md shadow-primary/20">All</button>
+                            <button class="px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors">Videos</button>
+                            <button class="px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors">Channels</button>
+                            <button class="px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors">Playlists</button>
+                        </div>
+                        
+                        <div class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1 pb-4">
+                            <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors">
+                                <div class="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex flex-col items-center justify-center shrink-0 relative overflow-hidden">
+                                    <i class="ph ph-image text-gray-400 text-2xl mb-1"></i>
+                                    <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium">PLACEHOLDER</span>
+                                    <div class="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1 rounded">10:24</div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors">Understanding Quantum Mechanics in 10 Minutes</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Science Channel</p>
+                                    <p class="text-[11px] text-gray-400 mt-0.5">1.2M views • 2 days ago</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-4 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors">
+                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex flex-col items-center justify-center shrink-0 ml-8 mr-4 overflow-hidden border border-gray-300 dark:border-gray-600">
+                                    <i class="ph ph-user text-gray-400 text-xl mb-0.5"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold text-sm group-hover:text-primary transition-colors">Tech Reviewer</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">2.8M Subscribers</p>
+                                    <p class="text-[11px] text-gray-400 mt-0.5">@techreviewer</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors">
+                                <div class="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex flex-col items-center justify-center shrink-0 relative overflow-hidden">
+                                    <div class="absolute right-0 top-0 bottom-0 w-10 bg-black/40 flex items-center justify-center backdrop-blur-sm">
+                                        <i class="ph-fill ph-list-dashes text-white"></i>
+                                    </div>
+                                    <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium z-10">COVER</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors">Coding Soundtrack Vol. 4</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Lofi Records</p>
+                                    <p class="text-[11px] text-gray-400 mt-0.5 bg-gray-100 dark:bg-gray-800 inline-block px-1.5 rounded">25 videos</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div id="search-empty-state" class="flex-1 flex flex-col items-center justify-center text-center opacity-60">
                         <i class="ph ph-magnifying-glass text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
                         <p class="text-sm text-gray-500 dark:text-gray-400 max-w-[200px]">Type something above to search on YouTube</p>
@@ -137,7 +193,36 @@
                     </div>
                     
                     <div id="playlist-list-container" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4 pr-2 pb-4">
+                        <div onclick="openPlaylistDetail('Favorites')" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/40 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group border border-transparent dark:border-gray-800">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
+                                    <i class="ph ph-music-notes text-gray-400 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-sm text-gray-900 dark:text-gray-100 group-hover:text-primary transition-colors">Favorites</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">25 videos</p>
+                                </div>
+                            </div>
+                            <button class="p-2 text-gray-400 hover:text-primary transition-colors">
+                                <i class="ph ph-caret-right text-xl"></i>
+                            </button>
                         </div>
+                        
+                        <div onclick="openPlaylistDetail('Coding Tutorials')" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/40 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group border border-transparent dark:border-gray-800">
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
+                                    <i class="ph ph-code text-gray-400 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-sm text-gray-900 dark:text-gray-100 group-hover:text-primary transition-colors">Coding Tutorials</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">12 videos</p>
+                                </div>
+                            </div>
+                            <button class="p-2 text-gray-400 hover:text-primary transition-colors">
+                                <i class="ph ph-caret-right text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div id="view-playlist-detail" class="view-section flex-col h-full w-full p-5 pt-6 relative">
@@ -145,7 +230,7 @@
                         <button onclick="closePlaylistDetail()" class="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors">
                             <i class="ph ph-caret-left text-xl"></i>
                         </button>
-                        <h2 class="text-lg font-bold dark:text-white truncate flex-1 text-center pr-6">Playlist Name</h2>
+                        <h2 class="text-lg font-bold dark:text-white truncate flex-1 text-center pr-6">Favorites</h2>
                     </div>
                 
                     <div class="flex-1 overflow-y-auto custom-scrollbar flex flex-col pr-2 pb-4 overflow-x-hidden">
@@ -155,7 +240,7 @@
                                 <i class="ph ph-music-notes text-gray-400 text-3xl"></i>
                             </div>
                             <div class="flex-1 pb-1">
-                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3 bg-gray-100 dark:bg-gray-800/80 inline-block px-2 py-1 rounded-md">0 videos</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3 bg-gray-100 dark:bg-gray-800/80 inline-block px-2 py-1 rounded-md">25 videos</p>
                                 <div class="flex items-center gap-2 relative">
                                     <button class="flex-1 bg-primary text-white py-2.5 rounded-xl font-semibold shadow-lg shadow-primary/30 flex items-center justify-center gap-2 hover:bg-[#c945c9] transition-colors">
                                         <i class="ph-fill ph-play text-lg"></i> Play
@@ -180,7 +265,42 @@
                         </div>
                 
                         <div class="flex flex-col gap-3" id="playlist-video-list">
+                            
+                            <div class="relative w-full rounded-xl overflow-hidden bg-red-500 group swipe-container" style="touch-action: pan-y;" data-index="0" data-playlist="Favorites">
+                                <div class="absolute inset-0 flex items-center justify-end pr-5 text-white">
+                                    <i class="ph-fill ph-trash text-xl"></i>
+                                </div>
+                                <div class="swipe-front relative w-full bg-white dark:bg-[#1a1a1a] flex items-center gap-3 p-2 rounded-xl transition-transform ease-out z-10 border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer">
+                                    <div class="w-24 h-14 bg-gray-200 dark:bg-gray-700 rounded-lg shrink-0 relative overflow-hidden flex justify-center items-center">
+                                        <i class="ph ph-image text-gray-400"></i>
+                                        <div class="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1 rounded">3:45</div>
+                                    </div>
+                                    <div class="flex-1 min-w-0 pr-1">
+                                        <h4 class="font-semibold text-sm line-clamp-1 leading-tight text-gray-900 dark:text-gray-100">Design Systems 101</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">UI/UX Daily</p>
+                                    </div>
+                                    <i class="ph ph-list text-gray-300 dark:text-gray-600 mr-2 text-lg active:text-gray-500"></i>
+                                </div>
                             </div>
+                
+                            <div class="relative w-full rounded-xl overflow-hidden bg-red-500 group swipe-container" style="touch-action: pan-y;" data-index="1" data-playlist="Favorites">
+                                <div class="absolute inset-0 flex items-center justify-end pr-5 text-white">
+                                    <i class="ph-fill ph-trash text-xl"></i>
+                                </div>
+                                <div class="swipe-front relative w-full bg-white dark:bg-[#1a1a1a] flex items-center gap-3 p-2 rounded-xl transition-transform ease-out z-10 border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer">
+                                    <div class="w-24 h-14 bg-gray-200 dark:bg-gray-700 rounded-lg shrink-0 relative overflow-hidden flex justify-center items-center">
+                                        <i class="ph ph-image text-gray-400"></i>
+                                        <div class="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1 rounded">12:20</div>
+                                    </div>
+                                    <div class="flex-1 min-w-0 pr-1">
+                                        <h4 class="font-semibold text-sm line-clamp-1 leading-tight text-gray-900 dark:text-gray-100">Tailwind CSS Advanced</h4>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">Code Master</p>
+                                    </div>
+                                    <i class="ph ph-list text-gray-300 dark:text-gray-600 mr-2 text-lg active:text-gray-500"></i>
+                                </div>
+                            </div>
+                
+                        </div>
                     </div>
                 </div>
 
@@ -205,6 +325,12 @@
                                 <button onclick="setTheme('off')" id="theme-btn-off" class="flex-1 py-2 text-sm font-medium rounded-lg z-10 transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">Off</button>
                             </div>
                         </div>
+
+                        <div class="flex flex-col items-center justify-center mt-8 text-center opacity-60">
+                            <i class="ph-fill ph-nut text-3xl mb-2 text-gray-400"></i>
+                            <p class="text-xs font-semibold text-gray-500">YouTube Player 2</p>
+                            <p class="text-[10px] text-gray-400 mt-1">Powered by Nut • Version 2.0</p>
+                        </div>
                     </div>
                 </div>
 
@@ -213,6 +339,7 @@
                         <h2 class="text-xl font-bold dark:text-white">Queue</h2>
                         <span class="text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 px-2 py-1 rounded-md">0 Videos</span>
                     </div>
+                    
                     <div class="flex-1 flex flex-col items-center justify-center text-center pb-8">
                         <div class="w-24 h-24 bg-gray-50 dark:bg-gray-800/50 rounded-full flex items-center justify-center mb-6">
                             <i class="ph ph-list-plus text-4xl text-gray-300 dark:text-gray-600"></i>
@@ -257,6 +384,13 @@
         const views = document.querySelectorAll('.view-section');
         const navBar = document.getElementById('nav-bar');
         
+        // Search Elements
+        const topSearchInput = document.getElementById('top-search-input');
+        const searchInput = document.getElementById('search-input');
+        const clearSearchBtn = document.getElementById('clear-search');
+        const searchResultsArea = document.getElementById('search-results-area');
+        const searchEmptyState = document.getElementById('search-empty-state');
+
         // Playlist Detail Elements
         const viewPlaylists = document.getElementById('view-playlists');
         const viewPlaylistDetail = document.getElementById('view-playlist-detail');
@@ -294,12 +428,17 @@
 
         function loadPlaylistsFromV1() {
             const savedPlaylists = getLocalStorage('ytplayer_playlists');
-            if (savedPlaylists) {
+            
+            // Only overwrite the UI if there is actual saved data
+            if (savedPlaylists && Object.keys(savedPlaylists).length > 0) {
                 playlists = savedPlaylists;
+                renderV2Playlists();
             } else {
                 playlists = {};
+                // If no data is loaded, we do NOT clear the placeholder HTML, 
+                // so your beautiful mockups stay visible for demonstration!
+                initSwipeToDelete(); // Still initialize swipe for the hardcoded items
             }
-            renderV2Playlists();
         }
 
         function escapeHTML(str) {
@@ -322,15 +461,6 @@
 
             container.innerHTML = ''; 
             const playlistNames = Object.keys(playlists);
-
-            if (playlistNames.length === 0) {
-                container.innerHTML = `
-                    <div class="flex flex-col items-center justify-center h-full opacity-60 text-center mt-10">
-                        <i class="ph ph-playlist text-5xl text-gray-300 dark:text-gray-600 mb-3"></i>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">No playlists found</p>
-                    </div>`;
-                return;
-            }
 
             playlistNames.forEach(name => {
                 const plData = playlists[name];
@@ -366,9 +496,11 @@
             loadPlaylistsFromV1();
         });
 
-        // --- Navigation Logic ---
+
+        // --- Navigation & Island Logic ---
         function openIsland(tabName) {
             isIslandOpen = true;
+            
             const isMobile = window.innerWidth < 768;
             island.style.width = isMobile ? '92%' : '440px';
             island.style.height = isMobile ? '75dvh' : '65vh';
@@ -376,8 +508,10 @@
             island.style.borderRadius = '2rem';
             
             navBar.classList.add('border-gray-200', 'dark:border-gray-800');
+            
             overlay.classList.remove('pointer-events-none');
             overlay.style.opacity = '1';
+
             contentContainer.style.height = 'calc(100% - 72px)';
             contentContainer.style.opacity = '1';
 
@@ -392,9 +526,12 @@
             island.style.width = '320px';
             island.style.height = '72px';
             island.style.borderRadius = '9999px';
+            
             navBar.classList.remove('border-gray-200', 'dark:border-gray-800');
+
             overlay.classList.add('pointer-events-none');
             overlay.style.opacity = '0';
+
             contentContainer.style.height = '0';
             contentContainer.style.opacity = '0';
 
@@ -410,16 +547,25 @@
                     closePlaylistOptions();
                 }
             }, 300);
+            
+            document.activeElement.blur();
         }
 
         function switchTab(tabName) {
-            if (!isIslandOpen) { openIsland(tabName); return; }
+            if (!isIslandOpen) {
+                openIsland(tabName);
+                return;
+            }
+
             activeTab = tabName;
-            isDetailViewOpen = false;
+            isDetailViewOpen = false; 
 
             views.forEach(view => {
-                if (view.id === `view-${tabName}`) view.classList.add('active');
-                else view.classList.remove('active');
+                if (view.id === `view-${tabName}`) {
+                    view.classList.add('active');
+                } else {
+                    view.classList.remove('active');
+                }
             });
 
             navBtns.forEach(btn => {
@@ -446,21 +592,79 @@
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const target = btn.getAttribute('data-target');
-                if (isIslandOpen && activeTab === target && !isDetailViewOpen) closeIsland(); 
-                else switchTab(target);
+                if (isIslandOpen && activeTab === target && !isDetailViewOpen) {
+                    closeIsland(); 
+                } else {
+                    switchTab(target);
+                }
             });
         });
 
         overlay.addEventListener('click', closeIsland);
         island.addEventListener('click', (e) => e.stopPropagation());
 
+        // --- Search Logic ---
+        function updateSearchUI(query) {
+            if (query.length > 0) {
+                clearSearchBtn.classList.remove('hidden');
+                searchResultsArea.classList.remove('hidden');
+                searchResultsArea.classList.add('flex');
+                searchEmptyState.classList.add('hidden');
+            } else {
+                clearSearchBtn.classList.add('hidden');
+                searchResultsArea.classList.add('hidden');
+                searchResultsArea.classList.remove('flex');
+                searchEmptyState.classList.remove('hidden');
+            }
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            topSearchInput.value = e.target.value; 
+            updateSearchUI(query);
+        });
+
+        topSearchInput.addEventListener('focus', () => {
+            if (!isIslandOpen || activeTab !== 'search') {
+                openIsland('search');
+            }
+            setTimeout(() => searchInput.focus(), 300);
+        });
+
+        topSearchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            searchInput.value = e.target.value; 
+            updateSearchUI(query);
+            
+            if (!isIslandOpen || activeTab !== 'search') {
+                openIsland('search');
+                setTimeout(() => searchInput.focus(), 300);
+            }
+        });
+
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            topSearchInput.value = '';
+            updateSearchUI('');
+            searchInput.focus();
+        });
+
+
         // --- Playlist Detail & Video List Logic ---
         function renderPlaylistVideos(playlistName) {
             const container = document.getElementById('playlist-video-list');
             if (!container) return;
 
-            container.innerHTML = '';
             const plData = playlists[playlistName];
+            
+            // If the playlist isn't in memory (e.g. testing hardcoded UI), skip re-rendering
+            if (!plData) {
+                initSwipeToDelete();
+                return;
+            }
+
+            container.innerHTML = '';
+            
             let videos = [];
             if (plData && Array.isArray(plData.videos)) {
                 videos = plData.videos;
@@ -482,7 +686,6 @@
                 const title = escapeHTML(video.title || 'Unknown Video');
                 const channel = escapeHTML(video.channel || video.channelTitle || video.author || 'Unknown Channel');
                 
-                // Fetch high quality thumbnail directly from youtube
                 const thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
                 const thumbHtml = thumbUrl 
                     ? `<img src="${thumbUrl}" class="w-full h-full object-cover" alt="cover">` 
@@ -513,8 +716,9 @@
 
         function openPlaylistDetail(playlistName) {
             isDetailViewOpen = true;
-            viewPlaylistDetail.querySelector('h2').innerText = playlistName || "Playlist";
             
+            viewPlaylistDetail.querySelector('h2').innerText = playlistName || "Playlist";
+
             const plData = playlists[playlistName];
             let videoCount = 0;
             if (plData && Array.isArray(plData.videos)) {
@@ -524,7 +728,7 @@
             }
             
             const countElem = viewPlaylistDetail.querySelector('.bg-gray-100.inline-block');
-            if(countElem) countElem.innerText = `${videoCount} videos`;
+            if(countElem && plData) countElem.innerText = `${videoCount} videos`;
 
             renderPlaylistVideos(playlistName);
 
@@ -539,13 +743,16 @@
             closePlaylistOptions(); 
         }
 
+        // --- Dropdown Menu Logic ---
         function togglePlaylistOptions(e) {
             e.stopPropagation();
             const isClosed = playlistDropdown.classList.contains('opacity-0');
             if (isClosed) {
                 playlistDropdown.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
                 playlistDropdown.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
-            } else closePlaylistOptions();
+            } else {
+                closePlaylistOptions();
+            }
         }
 
         function closePlaylistOptions() {
@@ -553,8 +760,15 @@
             playlistDropdown.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
         }
 
+        island.addEventListener('click', () => {
+            closePlaylistOptions();
+        });
+
+        // --- Swipe to Delete Touch Logic ---
         function deleteVideo(playlistName, index) {
             const plData = playlists[playlistName];
+            if (!plData) return; // Ignore if working with hardcoded demo UI
+            
             if (plData && Array.isArray(plData.videos)) {
                 plData.videos.splice(index, 1);
             } else if (Array.isArray(plData)) {
@@ -567,11 +781,9 @@
             const countElem = viewPlaylistDetail.querySelector('.bg-gray-100.inline-block');
             if(countElem) countElem.innerText = `${videoCount} videos`;
             
-            // Re-render main playlists page count
             renderV2Playlists();
         }
 
-        // Swipe logic
         function initSwipeToDelete() {
             const swipeContainers = document.querySelectorAll('.swipe-container');
             
@@ -580,8 +792,12 @@
                 container.dataset.swipeInitialized = "true";
 
                 const front = container.querySelector('.swipe-front');
-                let startX = 0, currentX = 0, isDragging = false;
-                const actionThreshold = -90, maxResistance = -120; 
+                let startX = 0;
+                let currentX = 0;
+                let isDragging = false;
+                
+                const actionThreshold = -90; 
+                const maxResistance = -120; 
                 
                 container.addEventListener('touchstart', (e) => {
                     startX = e.touches[0].clientX;
@@ -592,8 +808,12 @@
                 container.addEventListener('touchmove', (e) => {
                     if (!isDragging) return;
                     const deltaX = e.touches[0].clientX - startX;
+                    
                     if (deltaX < 0) {
-                        currentX = deltaX < maxResistance ? maxResistance + (deltaX - maxResistance) * 0.2 : deltaX;
+                        currentX = deltaX < maxResistance 
+                            ? maxResistance + (deltaX - maxResistance) * 0.2 
+                            : deltaX;
+                        
                         front.style.transform = `translateX(${currentX}px)`;
                     }
                 }, { passive: true });
@@ -614,7 +834,9 @@
                             
                             container.style.transition = 'all 0.3s ease-in-out';
                             container.style.height = `${container.offsetHeight}px`; 
-                            container.offsetHeight; // Force reflow
+                            
+                            container.offsetHeight; 
+                            
                             container.style.opacity = '0';
                             container.style.padding = '0';
                             container.style.marginTop = '0';
@@ -623,8 +845,9 @@
                             
                             setTimeout(() => {
                                 container.remove();
-                                // Re-index remaining elements to prevent wrong deletions later
-                                renderPlaylistVideos(plName);
+                                if (plName && playlists[plName]) {
+                                    renderPlaylistVideos(plName);
+                                }
                             }, 300);
                         }, 200);
 
@@ -636,7 +859,9 @@
             });
         }
 
-        // Theme Logic
+
+        // --- Theme / Dark Mode Logic ---
+
         function initTheme() {
             const savedTheme = localStorage.getItem('ytp-theme') || 'auto';
             setTheme(savedTheme, false);
@@ -645,9 +870,19 @@
         function setTheme(mode, animate = true) {
             currentTheme = mode;
             localStorage.setItem('ytp-theme', mode);
-            let isDark = mode === 'on' ? true : (mode === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : false);
-            if (isDark) document.documentElement.classList.add('dark');
-            else document.documentElement.classList.remove('dark');
+
+            let isDark = false;
+            if (mode === 'on') {
+                isDark = true;
+            } else if (mode === 'auto') {
+                isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            }
+
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
 
             const btnAuto = document.getElementById('theme-btn-auto');
             const btnOn = document.getElementById('theme-btn-on');
@@ -660,13 +895,16 @@
             });
 
             const activeBtn = mode === 'auto' ? btnAuto : (mode === 'on' ? btnOn : btnOff);
+            
             activeBtn.classList.add('shadow-sm');
             activeBtn.style.backgroundColor = '#de5cde';
             activeBtn.style.color = '#ffffff';
         }
 
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-            if (currentTheme === 'auto') setTheme('auto'); 
+            if (currentTheme === 'auto') {
+                setTheme('auto'); 
+            }
         });
 
         window.addEventListener('resize', () => {
