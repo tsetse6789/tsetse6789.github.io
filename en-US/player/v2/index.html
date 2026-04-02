@@ -192,37 +192,7 @@
                         </div>
                     </div>
                     
-                    <div id="playlist-list-container" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4 pr-2 pb-4">
-                        <div onclick="openPlaylistDetail('Favorites')" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/40 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group border border-transparent dark:border-gray-800">
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
-                                    <i class="ph ph-music-notes text-gray-400 text-xl"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-semibold text-sm text-gray-900 dark:text-gray-100 group-hover:text-primary transition-colors">Favorites</h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">25 videos</p>
-                                </div>
-                            </div>
-                            <button class="p-2 text-gray-400 hover:text-primary transition-colors">
-                                <i class="ph ph-caret-right text-xl"></i>
-                            </button>
-                        </div>
-                        
-                        <div onclick="openPlaylistDetail('Coding Tutorials')" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/40 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group border border-transparent dark:border-gray-800">
-                            <div class="flex items-center gap-4">
-                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
-                                    <i class="ph ph-code text-gray-400 text-xl"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-semibold text-sm text-gray-900 dark:text-gray-100 group-hover:text-primary transition-colors">Coding Tutorials</h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">12 videos</p>
-                                </div>
-                            </div>
-                            <button class="p-2 text-gray-400 hover:text-primary transition-colors">
-                                <i class="ph ph-caret-right text-xl"></i>
-                            </button>
-                        </div>
-                    </div>
+                    <div id="playlist-list-container" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4 pr-2 pb-4"></div>
                 </div>
 
                 <div id="view-playlist-detail" class="view-section flex-col h-full w-full p-5 pt-6 relative">
@@ -236,7 +206,7 @@
                     <div class="flex-1 overflow-y-auto custom-scrollbar flex flex-col pr-2 pb-4 overflow-x-hidden">
                         
                         <div class="flex gap-4 items-end mb-6">
-                            <div class="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-md relative overflow-hidden">
+                            <div id="playlist-detail-cover" class="w-24 h-24 bg-gray-200 dark:bg-gray-700 rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-md relative overflow-hidden">
                                 <i class="ph ph-music-notes text-gray-400 text-3xl"></i>
                             </div>
                             <div class="flex-1 pb-1">
@@ -264,43 +234,7 @@
                             </div>
                         </div>
                 
-                        <div class="flex flex-col gap-3" id="playlist-video-list">
-                            
-                            <div class="relative w-full rounded-xl overflow-hidden bg-red-500 group swipe-container" style="touch-action: pan-y;" data-index="0" data-playlist="Favorites">
-                                <div class="absolute inset-0 flex items-center justify-end pr-5 text-white">
-                                    <i class="ph-fill ph-trash text-xl"></i>
-                                </div>
-                                <div class="swipe-front relative w-full bg-white dark:bg-[#1a1a1a] flex items-center gap-3 p-2 rounded-xl transition-transform ease-out z-10 border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer">
-                                    <div class="w-24 h-14 bg-gray-200 dark:bg-gray-700 rounded-lg shrink-0 relative overflow-hidden flex justify-center items-center">
-                                        <i class="ph ph-image text-gray-400"></i>
-                                        <div class="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1 rounded">3:45</div>
-                                    </div>
-                                    <div class="flex-1 min-w-0 pr-1">
-                                        <h4 class="font-semibold text-sm line-clamp-1 leading-tight text-gray-900 dark:text-gray-100">Design Systems 101</h4>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">UI/UX Daily</p>
-                                    </div>
-                                    <i class="ph ph-list text-gray-300 dark:text-gray-600 mr-2 text-lg active:text-gray-500"></i>
-                                </div>
-                            </div>
-                
-                            <div class="relative w-full rounded-xl overflow-hidden bg-red-500 group swipe-container" style="touch-action: pan-y;" data-index="1" data-playlist="Favorites">
-                                <div class="absolute inset-0 flex items-center justify-end pr-5 text-white">
-                                    <i class="ph-fill ph-trash text-xl"></i>
-                                </div>
-                                <div class="swipe-front relative w-full bg-white dark:bg-[#1a1a1a] flex items-center gap-3 p-2 rounded-xl transition-transform ease-out z-10 border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer">
-                                    <div class="w-24 h-14 bg-gray-200 dark:bg-gray-700 rounded-lg shrink-0 relative overflow-hidden flex justify-center items-center">
-                                        <i class="ph ph-image text-gray-400"></i>
-                                        <div class="absolute bottom-1 right-1 bg-black/70 text-white text-[9px] px-1 rounded">12:20</div>
-                                    </div>
-                                    <div class="flex-1 min-w-0 pr-1">
-                                        <h4 class="font-semibold text-sm line-clamp-1 leading-tight text-gray-900 dark:text-gray-100">Tailwind CSS Advanced</h4>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">Code Master</p>
-                                    </div>
-                                    <i class="ph ph-list text-gray-300 dark:text-gray-600 mr-2 text-lg active:text-gray-500"></i>
-                                </div>
-                            </div>
-                
-                        </div>
+                        <div class="flex flex-col gap-3" id="playlist-video-list"></div>
                     </div>
                 </div>
 
@@ -429,16 +363,12 @@
         function loadPlaylistsFromV1() {
             const savedPlaylists = getLocalStorage('ytplayer_playlists');
             
-            // Only overwrite the UI if there is actual saved data
             if (savedPlaylists && Object.keys(savedPlaylists).length > 0) {
                 playlists = savedPlaylists;
-                renderV2Playlists();
             } else {
                 playlists = {};
-                // If no data is loaded, we do NOT clear the placeholder HTML, 
-                // so your beautiful mockups stay visible for demonstration!
-                initSwipeToDelete(); // Still initialize swipe for the hardcoded items
             }
+            renderV2Playlists();
         }
 
         function escapeHTML(str) {
@@ -462,21 +392,42 @@
             container.innerHTML = ''; 
             const playlistNames = Object.keys(playlists);
 
+            // Empty state for playlists
+            if (playlistNames.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-400 dark:text-gray-500 mt-6 flex flex-col items-center">
+                        <i class="ph ph-playlist text-4xl mb-2 opacity-50"></i>
+                        <p class="text-sm">No playlists found.</p>
+                    </div>`;
+                return;
+            }
+
             playlistNames.forEach(name => {
                 const plData = playlists[name];
-                let videoCount = 0;
+                let videos = [];
                 if (plData && Array.isArray(plData.videos)) {
-                    videoCount = plData.videos.length;
+                    videos = plData.videos;
                 } else if (Array.isArray(plData)) {
-                    videoCount = plData.length;
+                    videos = plData;
                 }
 
+                const videoCount = videos.length;
                 const safeName = escapeHTML(name);
+
+                // Thumbnail Logic: Grab first video's thumbnail or use icon
+                let thumbHtml = '<i class="ph ph-music-notes text-gray-400 text-xl"></i>';
+                if (videos.length > 0) {
+                    const firstVideoId = videos[0].id || videos[0].videoId || '';
+                    if (firstVideoId) {
+                        thumbHtml = `<img src="https://img.youtube.com/vi/${firstVideoId}/mqdefault.jpg" class="w-full h-full object-cover" alt="cover">`;
+                    }
+                }
+
                 const itemHTML = `
                     <div onclick="openPlaylistDetail('${safeName.replace(/'/g, "\\'")}')" class="flex items-center justify-between p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/40 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer group border border-transparent dark:border-gray-800">
                         <div class="flex items-center gap-4">
                             <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-xl flex flex-col items-center justify-center shrink-0 shadow-sm relative overflow-hidden">
-                                <i class="ph ph-music-notes text-gray-400 text-xl"></i>
+                                ${thumbHtml}
                             </div>
                             <div>
                                 <h4 class="font-semibold text-sm text-gray-900 dark:text-gray-100 group-hover:text-primary transition-colors">${safeName}</h4>
@@ -720,15 +671,31 @@
             viewPlaylistDetail.querySelector('h2').innerText = playlistName || "Playlist";
 
             const plData = playlists[playlistName];
-            let videoCount = 0;
+            let videos = [];
             if (plData && Array.isArray(plData.videos)) {
-                videoCount = plData.videos.length;
+                videos = plData.videos;
             } else if (Array.isArray(plData)) {
-                videoCount = plData.length;
+                videos = plData;
             }
             
+            const videoCount = videos.length;
             const countElem = viewPlaylistDetail.querySelector('.bg-gray-100.inline-block');
-            if(countElem && plData) countElem.innerText = `${videoCount} videos`;
+            if(countElem) countElem.innerText = `${videoCount} videos`;
+
+            // Update the Detail View Cover dynamically
+            const detailCover = document.getElementById('playlist-detail-cover');
+            if (detailCover) {
+                if (videos.length > 0) {
+                    const firstVideoId = videos[0].id || videos[0].videoId || '';
+                    if (firstVideoId) {
+                        detailCover.innerHTML = `<img src="https://img.youtube.com/vi/${firstVideoId}/mqdefault.jpg" class="w-full h-full object-cover" alt="cover">`;
+                    } else {
+                        detailCover.innerHTML = '<i class="ph ph-music-notes text-gray-400 text-3xl"></i>';
+                    }
+                } else {
+                    detailCover.innerHTML = '<i class="ph ph-music-notes text-gray-400 text-3xl"></i>';
+                }
+            }
 
             renderPlaylistVideos(playlistName);
 
