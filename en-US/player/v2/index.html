@@ -763,9 +763,13 @@
                 let currentX = 0;
                 let isDragging = false;
                 
-                const actionThreshold = -90; 
-                const maxResistance = -120; 
+                // Configuration for the two-step swipe
+                const revealDistance = -80;   // Distance to expose the trash icon
+                const swipeThreshold = -40;   // Minimum swipe distance to trigger state change
+                const closeThreshold = 30;    // Minimum right-swipe distance to close
                 
+                container.dataset.state = "closed"; // "closed" or "revealed"
+
                 container.addEventListener('touchstart', (e) => {
                     startX = e.touches[0].clientX;
                     isDragging = true;
@@ -776,55 +780,89 @@
                     if (!isDragging) return;
                     const deltaX = e.touches[0].clientX - startX;
                     
-                    if (deltaX < 0) {
-                        currentX = deltaX < maxResistance 
-                            ? maxResistance + (deltaX - maxResistance) * 0.2 
-                            : deltaX;
-                        
-                        front.style.transform = `translateX(${currentX}px)`;
+                    // Base position depends on whether it's already revealed
+                    const baseX = container.dataset.state === "revealed" ? revealDistance : 0;
+                    currentX = baseX + deltaX;
+                    
+                    // Add resistance if trying to swipe right beyond 0
+                    if (currentX > 0) {
+                        currentX = currentX * 0.2;
                     }
+
+                    front.style.transform = `translateX(${currentX}px)`;
                 }, { passive: true });
 
-                container.addEventListener('touchend', () => {
+                // Extracted deletion animation and logic for reuse
+                const triggerDelete = () => {
+                    front.style.transform = `translateX(-100%)`;
+                    
+                    setTimeout(() => {
+                        const index = container.getAttribute('data-index');
+                        const plName = container.getAttribute('data-playlist');
+                        if (index !== null && plName) {
+                            deleteVideo(plName, parseInt(index));
+                        }
+                        
+                        container.style.transition = 'all 0.3s ease-in-out';
+                        container.style.height = `${container.offsetHeight}px`; 
+                        
+                        container.offsetHeight; // Force reflow
+                        
+                        container.style.opacity = '0';
+                        container.style.padding = '0';
+                        container.style.marginTop = '0';
+                        container.style.marginBottom = '0';
+                        container.style.height = '0';
+                        
+                        setTimeout(() => {
+                            container.remove();
+                            if (plName && playlists[plName]) {
+                                renderPlaylistVideos(plName);
+                            }
+                        }, 300);
+                    }, 200);
+                };
+
+                container.addEventListener('touchend', (e) => {
+                    if (!isDragging) return;
                     isDragging = false;
                     front.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
                     
-                    if (currentX < actionThreshold) {
-                        front.style.transform = `translateX(-100%)`;
-                        
-                        setTimeout(() => {
-                            const index = container.getAttribute('data-index');
-                            const plName = container.getAttribute('data-playlist');
-                            if (index !== null && plName) {
-                                deleteVideo(plName, parseInt(index));
-                            }
-                            
-                            container.style.transition = 'all 0.3s ease-in-out';
-                            container.style.height = `${container.offsetHeight}px`; 
-                            
-                            container.offsetHeight; 
-                            
-                            container.style.opacity = '0';
-                            container.style.padding = '0';
-                            container.style.marginTop = '0';
-                            container.style.marginBottom = '0';
-                            container.style.height = '0';
-                            
-                            setTimeout(() => {
-                                container.remove();
-                                if (plName && playlists[plName]) {
-                                    renderPlaylistVideos(plName);
-                                }
-                            }, 300);
-                        }, 200);
+                    const deltaX = e.changedTouches[0].clientX - startX;
 
-                    } else {
-                        currentX = 0;
-                        front.style.transform = `translateX(0)`;
+                    if (container.dataset.state === "closed") {
+                        if (deltaX < swipeThreshold) {
+                            // 1st Swipe Left -> Reveal the delete icon
+                            container.dataset.state = "revealed";
+                            front.style.transform = `translateX(${revealDistance}px)`;
+                        } else {
+                            // Not enough distance -> Snap back closed
+                            front.style.transform = `translateX(0)`;
+                        }
+                    } else if (container.dataset.state === "revealed") {
+                        if (deltaX < swipeThreshold) {
+                            // 2nd Swipe Left -> Trigger Deletion
+                            triggerDelete();
+                        } else if (deltaX > closeThreshold) {
+                            // Swipe Right -> Close and hide delete icon
+                            container.dataset.state = "closed";
+                            front.style.transform = `translateX(0)`;
+                        } else {
+                            // Minimal movement -> Stay revealed
+                            front.style.transform = `translateX(${revealDistance}px)`;
+                        }
+                    }
+                });
+
+                // Bonus: Allow clicking the revealed red background/trash icon to delete directly
+                container.addEventListener('click', (e) => {
+                    if (container.dataset.state === "revealed" && !front.contains(e.target)) {
+                        triggerDelete();
                     }
                 });
             });
         }
+
 
 
         // --- Theme / Dark Mode Logic ---
