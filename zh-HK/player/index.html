@@ -6894,8 +6894,7 @@
                 }
             });
         }
-
-        function hideCustomConfirm(confirmed = false) {
+function hideCustomConfirm(confirmed = false) {
             const overlay = document.getElementById('customConfirmOverlay');
             if (overlay) {
                 if (overlay.cleanup) overlay.cleanup();
@@ -6909,6 +6908,74 @@
                 
                 overlay.remove();
             }
+        }
+
+        // --- YouTube Player 2 Beta Welcome Message ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const hideUntil = localStorage.getItem('hideWelcomeMsgV2Until');
+            const now = new Date().getTime();
+
+            // Check if the 14-day limit has passed or doesn't exist
+            if (!hideUntil || now > parseInt(hideUntil, 10)) {
+                // Short delay to ensure it renders over everything gracefully
+                setTimeout(showWelcomeMessage, 500);
+            }
+        });
+
+        function showWelcomeMessage() {
+            // Create backdrop
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'welcomeMessageOverlay';
+            overlay.style.zIndex = '99998';
+
+            // Create Modal Window
+            const modal = document.createElement('div');
+            modal.className = 'rename-form fade-in';
+            modal.style.minWidth = '320px';
+            modal.style.maxWidth = '450px';
+            modal.style.padding = '2rem';
+            modal.style.zIndex = '99999';
+            
+            modal.innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold mb-4" style="background: linear-gradient(to right, #5d5cde, #de5cde, #f1edc0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent;">
+                        YouTube Player 2 [Beta]
+                    </h2>
+                    <p class="text-gray-700 dark:text-gray-300 mb-6 text-sm leading-relaxed">
+                        YouTube Player 2現已推出，帶來了新的UI設計、使用者互動和增強的邏輯......
+                    </p>
+                    <div class="flex flex-col gap-3">
+                        <a href="https://tsetse6789.github.io/en-US/player/v2" 
+                           target="_blank"
+                           class="w-full py-3 text-white rounded-lg font-medium transition-transform hover:scale-105 flex items-center justify-center gap-2"
+                           style="background-color: #de5cde;">
+                           前往測試版本🚀
+                        </a>
+                        <button onclick="dismissWelcomeMessage()" 
+                                class="w-full py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                            14天內不要顯示這個
+                        </button>
+                    </div>
+                    <p class="mt-4 text-xs text-gray-500 dark:text-gray-400">
+                        備註：目前僅提供英文版本
+                    </p>
+                </div>
+            `;
+
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+        }
+
+        function dismissWelcomeMessage() {
+            const overlay = document.getElementById('welcomeMessageOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+            
+            // Set expiry in localStorage to 14 days from the current time
+            const expiryTime = new Date().getTime() + (14 * 24 * 60 * 60 * 1000);
+            localStorage.setItem('hideWelcomeMsgV2Until', expiryTime.toString());
         }
     </script>
 </body>
