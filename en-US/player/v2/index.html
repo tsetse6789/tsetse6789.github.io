@@ -605,15 +605,14 @@
         function renderPlaylistVideos(playlistName) {
             const container = document.getElementById('playlist-video-list');
             if (!container) return;
-
+        
             const plData = playlists[playlistName];
             
-            // If the playlist isn't in memory (e.g. testing hardcoded UI), skip re-rendering
             if (!plData) {
                 initSwipeToDelete();
                 return;
             }
-
+        
             container.innerHTML = '';
             
             let videos = [];
@@ -622,7 +621,7 @@
             } else if (Array.isArray(plData)) {
                 videos = plData;
             }
-
+        
             if (videos.length === 0) {
                 container.innerHTML = `
                     <div class="text-center text-gray-400 dark:text-gray-500 mt-6 flex flex-col items-center">
@@ -631,7 +630,7 @@
                     </div>`;
                 return;
             }
-
+        
             videos.forEach((video, index) => {
                 const videoId = video.id || video.videoId || '';
                 const title = escapeHTML(video.title || 'Unknown Video');
@@ -639,29 +638,31 @@
                 
                 const thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : '';
                 const thumbHtml = thumbUrl 
-                    ? `<img src="${thumbUrl}" class="w-full h-full object-cover" alt="cover">` 
+                    ? `<img src="${thumbUrl}" class="w-full h-full object-cover pointer-events-none" alt="cover">` 
                     : `<i class="ph ph-image text-gray-400"></i>`;
-
+        
+                // Updated HTML: Added hover classes, separated delete background for opacity control
                 const videoHtml = `
-                    <div class="relative w-full rounded-xl overflow-hidden bg-red-500 group swipe-container" style="touch-action: pan-y;" data-index="${index}" data-playlist="${escapeHTML(playlistName)}">
-                        <div class="absolute inset-0 flex items-center justify-end pr-5 text-white">
-                            <i class="ph-fill ph-trash text-xl"></i>
+                    <div class="relative w-full rounded-xl overflow-hidden group swipe-container select-none" style="touch-action: pan-y;" data-index="${index}" data-playlist="${escapeHTML(playlistName)}">
+                        <div class="absolute inset-0 flex items-center justify-end rounded-xl overflow-hidden">
+                            <div class="delete-bg absolute inset-0 bg-red-500 opacity-0 transition-opacity duration-75"></div>
+                            <i class="ph-fill ph-trash text-xl text-white relative z-10 pr-5"></i>
                         </div>
-                        <div class="swipe-front relative w-full bg-white dark:bg-[#1a1a1a] flex items-center gap-3 p-2 rounded-xl transition-transform ease-out z-10 border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer">
-                            <div class="w-24 h-14 bg-gray-200 dark:bg-gray-700 rounded-lg shrink-0 relative overflow-hidden flex justify-center items-center">
+                        <div class="swipe-front relative w-full bg-white dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-gray-800/80 flex items-center gap-3 p-2 rounded-xl transition-all ease-out z-10 border border-gray-100 dark:border-gray-800 shadow-sm cursor-pointer">
+                            <div class="w-24 h-14 bg-gray-200 dark:bg-gray-700 rounded-lg shrink-0 relative overflow-hidden flex justify-center items-center pointer-events-none">
                                 ${thumbHtml}
                             </div>
-                            <div class="flex-1 min-w-0 pr-1">
+                            <div class="flex-1 min-w-0 pr-1 pointer-events-none">
                                 <h4 class="font-semibold text-sm line-clamp-1 leading-tight text-gray-900 dark:text-gray-100">${title}</h4>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">${channel}</p>
                             </div>
-                            <i class="ph ph-list text-gray-300 dark:text-gray-600 mr-2 text-lg active:text-gray-500"></i>
+                            <i class="ph ph-list text-gray-300 dark:text-gray-600 mr-2 text-lg active:text-gray-500 drag-handle"></i>
                         </div>
                     </div>
                 `;
                 container.insertAdjacentHTML('beforeend', videoHtml);
             });
-
+        
             initSwipeToDelete();
         }
 
@@ -753,48 +754,102 @@
 
         function initSwipeToDelete() {
             const swipeContainers = document.querySelectorAll('.swipe-container');
+            const listContainer = document.getElementById('playlist-video-list');
             
             swipeContainers.forEach(container => {
                 if (container.dataset.swipeInitialized) return;
                 container.dataset.swipeInitialized = "true";
-
+        
                 const front = container.querySelector('.swipe-front');
-                let startX = 0;
-                let currentX = 0;
-                let isDragging = false;
+                const deleteBg = container.querySelector('.delete-bg');
+                let startX = 0, startY = 0, currentX = 0;
+                let isDragging = false, isSwiping = false, isReordering = false;
+                let longPressTimer;
                 
-                // Configuration for the two-step swipe
-                const revealDistance = -80;   // Distance to expose the trash icon
-                const swipeThreshold = -40;   // Minimum swipe distance to trigger state change
-                const closeThreshold = 30;    // Minimum right-swipe distance to close
+                const revealDistance = -80;
+                const swipeThreshold = -40;
+                const closeThreshold = 30;
                 
-                container.dataset.state = "closed"; // "closed" or "revealed"
-
+                container.dataset.state = "closed";
+        
+                // Disable context menu so long-press doesn't trigger native menus on mobile
+                container.addEventListener('contextmenu', e => e.preventDefault());
+        
                 container.addEventListener('touchstart', (e) => {
                     startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
                     isDragging = true;
+                    isSwiping = false;
                     front.style.transition = 'none'; 
+                    if (deleteBg) deleteBg.style.transition = 'none';
+        
+                    // Long Press Timer for Reordering
+                    longPressTimer = setTimeout(() => {
+                        if (!isSwiping && container.dataset.state === "closed") {
+                            isReordering = true;
+                            isDragging = false; 
+                            
+                            // Visual feedback for picking up the item
+                            container.style.transition = 'transform 0.2s';
+                            container.style.transform = 'scale(1.02)';
+                            container.style.zIndex = '50';
+                            front.classList.add('shadow-xl', 'opacity-90');
+                            if (navigator.vibrate) navigator.vibrate(50);
+                        }
+                    }, 400); // 400ms hold to activate drag
                 }, { passive: true });
-
+        
+                // Note: {passive: false} is required so we can call e.preventDefault() during reordering
                 container.addEventListener('touchmove', (e) => {
-                    if (!isDragging) return;
                     const deltaX = e.touches[0].clientX - startX;
+                    const deltaY = e.touches[0].clientY - startY;
                     
-                    // Base position depends on whether it's already revealed
+                    // If user moves finger quickly, cancel the long press (it's a swipe or scroll)
+                    if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+                        clearTimeout(longPressTimer);
+                        if (!isReordering) isSwiping = true;
+                    }
+        
+                    // --- DRAG AND DROP REORDER LOGIC ---
+                    if (isReordering) {
+                        e.preventDefault(); // Stop page scroll
+                        const touchY = e.touches[0].clientY;
+                        const siblings = [...listContainer.querySelectorAll('.swipe-container')].filter(s => s !== container);
+                        
+                        // Find which sibling we are hovering over
+                        const nextSibling = siblings.find(sibling => {
+                            const box = sibling.getBoundingClientRect();
+                            return touchY <= box.top + box.height / 2;
+                        });
+        
+                        if (nextSibling) {
+                            listContainer.insertBefore(container, nextSibling);
+                        } else {
+                            listContainer.appendChild(container);
+                        }
+                        return;
+                    }
+        
+                    // --- SWIPE TO DELETE LOGIC ---
+                    if (!isDragging || !isSwiping) return;
+                    
                     const baseX = container.dataset.state === "revealed" ? revealDistance : 0;
                     currentX = baseX + deltaX;
                     
-                    // Add resistance if trying to swipe right beyond 0
-                    if (currentX > 0) {
-                        currentX = currentX * 0.2;
-                    }
-
+                    if (currentX > 0) currentX = currentX * 0.2; // Resistance when swiping right
+        
                     front.style.transform = `translateX(${currentX}px)`;
-                }, { passive: true });
-
-                // Extracted deletion animation and logic for reuse
+        
+                    // Dynamically change background opacity based on swipe distance
+                    if (deleteBg && currentX < 0) {
+                        const ratio = Math.min(Math.abs(currentX) / Math.abs(revealDistance), 1);
+                        deleteBg.style.opacity = ratio;
+                    }
+                }, { passive: false }); 
+        
                 const triggerDelete = () => {
                     front.style.transform = `translateX(-100%)`;
+                    if (deleteBg) deleteBg.style.opacity = 1;
                     
                     setTimeout(() => {
                         const index = container.getAttribute('data-index');
@@ -805,7 +860,6 @@
                         
                         container.style.transition = 'all 0.3s ease-in-out';
                         container.style.height = `${container.offsetHeight}px`; 
-                        
                         container.offsetHeight; // Force reflow
                         
                         container.style.opacity = '0';
@@ -816,45 +870,82 @@
                         
                         setTimeout(() => {
                             container.remove();
-                            if (plName && playlists[plName]) {
-                                renderPlaylistVideos(plName);
-                            }
+                            if (plName && playlists[plName]) renderPlaylistVideos(plName);
                         }, 300);
                     }, 200);
                 };
-
+        
                 container.addEventListener('touchend', (e) => {
+                    clearTimeout(longPressTimer);
+        
+                    // --- FINISH REORDERING ---
+                    if (isReordering) {
+                        isReordering = false;
+                        
+                        // Reset visuals
+                        container.style.transform = 'scale(1)';
+                        container.style.zIndex = '1';
+                        front.classList.remove('shadow-xl', 'opacity-90');
+        
+                        // Save new arrangement
+                        const plName = container.getAttribute('data-playlist');
+                        const plData = playlists[plName];
+                        
+                        if (plData) {
+                            const newOrderNodes = [...listContainer.querySelectorAll('.swipe-container')];
+                            let videosArray = Array.isArray(plData.videos) ? plData.videos : plData;
+                            
+                            // Map the new DOM order back to the original objects using data-index
+                            const newVideosArray = newOrderNodes.map(node => {
+                                const oldIndex = parseInt(node.getAttribute('data-index'));
+                                return videosArray[oldIndex];
+                            });
+        
+                            // Save back into state
+                            if (Array.isArray(plData.videos)) {
+                                plData.videos = newVideosArray;
+                            } else {
+                                playlists[plName] = newVideosArray;
+                            }
+        
+                            saveToLocalStorage();
+                            renderPlaylistVideos(plName); // Re-render to cleanly reset indices
+                        }
+                        return;
+                    }
+        
+                    // --- FINISH SWIPE ---
                     if (!isDragging) return;
                     isDragging = false;
                     front.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+                    if (deleteBg) deleteBg.style.transition = 'opacity 0.3s ease';
                     
                     const deltaX = e.changedTouches[0].clientX - startX;
-
+        
                     if (container.dataset.state === "closed") {
                         if (deltaX < swipeThreshold) {
-                            // 1st Swipe Left -> Reveal the delete icon
                             container.dataset.state = "revealed";
                             front.style.transform = `translateX(${revealDistance}px)`;
+                            if (deleteBg) deleteBg.style.opacity = 1;
                         } else {
-                            // Not enough distance -> Snap back closed
                             front.style.transform = `translateX(0)`;
+                            if (deleteBg) deleteBg.style.opacity = 0;
                         }
                     } else if (container.dataset.state === "revealed") {
                         if (deltaX < swipeThreshold) {
-                            // 2nd Swipe Left -> Trigger Deletion
                             triggerDelete();
                         } else if (deltaX > closeThreshold) {
-                            // Swipe Right -> Close and hide delete icon
                             container.dataset.state = "closed";
                             front.style.transform = `translateX(0)`;
+                            if (deleteBg) deleteBg.style.opacity = 0;
                         } else {
-                            // Minimal movement -> Stay revealed
                             front.style.transform = `translateX(${revealDistance}px)`;
+                            if (deleteBg) deleteBg.style.opacity = 1;
                         }
                     }
                 });
-
-                // Bonus: Allow clicking the revealed red background/trash icon to delete directly
+        
+                // Click delete icon directly when revealed
                 container.addEventListener('click', (e) => {
                     if (container.dataset.state === "revealed" && !front.contains(e.target)) {
                         triggerDelete();
@@ -862,8 +953,6 @@
                 });
             });
         }
-
-
 
         // --- Theme / Dark Mode Logic ---
 
