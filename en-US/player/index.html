@@ -6933,13 +6933,22 @@ function hideCustomConfirm(confirmed = false) {
             // Create Modal Window
             const modal = document.createElement('div');
             modal.className = 'rename-form fade-in';
+            modal.style.position = 'relative'; // Added to allow absolute positioning of the close button
             modal.style.minWidth = '320px';
             modal.style.maxWidth = '450px';
             modal.style.padding = '2rem';
             modal.style.zIndex = '99999';
             
             modal.innerHTML = `
-                <div class="text-center">
+                <button onclick="document.getElementById('welcomeMessageOverlay').remove()" 
+                        class="absolute top-3 right-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                        aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+                <div class="text-center mt-2">
                     <h2 class="text-2xl font-bold mb-4" style="background: linear-gradient(to right, #5d5cde, #de5cde, #f1edc0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent;">
                         YouTube Player 2 [Beta]
                     </h2>
