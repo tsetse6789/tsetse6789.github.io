@@ -125,52 +125,15 @@
                     </div>
 
                     <div id="search-results-area" class="flex-1 hidden flex-col overflow-hidden mt-2">
-                        <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-3 shrink-0">
-                            <button class="px-4 py-1.5 rounded-full bg-primary text-white text-sm font-semibold shrink-0 shadow-md shadow-primary/20">All</button>
-                            <button class="px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors">Videos</button>
-                            <button class="px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors">Channels</button>
-                            <button class="px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors">Playlists</button>
+                        <div class="flex gap-2 overflow-x-auto custom-scrollbar pb-3 shrink-0" id="search-filters">
+                            <button data-type="" class="filter-btn px-4 py-1.5 rounded-full bg-primary text-white text-sm font-semibold shrink-0 shadow-md shadow-primary/20">All</button>
+                            <button data-type="video" class="filter-btn px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors">Videos</button>
+                            <button data-type="channel" class="filter-btn px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors">Channels</button>
+                            <button data-type="playlist" class="filter-btn px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors">Playlists</button>
                         </div>
                         
-                        <div class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1 pb-4">
-                            <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors">
-                                <div class="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex flex-col items-center justify-center shrink-0 relative overflow-hidden">
-                                    <i class="ph ph-image text-gray-400 text-2xl mb-1"></i>
-                                    <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium">PLACEHOLDER</span>
-                                    <div class="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1 rounded">10:24</div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors">Understanding Quantum Mechanics in 10 Minutes</h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Science Channel</p>
-                                    <p class="text-[11px] text-gray-400 mt-0.5">1.2M views • 2 days ago</p>
-                                </div>
+                        <div id="search-results-list" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-3 pr-1 pb-4">
                             </div>
-                            
-                            <div class="flex items-center gap-4 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors">
-                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex flex-col items-center justify-center shrink-0 ml-8 mr-4 overflow-hidden border border-gray-300 dark:border-gray-600">
-                                    <i class="ph ph-user text-gray-400 text-xl mb-0.5"></i>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="font-semibold text-sm group-hover:text-primary transition-colors">Tech Reviewer</h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">2.8M Subscribers</p>
-                                    <p class="text-[11px] text-gray-400 mt-0.5">@techreviewer</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors">
-                                <div class="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex flex-col items-center justify-center shrink-0 relative overflow-hidden">
-                                    <div class="absolute right-0 top-0 bottom-0 w-10 bg-black/40 flex items-center justify-center backdrop-blur-sm">
-                                        <i class="ph-fill ph-list-dashes text-white"></i>
-                                    </div>
-                                    <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium z-10">COVER</span>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors">Coding Soundtrack Vol. 4</h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">Lofi Records</p>
-                                    <p class="text-[11px] text-gray-400 mt-0.5 bg-gray-100 dark:bg-gray-800 inline-block px-1.5 rounded">25 videos</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                     
                     <div id="search-empty-state" class="flex-1 flex flex-col items-center justify-center text-center opacity-60">
@@ -555,6 +518,13 @@
         island.addEventListener('click', (e) => e.stopPropagation());
 
         // --- Search Logic ---
+        const YOUTUBE_API_KEY = 'AIzaSyCQExuj8PVT14tgxr9jUB7qGsG364P_u48';
+        let currentSearchType = ''; 
+        let searchTimeout = null;
+        
+        const searchResultsList = document.getElementById('search-results-list');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        
         function updateSearchUI(query) {
             if (query.length > 0) {
                 clearSearchBtn.classList.remove('hidden');
@@ -566,22 +536,132 @@
                 searchResultsArea.classList.add('hidden');
                 searchResultsArea.classList.remove('flex');
                 searchEmptyState.classList.remove('hidden');
+                searchResultsList.innerHTML = ''; 
             }
         }
-
+        
+        async function fetchSearchResults(query, type) {
+            if (!query) return;
+            
+            searchResultsList.innerHTML = `<div class="flex justify-center py-6"><i class="ph ph-spinner-gap animate-spin text-3xl text-primary"></i></div>`;
+            
+            try {
+                const typeParam = type ? `&type=${type}` : '&type=video,channel,playlist';
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=15&q=${encodeURIComponent(query)}${typeParam}&key=${YOUTUBE_API_KEY}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.items && data.items.length > 0) {
+                    renderSearchResults(data.items);
+                } else {
+                    searchResultsList.innerHTML = `<div class="text-center text-sm text-gray-500 py-6">No results found.</div>`;
+                }
+            } catch (error) {
+                console.error('Error fetching YouTube data:', error);
+                searchResultsList.innerHTML = `<div class="text-center text-sm text-red-500 py-6">Error loading results. Check your connection or API key.</div>`;
+            }
+        }
+        
+        function renderSearchResults(items) {
+            searchResultsList.innerHTML = '';
+            
+            items.forEach(item => {
+                const snippet = item.snippet;
+                const kind = item.id.kind;
+                const title = escapeHTML(snippet.title);
+                const channelTitle = escapeHTML(snippet.channelTitle);
+                const thumbUrl = snippet.thumbnails?.medium?.url || snippet.thumbnails?.default?.url || '';
+                
+                let itemHtml = '';
+                
+                if (kind === 'youtube#video') {
+                    const date = new Date(snippet.publishedAt).toLocaleDateString();
+                    itemHtml = `
+                        <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors" data-id="${item.id.videoId}">
+                            <div class="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex flex-col items-center justify-center shrink-0 relative overflow-hidden">
+                                <img src="${thumbUrl}" class="w-full h-full object-cover" alt="thumbnail">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors" title="${title}">${title}</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">${channelTitle}</p>
+                                <p class="text-[11px] text-gray-400 mt-0.5">${date}</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (kind === 'youtube#channel') {
+                    itemHtml = `
+                        <div class="flex items-center gap-4 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors" data-id="${item.id.channelId}">
+                            <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex flex-col items-center justify-center shrink-0 ml-8 mr-4 overflow-hidden border border-gray-300 dark:border-gray-600">
+                                <img src="${thumbUrl}" class="w-full h-full object-cover" alt="avatar">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-sm group-hover:text-primary transition-colors">${title}</h4>
+                                <p class="text-[11px] text-gray-400 mt-0.5">Channel</p>
+                            </div>
+                        </div>
+                    `;
+                } else if (kind === 'youtube#playlist') {
+                    itemHtml = `
+                        <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/60 cursor-pointer group transition-colors" data-id="${item.id.playlistId}">
+                            <div class="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg flex flex-col items-center justify-center shrink-0 relative overflow-hidden">
+                                <img src="${thumbUrl}" class="w-full h-full object-cover" alt="playlist cover">
+                                <div class="absolute right-0 top-0 bottom-0 w-10 bg-black/40 flex items-center justify-center backdrop-blur-sm">
+                                    <i class="ph-fill ph-list-dashes text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-semibold text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors" title="${title}">${title}</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1.5">${channelTitle}</p>
+                                <p class="text-[11px] text-gray-400 mt-0.5 bg-gray-100 dark:bg-gray-800 inline-block px-1.5 rounded">Playlist</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                searchResultsList.insertAdjacentHTML('beforeend', itemHtml);
+            });
+        }
+        
+        function triggerSearch() {
+            const query = searchInput.value.trim();
+            if (query.length > 0) {
+                fetchSearchResults(query, currentSearchType);
+            }
+        }
+        
+        // Category Filter Logic
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => {
+                    b.className = "filter-btn px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 text-sm font-medium shrink-0 transition-colors";
+                });
+                btn.className = "filter-btn px-4 py-1.5 rounded-full bg-primary text-white text-sm font-semibold shrink-0 shadow-md shadow-primary/20";
+                
+                currentSearchType = btn.getAttribute('data-type');
+                triggerSearch();
+            });
+        });
+        
+        // Input Listeners with Debounce
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
             topSearchInput.value = e.target.value; 
             updateSearchUI(query);
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                triggerSearch();
+            }, 500); 
         });
-
+        
         topSearchInput.addEventListener('focus', () => {
             if (!isIslandOpen || activeTab !== 'search') {
                 openIsland('search');
             }
             setTimeout(() => searchInput.focus(), 300);
         });
-
+        
         topSearchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
             searchInput.value = e.target.value; 
@@ -591,15 +671,20 @@
                 openIsland('search');
                 setTimeout(() => searchInput.focus(), 300);
             }
+        
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                triggerSearch();
+            }, 500);
         });
-
+        
         clearSearchBtn.addEventListener('click', () => {
             searchInput.value = '';
             topSearchInput.value = '';
             updateSearchUI('');
             searchInput.focus();
+            clearTimeout(searchTimeout);
         });
-
 
         // --- Playlist Detail & Video List Logic ---
         function renderPlaylistVideos(playlistName) {
