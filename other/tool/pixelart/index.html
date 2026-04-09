@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Art Converter (MP4/GIF)</title>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #1e1e2e;
+            color: #cdd6f4;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 { border-bottom: 2px solid #a6e3a1; padding-bottom: 10px; }
+        .controls {
+            background: #313244;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: grid;
+            gap: 15px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label { font-weight: bold; min-width: 120px; }
+        input[type="number"] {
+            background: #45475a;
+            color: white;
+            border: 1px solid #585b70;
+            padding: 5px 10px;
+            border-radius: 4px;
+            width: 80px;
+        }
+        input[type="file"] {
+            background: #45475a;
+            padding: 10px;
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background: #a6e3a1;
+            color: #1e1e2e;
+            border: none;
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover { background: #94e2d5; }
+        button:disabled { background: #585b70; color: #a6adc8; cursor: not-allowed; }
+        
+        .preview-container { text-align: center; margin-bottom: 20px; }
+        video, img { max-width: 100%; max-height: 300px; border-radius: 8px; background: #000; }
+        
+        #log-output {
+            background: #11111b;
+            color: #a6adc8;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Pixel Art Converter (MP4/GIF)</h1>
+    
+    <div class="preview-container" id="preview-container" style="display: none;">
+        <video id="preview-video" controls loop style="display: none;"></video>
+        <img id="preview-img" style="display: none;" />
+    </div>
+
+    <div class="controls">
+        <div>
+            <label for="file-upload">Upload MP4 or GIF:</label>
+            <input type="file" id="file-upload" accept=".mp4, .gif">
+        </div>
+
+        <div class="control-group">
+            <label>Scale Method:</label>
+            <input type="radio" name="scale-mode" id="mode-multiplier" value="multiplier" checked>
+            <label for="mode-multiplier" style="min-width: auto;">Multiplier (n * n)</label>
+            
+            <input type="radio" name="scale-mode" id="mode-resolution" value="resolution">
+            <label for="mode-resolution" style="min-width: auto;">Custom Resolution</label>
+        </div>
+
+        <div class="control-group" id="multiplier-settings">
+            <label for="scale-factor">Multiplier (n):</label>
+            <input type="number" id="scale-factor" value="4" min="1" max="50">
+            <span>x</span>
+        </div>
+
+        <div class="control-group" id="resolution-settings" style="display: none;">
+            <label for="res-width">Target Width:</label>
+            <input type="number" id="res-width" value="2048" min="1">
+            <label for="res-height" style="margin-left: 10px; min-width: auto;">Height:</label>
+            <input type="number" id="res-height" value="2048" min="1">
+        </div>
+
+        <button id="btn-convert" disabled>Convert to Scaled MP4</button>
+    </div>
+
+    <h3>Processing Logs</h3>
+    <div id="log-output">Awaiting file...</div>
+
+    <script>
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        // Initialize FFmpeg
+        const ffmpeg = createFFmpeg({ log: true });
+
+        const fileUpload = document.getElementById('file-upload');
+        const btnConvert = document.getElementById('btn-convert');
+        const logOutput = document.getElementById('log-output');
+        
+        const modeMultiplier = document.getElementById('mode-multiplier');
+        const modeResolution = document.getElementById('mode-resolution');
+        const multiplierSettings = document.getElementById('multiplier-settings');
+        const resolutionSettings = document.getElementById('resolution-settings');
+        
+        const previewContainer = document.getElementById('preview-container');
+        const previewVideo = document.getElementById('preview-video');
+        const previewImg = document.getElementById('preview-img');
+
+        let currentFile = null;
+
+        // Toggle UI based on selected scaling mode
+        modeMultiplier.addEventListener('change', updateUI);
+        modeResolution.addEventListener('change', updateUI);
+
+        function updateUI() {
+            if (modeMultiplier.checked) {
+                multiplierSettings.style.display = 'flex';
+                resolutionSettings.style.display = 'none';
+            } else {
+                multiplierSettings.style.display = 'none';
+                resolutionSettings.style.display = 'flex';
+            }
+        }
+
+        // Custom logger to show progress
+        ffmpeg.setLogger(({ type, message }) => {
+            logOutput.innerHTML += message + '\n';
+            logOutput.scrollTop = logOutput.scrollHeight;
+        });
+
+        // Handle File Selection
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            currentFile = file;
+            btnConvert.disabled = false;
+            logOutput.innerHTML = `Loaded: ${file.name}\nReady to convert.\n`;
+
+            // Preview logic
+            const url = URL.createObjectURL(file);
+            previewContainer.style.display = 'block';
+            
+            if (file.type.includes('gif')) {
+                previewVideo.style.display = 'none';
+                previewImg.style.display = 'inline-block';
+                previewImg.src = url;
+            } else {
+                previewImg.style.display = 'none';
+                previewVideo.style.display = 'inline-block';
+                previewVideo.src = url;
+            }
+        });
+
+        // Conversion Logic
+        btnConvert.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            try {
+                btnConvert.disabled = true;
+                btnConvert.innerText = "Loading FFmpeg Engine...";
+                
+                if (!ffmpeg.isLoaded()) {
+                    await ffmpeg.load();
+                }
+
+                btnConvert.innerText = "Processing Video... Please wait";
+                const inputFileName = 'input' + (currentFile.type.includes('gif') ? '.gif' : '.mp4');
+                const outputFileName = 'output.mp4';
+
+                // Write file to FFmpeg's virtual file system
+                ffmpeg.FS('writeFile', inputFileName, await fetchFile(currentFile));
+
+                // Determine scaling filter
+                let scaleFilter = '';
+                if (modeMultiplier.checked) {
+                    const n = document.getElementById('scale-factor').value;
+                    // iw = input width, ih = input height. flags=neighbor ensures no blurring.
+                    scaleFilter = `scale=iw*${n}:ih*${n}:flags=neighbor`;
+                } else {
+                    const w = document.getElementById('res-width').value;
+                    const h = document.getElementById('res-height').value;
+                    scaleFilter = `scale=${w}:${h}:flags=neighbor`;
+                }
+
+                // Run FFmpeg command
+                // -i input: specifies input file
+                // -vf: video filter (scaling)
+                // -c:v libx264: use H.264 video codec for MP4 compatibility
+                // -pix_fmt yuv420p: ensures maximum compatibility across video players
+                await ffmpeg.run(
+                    '-i', inputFileName, 
+                    '-vf', scaleFilter, 
+                    '-c:v', 'libx264', 
+                    '-pix_fmt', 'yuv420p', 
+                    outputFileName
+                );
+
+                // Read the result back
+                const data = ffmpeg.FS('readFile', outputFileName);
+
+                // Create a blob and trigger download
+                const blob = new Blob([data.buffer], { type: 'video/mp4' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `scaled_${currentFile.name.split('.')[0]}.mp4`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                btnConvert.innerText = "Done! Convert Another?";
+                btnConvert.disabled = false;
+                logOutput.innerHTML += '\n✅ Conversion Complete! File downloaded.\n';
+
+            } catch (err) {
+                console.error(err);
+                logOutput.innerHTML += `\n❌ Error: ${err.message}\n`;
+                btnConvert.innerText = "Error - See Logs";
+                btnConvert.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
