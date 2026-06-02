@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT 解碼逃生門 (Escape Room App)</title>
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --terminal-bg: #1f2833;
+            --neon-green: #66fcf1;
+            --neon-blue: #45a29e;
+            --text-color: #c5c6c7;
+            --error-red: #ff4c4c;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(69, 162, 158, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(102, 252, 241, 0.1) 0%, transparent 20%);
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background-color: var(--terminal-bg);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 0 30px rgba(69, 162, 158, 0.3), inset 0 0 10px rgba(0,0,0,0.5);
+            border: 2px solid var(--neon-blue);
+            position: relative;
+        }
+
+        h1, h2, h3 {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(102, 252, 241, 0.6);
+            text-align: center;
+            margin-top: 0;
+        }
+
+        p {
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .btn {
+            background: transparent;
+            color: var(--neon-green);
+            border: 2px solid var(--neon-green);
+            padding: 14px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            width: 100%;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: var(--neon-green);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px rgba(102, 252, 241, 0.6);
+        }
+        
+        .btn-alt {
+            border-color: var(--neon-blue);
+            color: var(--neon-blue);
+            margin-top: 20px;
+        }
+        
+        .btn-alt:hover {
+            background: var(--neon-blue);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px rgba(69, 162, 158, 0.6);
+        }
+
+        .code-block {
+            background-color: #0b0c10;
+            padding: 18px;
+            border-left: 4px solid var(--neon-blue);
+            font-family: 'Consolas', monospace;
+            color: #a6e22e;
+            white-space: pre-wrap;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-size: 1.05rem;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .input-box {
+            width: 100%;
+            background: rgba(11, 12, 16, 0.8);
+            border: 2px solid var(--text-color);
+            color: var(--neon-green);
+            padding: 15px;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            border-radius: 8px;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input-box:focus {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(102, 252, 241, 0.5);
+        }
+
+        .feedback {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            min-height: 28px;
+            font-size: 1.1rem;
+        }
+
+        .success {
+            color: var(--neon-green);
+            text-shadow: 0 0 8px rgba(102, 252, 241, 0.8);
+        }
+
+        .error {
+            color: var(--error-red);
+            text-shadow: 0 0 8px rgba(255, 76, 76, 0.8);
+            animation: shake 0.4s;
+            display: block;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 6px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--neon-green);
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+            box-shadow: 0 0 15px var(--neon-green);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            50% { transform: translateX(8px); }
+            75% { transform: translateX(-8px); }
+            100% { transform: translateX(0); }
+        }
+
+        .glitch {
+            position: relative;
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .hint {
+            font-size: 0.95rem;
+            color: #8892b0;
+            margin-top: -10px;
+            display: block;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- Screen 0: Start Menu -->
+    <div id="screen-0" class="screen active">
+        <h1 class="glitch">ICT 黑客任務</h1>
+        <h2>[ 逃生門協議 ]</h2>
+        <p>警告！學校中央伺服器已被異常 AI 鎖定。你被困在機房內，只有透過解開 3 道 ICT 防火牆才能取得管理權限，打開逃生門並拯救全班的 ICT 筆記！</p>
+        <p style="text-align: center; margin: 25px 0;">
+            <strong>考驗內容：</strong><br>
+            💾 多媒體容量計算<br>
+            🐍 Python 邏輯追蹤<br>
+            🤖 AI 提示詞工程
+        </p>
+        <button class="btn" onclick="nextScreen(1)">啟動系統 [START]</button>
+    </div>
+
+    <!-- Screen 1: Multimedia -->
+    <div id="screen-1" class="screen">
+        <h2>防火牆 1：多媒體解碼</h2>
+        <p>系統要求輸入以下未壓縮圖像的檔案大小，單位為 <strong>MB</strong> (請四捨五入至小數後 3 位)。</p>
+        <div class="code-block">解像度 (Resolution): 1552 x 1164
+色深 (Color Depth): 24 bits</div>
+        <span class="hint">提示公式：面積 × 色深 / 8 = Bytes<br>1 KB = 1024 Bytes, 1 MB = 1024 KB</span>
+        
+        <input type="number" id="ans-1" class="input-box" placeholder="輸入數字 (例如: 2.513)" step="0.001">
+        <button class="btn btn-alt" onclick="checkLevel1()">提交驗證</button>
+        <div id="feedback-1" class="feedback"></div>
+    </div>
+
+    <!-- Screen 2: Python -->
+    <div id="screen-2" class="screen">
+        <h2>防火牆 2：Python 邏輯陷阱</h2>
+        <p>你攔截到一段控制逃生門的 Python 程式碼，請問這段程式執行後，<strong>最後一次迴圈印出的數字</strong>是多少？</p>
+        <div class="code-block">K = 15
+for J in range(4):
+    if K % 2 == 0:
+        print(K // 2)
+    else:
+        print(K * 2)
+    K = K - 3</div>
+        <span class="hint">請留意程式碼中的縮排與控制流程 (Iteration & Selection)</span>
+        <input type="number" id="ans-2" class="input-box" placeholder="輸入最後印出的整數">
+        <button class="btn btn-alt" onclick="checkLevel2()">提交驗證</button>
+        <div id="feedback-2" class="feedback"></div>
+    </div>
+
+    <!-- Screen 3: AI Prompts -->
+    <div id="screen-3" class="screen">
+        <h2>防火牆 3：AI 指令重構</h2>
+        <p>要徹底接管伺服器，你必須寫出完美的 Prompt (提示詞)。根據 ICT 筆記，編寫高質量提示詞必須遵循 <strong>RCT 公式</strong> 才能避免 AI 產生幻覺 (Hallucinations)。</p>
+        <p style="text-align: center;">請問 RCT 分別代表什麼？</p>
+        
+        <button class="btn" style="text-transform: none; font-size:1rem;" onclick="checkLevel3('A')">A. Run (執行), Code (代碼), Test (測試)</button>
+        <button class="btn" style="text-transform: none; font-size:1rem;" onclick="checkLevel3('B')">B. Role (角色), Context (背景), Task (任務)</button>
+        <button class="btn" style="text-transform: none; font-size:1rem;" onclick="checkLevel3('C')">C. Real (真實), Concept (概念), Tool (工具)</button>
+        
+        <div id="feedback-3" class="feedback"></div>
+    </div>
+
+    <!-- Screen 4: Victory -->
+    <div id="screen-4" class="screen">
+        <h1 style="color: #FFD700; text-shadow: 0 0 20px #FFD700;">權限已獲取！</h1>
+        <h2>[ 逃生門已開啟 ]</h2>
+        <p>恭喜你！你已經成功突破所有防火牆！</p>
+        <p>你的多媒體計算、Python 邏輯和 AI Prompt 技巧已達到頂級黑客水平，這份 ICT 筆記的精華你已經完全掌握了！</p>
+        <p style="text-align: center; color: #8892b0;">💡 小提示：你可以將這個 HTML 檔案透過 WhatsApp 傳給同學們，看看誰能最快破關！</p>
+        <button class="btn" style="border-color: #FFD700; color: #FFD700;" onclick="location.reload()">重新啟動系統</button>
+    </div>
+</div>
+
+<script>
+    let currentScreen = 0;
+    const totalScreens = 3;
+
+    function nextScreen(index) {
+        document.getElementById(`screen-${currentScreen}`).classList.remove('active');
+        currentScreen = index;
+        document.getElementById(`screen-${currentScreen}`).classList.add('active');
+        updateProgress();
+    }
+
+    function updateProgress() {
+        const percentage = ((currentScreen - 1) / totalScreens) * 100;
+        document.getElementById('progress').style.width = Math.max(0, percentage) + '%';
+        if (currentScreen === 4) {
+            document.getElementById('progress').style.width = '100%';
+        }
+    }
+
+    function showError(level, msg) {
+        const fb = document.getElementById(`feedback-${level}`);
+        fb.innerHTML = `<span class="error">❌ 錯誤：${msg}</span>`;
+    }
+
+    function showSuccess(level, msg) {
+        const fb = document.getElementById(`feedback-${level}`);
+        fb.innerHTML = `<span class="success">✅ 存取許可！${msg}</span>`;
+        // Lock inputs to prevent double clicks
+        if(document.getElementById(`ans-${level}`)) {
+            document.getElementById(`ans-${level}`).disabled = true;
+        }
+        setTimeout(() => nextScreen(level + 1), 1500);
+    }
+
+    // Level 1 validation
+    // (1552 * 1164 * 24) / 8 / 1024 / 1024 = 5.167822265625 ≈ 5.168
+    function checkLevel1() {
+        const ans = document.getElementById('ans-1').value.trim();
+        if (ans === '5.168') {
+            showSuccess(1, "計算精準，第一層防護已解除。");
+        } else {
+            showError(1, "數值不符。提示：請確保除以兩次 1024，並四捨五入至 3 位小數！");
+        }
+    }
+
+    // Level 2 validation
+    // K = 15
+    // Loop 0: J=0, K=15 (odd), print(15*2)=30, K=15-3=12
+    // Loop 1: J=1, K=12 (even), print(12//2)=6, K=12-3=9
+    // Loop 2: J=2, K=9 (odd), print(9*2)=18, K=9-3=6
+    // Loop 3: J=3, K=6 (even), print(6//2)=3, K=6-3=3
+    // Last printed number is 3
+    function checkLevel2() {
+        const ans = document.getElementById('ans-2').value.trim();
+        if (ans === '3') {
+            showSuccess(2, "邏輯推演正確，後門已開啟。");
+        } else {
+            showError(2, "追蹤失敗。提示：在紙上畫出每一次迴圈中 K 數值的變化。");
+        }
+    }
+
+    // Level 3 validation
+    function checkLevel3(ans) {
+        if (ans === 'B') {
+            showSuccess(3, "RCT 協議確認，AI 核心已關閉！");
+        } else {
+            showError(3, "無效指令！AI 產生了幻覺！");
+        }
+    }
+</script>
+
+</body>
+</html>
